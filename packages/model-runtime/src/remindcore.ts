@@ -378,7 +378,7 @@ const semanticCuePatterns: ReadonlyArray<[string, RegExp]> = [
   ['reminder.create', /\b(?:nudge|jog my memory|forget|prompt me|give me a prompt)\b/u],
   [
     'calendar.list',
-    /\b(?:what do i have|show me my schedule|what(?:'s| is) on my|rundown|agenda|walk me through|how is .+ looking)\b/u
+    /\b(?:what do i have|show me my schedule|what(?:'s| is) on my|rundown|agenda|walk me through|how is .+ looking|(?:first|second|third|fourth|fifth|earliest|next|previous|last|final|latest) (?:class|course|lecture|lab|discussion|event|meeting|appointment|reminder))\b/u
   ],
   ['calendar.search', /\b(?:locate|hunt down|hunt for|track down|where did i put)\b/u],
   ['calendar.availability', /\b(?:squeeze|space in my day|calendar look clear|have room)\b/u],

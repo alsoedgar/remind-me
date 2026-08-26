@@ -1,5 +1,5 @@
 {
-  "operationConfidence": 0.45058,
+  "operationConfidence": 0.4737,
   "ambiguityProbability": 0.35,
   "oodProbability": 0.35,
   "safeAssistedOperations": [
@@ -17,51 +17,51 @@
     "baseExamples": 36000,
     "teacherExamples": 2640,
     "teacherExamplesWithNovelFeatures": 2640,
-    "novelBuckets": 937,
-    "baseDevelopmentAccuracy": 0.902,
+    "novelBuckets": 924,
+    "baseDevelopmentAccuracy": 0.8785,
     "maximumDevelopmentAccuracyDrop": 0.0005,
-    "selectedStrength": 0.005,
+    "selectedStrength": 0.01,
     "candidates": [
       {
         "strength": 0.0,
-        "developmentAccuracy": 0.902,
-        "teacherChallengeAccuracy": 0.6518987341772152,
+        "developmentAccuracy": 0.8785,
+        "teacherChallengeAccuracy": 0.6139240506329114,
         "eligible": true
       },
       {
         "strength": 0.005,
-        "developmentAccuracy": 0.9016666666666666,
-        "teacherChallengeAccuracy": 0.689873417721519,
+        "developmentAccuracy": 0.8783333333333333,
+        "teacherChallengeAccuracy": 0.6392405063291139,
         "eligible": true
       },
       {
         "strength": 0.01,
-        "developmentAccuracy": 0.9013333333333333,
-        "teacherChallengeAccuracy": 0.6962025316455697,
-        "eligible": false
+        "developmentAccuracy": 0.8783333333333333,
+        "teacherChallengeAccuracy": 0.6708860759493671,
+        "eligible": true
       },
       {
         "strength": 0.02,
-        "developmentAccuracy": 0.9005,
-        "teacherChallengeAccuracy": 0.7151898734177216,
+        "developmentAccuracy": 0.8766666666666667,
+        "teacherChallengeAccuracy": 0.6962025316455697,
         "eligible": false
       },
       {
         "strength": 0.04,
-        "developmentAccuracy": 0.8993333333333333,
-        "teacherChallengeAccuracy": 0.740506329113924,
+        "developmentAccuracy": 0.8658333333333333,
+        "teacherChallengeAccuracy": 0.7468354430379747,
         "eligible": false
       },
       {
         "strength": 0.08,
-        "developmentAccuracy": 0.8848333333333334,
-        "teacherChallengeAccuracy": 0.740506329113924,
+        "developmentAccuracy": 0.8646666666666667,
+        "teacherChallengeAccuracy": 0.8291139240506329,
         "eligible": false
       },
       {
         "strength": 0.12,
-        "developmentAccuracy": 0.8806666666666667,
-        "teacherChallengeAccuracy": 0.6962025316455697,
+        "developmentAccuracy": 0.8595,
+        "teacherChallengeAccuracy": 0.7531645569620253,
         "eligible": false
       }
     ]

@@ -14,4 +14,4 @@ The added student heads are project-owned, zero-initialized classifiers trained 
 - Multi-action exact accuracy: 69.6%
 - Selective routing precision/coverage: 100.0% / 10.9%
 
-The challenge was evaluated in seven recorded engineering rounds while the generic multi-action decoder and runtime parity were corrected. It is not untouched or independently human-blind. The honest human-blind count remains zero until Phase 8. The model is advisory only and cannot resolve, confirm, execute, or persist an action.
+The challenge was evaluated in 7 recorded engineering rounds while the generic multi-action decoder and runtime parity were corrected. It is not untouched or independently human-blind. The honest human-blind count remains zero. The model is advisory only and cannot resolve, confirm, execute, or persist an action.

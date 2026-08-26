@@ -7,7 +7,7 @@
     "architecture": "HashFrame Next joint semantic and AssistantPlan advisory planner",
     "parameterCount": 4890624,
     "quantization": "symmetric-int8-per-output-channel",
-    "modelBytes": 6536991,
+    "modelBytes": 6537010,
     "mode": "confidence-gated-hybrid",
     "teacherUsed": true,
     "assistantPlanAvailable": true,
@@ -25,8 +25,8 @@
     "selectiveCoverage": 0.10921501706484642
   },
   "latencyMs": {
-    "median": 0.5311000000000377,
-    "p95": 1.2577999999999747
+    "median": 0.5666999999999689,
+    "p95": 1.4805999999999813
   },
   "assertions": {
     "typescriptInt8Parity": true,

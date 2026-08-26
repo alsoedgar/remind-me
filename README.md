@@ -47,7 +47,7 @@ All preview data below is synthetic. The captures are produced by the production
 
 - Create, move, rename, duplicate, repeat, complete, and delete events or reminders from typed or spoken requests.
 - Handle single actions and reviewed multi-action batches, including whole-day schedule copies and recurring weekday patterns.
-- Answer grounded questions such as “what is next?”, “am I free Friday afternoon?”, or “tell me more about tomorrow.”
+- Answer grounded questions such as “what’s my first class today?”, “am I free Friday afternoon?”, or “tell me more about tomorrow,” then keep the selected item in context for concise follow-ups such as “what room?”, “when does it start?”, or “what should I bring?”
 - Transcribe speech live with a bundled offline English Zipformer model; audio stays in memory and the transcript remains editable.
 - Read born-digital PDFs locally, fall back to offline OCR for scanned PDFs and images, reconstruct schedule rows, and show source evidence beside editable proposals.
 - Preserve lectures, labs, recurrence days, date ranges, times, and locations without silently creating arranged or asynchronous meetings that have no fixed time.
@@ -76,7 +76,7 @@ This project is deliberately more than an Electron shell around an API:
 | **Zipformer INT8 + sherpa-onnx** | Streaming English speech recognition                                               | 43.3 MiB model; live partial transcripts; lazy isolated process with idle unload                           |
 | **Optional Qwen3 1.7B Q4_K_M**   | Broader conversation and difficult paraphrase fallback                             | Explicit ~1.19 GiB install; local llama.cpp inference; removable; never receives direct mutation authority |
 
-The current RemindCore checkpoint reports 96.92% operation accuracy and 100% precision on eligible assisted candidates on its generated held-out split. PlanScan reports 100% born-digital execution equivalence and 79.2% OCR-like end-to-end equivalence on its tracked synthetic runtime fixture. These are reproducible generated-data measurements, not claims of universal real-world accuracy; the model cards document limitations and the absence of an independent human-blind benchmark.
+The current RemindCore checkpoint reports 97.73% operation accuracy and 100% precision on eligible assisted candidates on its generated held-out split. PlanScan reports 100% born-digital execution equivalence and 79.2% OCR-like end-to-end equivalence on its tracked synthetic runtime fixture. These are reproducible generated-data measurements, not claims of universal real-world accuracy; the model cards document limitations and the absence of an independent human-blind benchmark.
 
 ## Safety-first architecture
 

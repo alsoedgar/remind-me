@@ -6,21 +6,21 @@
   "files": {
     "train": {
       "examples": 38640,
-      "uniqueTexts": 29148,
-      "bytes": 17558005,
-      "sha256": "1f280be5e6116722b18df515cc96f8a3eddb7d2859ec4e48d94937772db57237"
+      "uniqueTexts": 29080,
+      "bytes": 17521085,
+      "sha256": "ce01ea75c901831e90d47bcb7f6084dae12c56c2497860ad383090b140e64382"
     },
     "dev": {
       "examples": 6000,
-      "uniqueTexts": 4015,
-      "bytes": 2630184,
-      "sha256": "657c30aba59fe69086eaee40c59c0b5a99c4873014938ea1f48c280609a7f551"
+      "uniqueTexts": 4023,
+      "bytes": 2623406,
+      "sha256": "1ecd406f2fa507c3452f6d0dd420abc13f03cd1efdd25930d498b2926068e78b"
     },
     "test": {
       "examples": 6000,
-      "uniqueTexts": 4041,
-      "bytes": 2683017,
-      "sha256": "eeea01ef198b43902008968d09108bc1deb0fe1aa69b40f2498d9330963c1d69"
+      "uniqueTexts": 4019,
+      "bytes": 2679882,
+      "sha256": "31e8401604e16bea0cae5ddaa9ea1aff9fa588248f5ce5d80689c70d9e17c348"
     },
     "teacherChallenge": {
       "examples": 158,
@@ -32,8 +32,8 @@
   "runtimeFixture": {
     "path": "fixtures/remindcore/heldout.v0.1.jsonl",
     "examples": 600,
-    "bytes": 268326,
-    "sha256": "a55c93d547bfc24fdbe2f7e051e0030fa685260bd866c233a6a8535904b1c194"
+    "bytes": 267424,
+    "sha256": "f37d7bcc2f432e482b6e20b5ecbcc20715e7787958692f2fb480901903464eb8"
   },
   "templateFamilies": {
     "train": [
@@ -79,9 +79,11 @@
       "event-politeness",
       "event-rename",
       "list-busy",
+      "list-first-class",
       "list-lexical-agenda",
       "list-lexical-looking",
       "list-lexical-rundown",
+      "list-next-class",
       "list-show",
       "list-what",
       "move-direct",
@@ -224,6 +226,7 @@
       "event-retitle",
       "event-take-off",
       "list-plans",
+      "list-second-class",
       "list-walk",
       "move-shift",
       "reminder-drop",
@@ -244,6 +247,7 @@
       "event-label",
       "event-make-room",
       "event-scrap",
+      "list-earliest-class",
       "list-looking",
       "list-rundown",
       "move-slide",
@@ -318,7 +322,7 @@
   },
   "teacherAssisted": {
     "acceptedCorpusPath": "ml/teacher_assisted/accepted/remindcore.json",
-    "acceptedCorpusSha256": "98d33ba4ad17790d822c695dcaff99bbb9bd8f409d46128cf1311a0683f99de3",
+    "acceptedCorpusSha256": "481610a89619c48a8a83080a4e4473cd8c657b41a5dfe59422dafcfb47390492",
     "teacherModelId": "Qwen3-1.7B-Q4_K_M",
     "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
     "acceptedTemplates": 73,

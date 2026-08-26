@@ -21,6 +21,22 @@ const globalVocabulary = [
   'november',
   'december',
   'next',
+  'first',
+  'second',
+  'third',
+  'fourth',
+  'fifth',
+  'last',
+  'earliest',
+  'latest',
+  'class',
+  'classes',
+  'course',
+  'courses',
+  'lecture',
+  'discussion',
+  'room',
+  'building',
   'calendar',
   'schedule',
   'agenda',
@@ -131,11 +147,13 @@ const exactRepairs: Readonly<Record<string, string>> = {
   calednaar: 'calendar',
   calednar: 'calendar',
   calender: 'calendar',
+  calss: 'class',
   cancle: 'cancel',
   chnage: 'change',
   cler: 'clear',
   craete: 'create',
   creat: 'create',
+  claas: 'class',
   delte: 'delete',
   delet: 'delete',
   detials: 'details',
@@ -145,6 +163,8 @@ const exactRepairs: Readonly<Record<string, string>> = {
   evnt: 'event',
   eveent: 'event',
   firday: 'friday',
+  fisrt: 'first',
+  frist: 'first',
   helo: 'hello',
   loaction: 'location',
   modfy: 'modify',
@@ -155,9 +175,11 @@ const exactRepairs: Readonly<Record<string, string>> = {
   remid: 'remind',
   remnder: 'reminder',
   remvoe: 'remove',
+  romm: 'room',
   satruday: 'saturday',
   schedue: 'schedule',
   scheduel: 'schedule',
+  secnd: 'second',
   shedule: 'schedule',
   sudnay: 'sunday',
   teh: 'the',
@@ -176,6 +198,8 @@ const exactRepairs: Readonly<Record<string, string>> = {
   yess: 'yes',
   yuo: 'you'
 }
+
+const exactOnlyVocabulary = new Set(['class', 'classes'])
 
 const compactPhraseRepairs: Readonly<Record<string, string>> = {
   add: 'add',
@@ -380,6 +404,7 @@ function bestVocabularyRepair(token: string, vocabulary: readonly string[]): str
   let best: { word: string; score: number } | null = null
   let tied = false
   for (const word of vocabulary) {
+    if (exactOnlyVocabulary.has(word)) continue
     const score = typoTokenSimilarity(normalized, word)
     if (score < 0.72) continue
     if (!best || score > best.score) {

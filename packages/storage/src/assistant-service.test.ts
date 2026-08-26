@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type {
   CalendarSnapshotRequest,
   EventForm,
@@ -427,6 +427,87 @@ describe('PersistentAssistantService', () => {
       })
     } finally {
       repository.close()
+    }
+  })
+
+  it('answers ordinal class questions and concise contextual detail follow-ups', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-02T12:00:00.000Z'))
+    const repository = new SqliteCalendarRepository(':memory:')
+    try {
+      const calendar = new PersistentCalendarService(repository)
+      calendar.saveEvent(overlappingEvent('Breakfast with Maya', '08:00', '08:30'), range)
+      calendar.saveEvent(
+        {
+          ...overlappingEvent('CS 251 lecture', '09:00', '09:50'),
+          location: 'SEO 1000',
+          description: 'Bring the lab worksheet.'
+        },
+        range
+      )
+      calendar.saveEvent(
+        {
+          ...overlappingEvent('Calculus III', '11:00', '11:50'),
+          location: 'SES 130'
+        },
+        range
+      )
+      const assistant = new PersistentAssistantService(repository)
+
+      const first = await assistant.send({
+        conversationId: null,
+        text: '  whats my frist claas today? ',
+        range
+      })
+      expect(first.response.kind).toBe('answer')
+      expect(first.response.text).toBe('CS 251 lecture.')
+      expect(first.response.relatedEventIds).toHaveLength(1)
+
+      const room = await assistant.send({
+        conversationId: first.conversation.id,
+        text: 'in what room?',
+        range
+      })
+      expect(room.response.text).toBe('CS 251 lecture — SEO 1000.')
+      expect(room.response.relatedEventIds).toEqual(first.response.relatedEventIds)
+
+      const start = await assistant.send({
+        conversationId: room.conversation.id,
+        text: 'when does it start?',
+        range
+      })
+      expect(start.response.text).toMatch(/^CS 251 lecture — 9:00\s*AM\.$/iu)
+
+      const duration = await assistant.send({
+        conversationId: start.conversation.id,
+        text: 'how long does it last?',
+        range
+      })
+      expect(duration.response.text).toBe('CS 251 lecture — 50 minutes.')
+
+      const notes = await assistant.send({
+        conversationId: duration.conversation.id,
+        text: 'what should I bring?',
+        range
+      })
+      expect(notes.response.text).toBe('CS 251 lecture — Bring the lab worksheet.')
+
+      const second = await assistant.send({
+        conversationId: notes.conversation.id,
+        text: "what's my second class today?",
+        range
+      })
+      expect(second.response.text).toBe('Calculus III.')
+
+      const secondRoom = await assistant.send({
+        conversationId: second.conversation.id,
+        text: 'where is that one?',
+        range
+      })
+      expect(secondRoom.response.text).toBe('Calculus III — SES 130.')
+    } finally {
+      repository.close()
+      vi.useRealTimers()
     }
   })
 

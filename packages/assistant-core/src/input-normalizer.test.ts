@@ -11,7 +11,8 @@ describe('assistant input normalization', () => {
     ['  wahts   th enext   evnt ?? ', 'whats the next event??'],
     ['can yuo ad lunch to morrow at 2 p m', 'can you add lunch tomorrow at 2 pm'],
     ['cler my entier scheduel', 'clear my entire schedule'],
-    ['mvoe Design review to wednsday', 'move Design review to wednesday']
+    ['mvoe Design review to wednsday', 'move Design review to wednesday'],
+    ['whats my frist claas today', 'whats my first class today']
   ])('repairs command vocabulary and accidental spaces: %s', (source, expected) => {
     expect(normalizeAssistantText(source)).toBe(expected)
   })

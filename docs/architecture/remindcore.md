@@ -64,14 +64,14 @@ All four appear in `models/manifest.json` with exact size, SHA-256, contract ver
 
 The original complete generated test split reports:
 
-- 96.92% operation accuracy and 97.20% macro F1 across the expanded operation inventory;
-- 100% precision among requests eligible for model assistance, at 47.21% coverage of the full generated test split;
-- 100% OOD recall and 88.82% ambiguity recall;
-- 97.98% constrained assisted-title coverage;
-- a 0.02 percentage-point operation-accuracy reduction after INT8 quantization (96.92% float, 96.90% INT8 in this run);
-- 2.66 ms Python evaluation p95.
+- 97.73% operation accuracy and 97.94% macro F1 across the expanded operation inventory;
+- 100% precision among requests eligible for model assistance, at 51.46% coverage of the full generated test split;
+- 99.65% OOD recall and 89.98% ambiguity recall;
+- 98.48% constrained assisted-title coverage;
+- a 0.05 percentage-point operation-accuracy reduction after INT8 quantization (97.73% float, 97.68% INT8 in this run);
+- 3.03 ms Python evaluation p95.
 
-The tracked TypeScript fixture reports 97.5% operation accuracy, 100% eligible precision at 13% eligible coverage, 100% OOD recall, 84.13% ambiguity recall, 100% schema validity, and approximately 1.29 ms warm p95 in the latest development-machine gate. On the disjoint teacher challenge, operation accuracy rises from 65.19% at zero residual to 68.99% at the promoted residual while assisted precision remains 100%. Exact current values live in `ml/remindcore/reports/`.
+The tracked TypeScript fixture retains 100% eligible precision at 17.5% eligible coverage, 100% OOD recall, 100% schema validity, and approximately 1.2 ms warm p95 in the latest development-machine gate. On the disjoint teacher challenge, operation accuracy rises from 61.39% at zero residual to 67.09% at the promoted residual while assisted precision remains 100%. Exact current values live in `ml/remindcore/reports/`.
 
 These are generated-data engineering metrics, not production or human-generalization claims. The expanded checkpoint clears the generated-data accuracy target, but ambiguity recall and independently authored language remain open gates, so model assistance stays narrow. Increasing data quantity alone is not enough; the next gate requires independently collected language, per-operation calibration, locale expansion, adversarial targeting tests, and execution-equivalent evaluation over real calendar contexts.
 

@@ -562,7 +562,7 @@ function queryWindow(
   })
 
   const rolling =
-    /\b(?:what(?:'s|s| is) (?:my )?next(?: (?:event|meeting|appointment|plan|item|reminder))?|show (?:me )?(?:my )?next (?:event|meeting|appointment|plan|item|reminder)|coming up|upcoming(?: plans?| events?)?)\b/iu.exec(
+    /\b(?:what(?:'s|s| is) (?:my )?next(?: (?:class|course|lecture|lab|discussion|event|meeting|appointment|plan|item|reminder))?|show (?:me )?(?:my )?next (?:class|course|lecture|lab|discussion|event|meeting|appointment|plan|item|reminder)|coming up|upcoming(?: plans?| events?)?)\b/iu.exec(
       text
     )
   if (rolling) return absoluteRange(rolling, current, current.add({ days: 30 }))
@@ -649,6 +649,20 @@ function queryWindow(
     start: date?.start ?? 0,
     end: endDate?.end ?? date?.end ?? text.length
   }
+}
+
+function isOrdinalCalendarQuery(value: string): boolean {
+  const hasOrdinalItem =
+    /\b(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|earliest|next|previous|last|final|latest)\s+(?:class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial|event|meeting|appointment|plan|item|reminder|thing)\b|\b(?:class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial|event|meeting|appointment|plan|item|reminder|thing)\s+(?:comes?|is)\s+(?:first|second|third|fourth|fifth|earliest|next|previous|last|final|latest)\b/iu.test(
+      value
+    )
+  if (!hasOrdinalItem) return false
+  return (
+    /\b(?:what(?:'s|s)?|which|where|when|show|tell|give|list)\b/iu.test(value) ||
+    /^(?:my\s+|the\s+)?(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|earliest|next|previous|last|final|latest)\b/iu.test(
+      value.trim()
+    )
+  )
 }
 
 function mutationWindow(
@@ -1167,13 +1181,14 @@ export function parseCalendarText(
   }
 
   if (
-    (/\b(?:what(?:'s|s| is)? (?:on|in|happening|(?:my )?next)|what(?:'s|s| is) (?:tomorrow|tmr|tmrw|tmw|today)|what (?:do|did) i have|what (?:was|is) on my (?:calendar|schedule|agenda)|what does my day look like|do i have anything|where (?:do i (?:need to )?be|am i going|was i)|show (?:me )?(?:my )?|list (?:my )?|how (?:busy|full)|summari[sz]e|walk me through|tell me (?:more )?about|give me (?:the )?details? (?:for|on)|what(?:'s|s| is) coming up|upcoming (?:plans?|events?))\b/iu.test(
-      sourceText
-    ) ||
+    (isOrdinalCalendarQuery(sourceText) ||
+      /\b(?:what(?:'s|s| is)? (?:on|in|happening|(?:my )?next)|what(?:'s|s| is) (?:tomorrow|tmr|tmrw|tmw|today)|what (?:do|did) i have|what (?:was|is) on my (?:calendar|schedule|agenda)|what does my day look like|do i have anything|where (?:do i (?:need to )?be|am i going|was i)|show (?:me )?(?:my )?|list (?:my )?|how (?:busy|full)|summari[sz]e|walk me through|tell me (?:more )?about|give me (?:the )?details? (?:for|on)|what(?:'s|s| is) coming up|upcoming (?:plans?|events?))\b/iu.test(
+        sourceText
+      ) ||
       context.semanticHint?.operation === 'calendar.list') &&
     (context.semanticHint?.operation === 'calendar.list' ||
       date !== null ||
-      /\b(?:calendar|schedule|agenda|plans?|today|tomorrow|tmr|tmrw|tmw|yesterday|week|month|year|last|next|past|previous|earlier|coming|upcoming|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/iu.test(
+      /\b(?:calendar|schedule|agenda|plans?|class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial|event|meeting|appointment|reminder|today|tomorrow|tmr|tmrw|tmw|yesterday|week|month|year|first|second|third|fourth|fifth|last|next|past|previous|earlier|coming|upcoming|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/iu.test(
         sourceText
       ))
   ) {

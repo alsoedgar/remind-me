@@ -25,8 +25,8 @@
       "selectivePrecision": 0.0,
       "selectiveCoverage": 0.0,
       "latencyMs": {
-        "median": 1.3336999109014869,
-        "p95": 2.924480056390166
+        "median": 1.789500005543232,
+        "p95": 3.9907899918034673
       }
     },
     "developmentSelectiveViable": true
@@ -48,8 +48,8 @@
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 1.6839999007061124,
-          "p95": 3.7186300032772106
+          "median": 2.2595999762415886,
+          "p95": 4.2357900412753215
         }
       }
     },
@@ -69,8 +69,8 @@
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 1.8629999831318855,
-          "p95": 4.619159933645276
+          "median": 2.7127000503242016,
+          "p95": 5.80664004664868
         }
       }
     },
@@ -90,8 +90,8 @@
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 1.7396999755874276,
-          "p95": 3.6392299691215153
+          "median": 2.359400037676096,
+          "p95": 4.612359951715916
         }
       }
     }
@@ -113,8 +113,8 @@
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 1.3336999109014869,
-          "p95": 2.924480056390166
+          "median": 1.789500005543232,
+          "p95": 3.9907899918034673
         }
       }
     },
@@ -134,8 +134,8 @@
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 1.5978000592440367,
-          "p95": 3.1950899749062946
+          "median": 2.040299936197698,
+          "p95": 3.9406900759786367
         }
       }
     },
@@ -155,8 +155,8 @@
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 1.730400021187961,
-          "p95": 3.9591200300492324
+          "median": 2.2761999862268567,
+          "p95": 4.510570003185421
         }
       }
     }
@@ -175,8 +175,8 @@
     "selectivePrecision": 1.0,
     "selectiveCoverage": 0.15577889447236182,
     "latencyMs": {
-      "median": 1.25919992569834,
-      "p95": 3.0461800517514344
+      "median": 1.690999954007566,
+      "p95": 3.382690018042922
     }
   },
   "challenge": {
@@ -193,8 +193,8 @@
     "selectivePrecision": 1.0,
     "selectiveCoverage": 0.10921501706484642,
     "latencyMs": {
-      "median": 1.2115000281482935,
-      "p95": 3.3583800308406353
+      "median": 1.64020003285259,
+      "p95": 3.7536399671807827
     }
   },
   "quantizedChallenge": {
@@ -211,14 +211,14 @@
     "selectivePrecision": 1.0,
     "selectiveCoverage": 0.10921501706484642,
     "latencyMs": {
-      "median": 1.2218999909237027,
-      "p95": 2.9303600313141938
+      "median": 1.6533000161871314,
+      "p95": 3.566319961100814
     }
   },
   "shippedBaseline": {
-    "routeAccuracy": 0.5119453924914675,
-    "firstCapabilityAccuracy": 0.24232081911262798,
-    "exactSequenceAccuracy": 0.22525597269624573
+    "routeAccuracy": 0.5187713310580204,
+    "firstCapabilityAccuracy": 0.2832764505119454,
+    "exactSequenceAccuracy": 0.26621160409556316
   },
   "routingThreshold": 0.85,
   "gates": {
@@ -247,7 +247,7 @@
       "passed": true
     },
     "gainOverShippedBaseline": {
-      "actual": 0.3003412969283277,
+      "actual": 0.25938566552901027,
       "required": 0.18,
       "comparison": ">=",
       "passed": true
@@ -307,8 +307,8 @@
   "artifacts": {
     "model": {
       "path": "models/remindcore/remindcore-v0.1-int8.json",
-      "bytes": 6536991,
-      "sha256": "b2d8c79112d695f86a13bfc0735ba3906eb9332582010eb1e49310afe4fe5e62"
+      "bytes": 6537010,
+      "sha256": "06224cfce739861a5061e00b3a08ce61b05e0bafc5e27c1bdfaf711fae0d20ba"
     },
     "tokenizer": {
       "path": "models/remindcore/tokenizer.json",
@@ -317,13 +317,13 @@
     },
     "thresholds": {
       "path": "models/remindcore/thresholds.json",
-      "bytes": 2265,
-      "sha256": "a891f5c437be3dda312e9885d3b60fd0f557a9729f6da94e58b8092d9ae8e94e"
+      "bytes": 2267,
+      "sha256": "bb8b59f7f90c984d1358642959cc347e4c0d87f6c6e27846826c5c28536b67cf"
     },
     "onnx": {
       "path": "models/remindcore/remindcore-v0.1-int8.onnx",
       "bytes": 4901827,
-      "sha256": "0785f75fb62fac87b30835a51862874a5a40608253f31c61286c4d54da185182"
+      "sha256": "3957ed9704183cf6e6b4efeef6942fc2b431051a0e51c23d642ee81f3c5ba02f"
     }
   }
 }

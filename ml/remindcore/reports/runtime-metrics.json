@@ -7,7 +7,7 @@
     "architecture": "HashFrame Next joint semantic and AssistantPlan advisory planner",
     "parameterCount": 4890624,
     "quantization": "symmetric-int8-per-output-channel",
-    "modelBytes": 6536991,
+    "modelBytes": 6537010,
     "mode": "confidence-gated-hybrid",
     "teacherUsed": true,
     "assistantPlanAvailable": true,
@@ -17,17 +17,17 @@
   },
   "metrics": {
     "fixtureExamples": 600,
-    "operationAccuracy": 0.975,
+    "operationAccuracy": 0.9816666666666667,
     "oodRecall": 1,
-    "ambiguityRecall": 0.8412698412698413,
+    "ambiguityRecall": 0.8852459016393442,
     "eligibleAssistedPrecision": 1,
-    "eligibleAssistedCoverage": 0.13,
+    "eligibleAssistedCoverage": 0.175,
     "schemaValidity": 1,
-    "rulesSafeOperationAccuracy": 0.05641025641025641,
-    "hybridSafeOperationAccuracy": 0.3333333333333333,
+    "rulesSafeOperationAccuracy": 0.10194174757281553,
+    "hybridSafeOperationAccuracy": 0.4320388349514563,
     "warmLatencyMs": {
-      "median": 0.5428000000000566,
-      "p95": 1.239400000000046
+      "median": 0.58400000000006,
+      "p95": 1.1988999999999805
     }
   },
   "assertions": {

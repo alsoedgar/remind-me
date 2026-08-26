@@ -122,6 +122,8 @@ TEMPLATES: dict[str, dict[str, list[tuple[str, str]]]] = {
             ("list-what", "What do I have {date} {time}"),
             ("list-show", "Show me my schedule {date} {time}"),
             ("list-busy", "How busy am I {date} {time}"),
+            ("list-first-class", "What is my first class {date}"),
+            ("list-next-class", "Which class comes next {date}"),
         ],
         "calendar.search": [
             ("search-find", "Find {target}"),
@@ -176,6 +178,7 @@ TEMPLATES: dict[str, dict[str, list[tuple[str, str]]]] = {
         "calendar.list": [
             ("list-walk", "Walk me through my agenda {date} {time}"),
             ("list-plans", "What are my plans {date} {time}"),
+            ("list-second-class", "Which class is second {date}"),
         ],
         "calendar.search": [
             ("search-locate", "Locate {target} on my calendar"),
@@ -209,6 +212,7 @@ TEMPLATES: dict[str, dict[str, list[tuple[str, str]]]] = {
         "calendar.list": [
             ("list-looking", "How is {date} looking {time}"),
             ("list-rundown", "Give me the rundown for {date} {time}"),
+            ("list-earliest-class", "What is my earliest class {date}"),
         ],
         "calendar.search": [
             ("search-track", "Track down {target} for me"),
@@ -878,7 +882,7 @@ def global_feature_names(text: str, include_char: bool = True) -> set[str]:
     )
     calendar_signal = bool(
         re.search(
-            r"\b(?:calendar|schedule|agenda|plan|plans|remind|reminder|free|available|event|"
+            r"\b(?:calendar|schedule|agenda|plan|plans|class|course|lecture|lab|discussion|room|remind|reminder|free|available|event|"
             r"meeting|appointment|conflict|overlap|booked|move|shift|duplicate|copy|clone|delete|cancel|done)\b",
             normalized,
         )
@@ -894,7 +898,7 @@ def global_feature_names(text: str, include_char: bool = True) -> set[str]:
     cue_patterns = {
         "event.create": r"\b(?:carve|pencil|penciled|make room|hold)\b",
         "reminder.create": r"\b(?:nudge|jog my memory|forget|prompt me|give me a prompt)\b",
-        "calendar.list": r"\b(?:what do i have|show me my schedule|what(?:'s| is) on my|rundown|agenda|walk me through|how is .+ looking)\b",
+        "calendar.list": r"\b(?:what do i have|show me my schedule|what(?:'s| is) on my|rundown|agenda|walk me through|how is .+ looking|(?:first|second|third|fourth|fifth|earliest|next|previous|last|final|latest) (?:class|course|lecture|lab|discussion|event|meeting|appointment|reminder))\b",
         "calendar.search": r"\b(?:locate|hunt down|hunt for|track down|where did i put)\b",
         "calendar.availability": r"\b(?:squeeze|space in my day|calendar look clear|have room)\b",
         "calendar.conflicts": r"\b(?:clashes|collisions|bump into|competing plans)\b",

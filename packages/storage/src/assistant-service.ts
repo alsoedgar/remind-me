@@ -974,10 +974,72 @@ function looksLikeCalendarRequest(value: string): boolean {
   )
 }
 
-function isCalendarDetailFollowUp(value: string): boolean {
-  return /^(?:more|more please|details?|show (?:me )?(?:more|details?)|tell me more|go (?:deeper|on)|expand(?: on that)?|what about the (?:times?|locations?|details?))[.!]*$/iu.test(
-    value.trim()
-  )
+type CalendarDetailRequest =
+  'details' | 'location' | 'time' | 'start' | 'end' | 'duration' | 'date' | 'notes'
+
+function calendarDetailFollowUp(value: string): CalendarDetailRequest | null {
+  const normalized = value
+    .normalize('NFKC')
+    .trim()
+    .replace(/[.!?]+$/gu, '')
+    .replace(/\s+/gu, ' ')
+  if (
+    /^(?:(?:in|at)\s+)?(?:(?:what|which)\s+(?:room|building|location|place)(?:\s+(?:is|was)\s+(?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment)))?(?:\s+in)?|where(?:\s+(?:is|was))?\s*(?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment))?|location)$/iu.test(
+      normalized
+    )
+  ) {
+    return 'location'
+  }
+  if (
+    /^(?:how long(?:\s+(?:is|was|does))?\s*(?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment))?(?:\s+last)?|what(?:'s| is) (?:its|the) duration|duration)$/iu.test(
+      normalized
+    )
+  ) {
+    return 'duration'
+  }
+  if (
+    /^(?:(?:what|which) time (?:does|did|will) (?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment)) end|when (?:does|did|will) (?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment)) end|(?:what(?:'s| is) )?(?:its|the)?\s*end time)$/iu.test(
+      normalized
+    )
+  ) {
+    return 'end'
+  }
+  if (
+    /^(?:(?:what|which) time (?:does|did|will) (?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment)) start|when (?:does|did|will) (?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment)) start|(?:what(?:'s| is) )?(?:its|the)?\s*start time)$/iu.test(
+      normalized
+    )
+  ) {
+    return 'start'
+  }
+  if (
+    /^(?:(?:what|which) time(?:\s+(?:is|was)\s+(?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment)))?|when(?:\s+(?:is|was))?\s+(?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment))|time)$/iu.test(
+      normalized
+    )
+  ) {
+    return 'time'
+  }
+  if (
+    /^(?:(?:what|which) (?:day|date)(?:\s+(?:is|was)\s+(?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment)))?|date)$/iu.test(
+      normalized
+    )
+  ) {
+    return 'date'
+  }
+  if (
+    /^(?:what (?:should|do) i (?:bring|prepare|need)|(?:are there |any )?(?:notes?|instructions?)|what(?:'s| is) (?:it|that|this|the (?:class|course|lecture|lab|event|meeting|appointment)) about)$/iu.test(
+      normalized
+    )
+  ) {
+    return 'notes'
+  }
+  if (
+    /^(?:more|more please|details?|show (?:me )?(?:more|details?)|tell me more|go (?:deeper|on)|expand(?: on that)?|what about the (?:times?|locations?|details?))$/iu.test(
+      normalized
+    )
+  ) {
+    return 'details'
+  }
+  return null
 }
 
 function focusedItemTitles(
@@ -1111,16 +1173,90 @@ function looksLikeCalendarReadRequest(value: string): boolean {
   )
 }
 
-function asksForSingleNextItem(value: string): boolean {
+type CalendarListItemKind = 'class' | 'event' | 'reminder' | 'item'
+
+type CalendarListPosition =
+  { kind: 'ordinal'; index: number } | { kind: 'next' } | { kind: 'previous' } | { kind: 'last' }
+
+interface CalendarListSelection {
+  itemKind: CalendarListItemKind
+  position: CalendarListPosition
+}
+
+function calendarListSelection(value: string): CalendarListSelection | null {
   const normalized = value
     .normalize('NFKC')
     .toLocaleLowerCase()
     .replace(/[‘’]/gu, "'")
     .replace(/[.!?]+$/gu, '')
     .trim()
-  return /^(?:what(?:'s|s| is) (?:my )?next(?: (?:event|meeting|appointment|plan|item|reminder))?|what(?:'s|s| is) coming up next|which (?:event|meeting|appointment|plan|item|reminder) is next|show (?:me )?(?:my )?next (?:event|meeting|appointment|plan|item|reminder))$/u.test(
-    normalized
-  )
+  if (
+    /^(?:what(?:'s|s| is) (?:my )?next|what(?:'s|s| is) coming up next|show (?:me )?(?:my )?next)$/u.test(
+      normalized
+    )
+  ) {
+    return { itemKind: 'item', position: { kind: 'next' } }
+  }
+
+  const direct =
+    /\b(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|earliest|next|previous|last|final|latest)\s+(class(?:es)?|courses?|lectures?|labs?|discussions?|seminars?|practicums?|recitations?|tutorials?|events?|meetings?|appointments?|plans?|items?|reminders?|tasks?|things?)\b/u.exec(
+      normalized
+    )
+  const inverse =
+    /\b(class(?:es)?|courses?|lectures?|labs?|discussions?|seminars?|practicums?|recitations?|tutorials?|events?|meetings?|appointments?|plans?|items?|reminders?|tasks?|things?)\s+(?:comes?|is)\s+(first|second|third|fourth|fifth|earliest|next|previous|last|final|latest)\b/u.exec(
+      normalized
+    )
+  const ordinal = direct?.[1] ?? inverse?.[2]
+  const noun = direct?.[2] ?? inverse?.[1]
+  if (!ordinal || !noun) return null
+
+  const itemKind: CalendarListItemKind =
+    /^(?:class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial)/u.test(noun)
+      ? 'class'
+      : /^(?:reminder|task)/u.test(noun)
+        ? 'reminder'
+        : /^(?:event|meeting|appointment)/u.test(noun)
+          ? 'event'
+          : 'item'
+  const position: CalendarListPosition =
+    ordinal === 'next'
+      ? { kind: 'next' }
+      : ordinal === 'previous'
+        ? { kind: 'previous' }
+        : /^(?:last|final|latest)$/u.test(ordinal)
+          ? { kind: 'last' }
+          : {
+              kind: 'ordinal',
+              index:
+                {
+                  first: 0,
+                  '1st': 0,
+                  earliest: 0,
+                  second: 1,
+                  '2nd': 1,
+                  third: 2,
+                  '3rd': 2,
+                  fourth: 3,
+                  '4th': 3,
+                  fifth: 4,
+                  '5th': 4
+                }[ordinal] ?? 0
+            }
+  return { itemKind, position }
+}
+
+function isLikelyClassOccurrence(event: EventOccurrence, entity: EventEntity | null): boolean {
+  const academicText = `${event.title} ${event.description}`
+  const explicitAcademicSignal =
+    /\b(?:class|course|lecture|laboratory|lab|discussion|seminar|practicum|recitation|tutorial|calculus|algebra|geometry|statistics|physics|chemistry|biology|anatomy|economics|psychology|sociology|history|literature|composition|programming|computer science|data structures|engineering)\b|\b[A-Z]{2,6}\s*[- ]?\d{2,4}[A-Z]?\b/iu.test(
+      academicText
+    )
+  if (explicitAcademicSignal) return true
+  const explicitNonClassSignal =
+    /\b(?:breakfast|brunch|lunch|dinner|coffee|gym|workout|doctor|dentist|appointment|birthday|concert|flight|interview|standup|sync|review|check-?in)\b/iu.test(
+      event.title
+    )
+  return !explicitNonClassSignal && (event.recurring || entity?.provenance === 'import')
 }
 
 function compactNameAnswer(titles: readonly string[], locale: string, emptyText: string): string {
@@ -1151,6 +1287,74 @@ function eventAnswerFact(
       : ''
   const recurrence = options.includeDescription && event.recurring ? ' (repeats)' : ''
   return `${when}, “${event.title}”${place}${recurrence}${description}`
+}
+
+function formatDurationMinutes(minutes: number): string {
+  const safeMinutes = Math.max(1, Math.round(minutes))
+  const hours = Math.floor(safeMinutes / 60)
+  const remainder = safeMinutes % 60
+  if (hours === 0) return `${remainder} minute${remainder === 1 ? '' : 's'}`
+  if (remainder === 0) return `${hours} hour${hours === 1 ? '' : 's'}`
+  return `${hours} hour${hours === 1 ? '' : 's'} ${remainder} minute${remainder === 1 ? '' : 's'}`
+}
+
+function eventAttributeValue(
+  event: EventOccurrence,
+  detail: Exclude<CalendarDetailRequest, 'details'>,
+  locale: string
+): string {
+  switch (detail) {
+    case 'location':
+      return event.location.trim() || 'no room or location saved'
+    case 'time':
+      return event.allDay
+        ? 'all day'
+        : `${formatTime(event.startUtc, locale, event.timezone)}–${formatTime(event.endUtc, locale, event.timezone)}`
+    case 'start':
+      return event.allDay ? 'all day' : formatTime(event.startUtc, locale, event.timezone)
+    case 'end':
+      return event.allDay ? 'all day' : formatTime(event.endUtc, locale, event.timezone)
+    case 'duration':
+      return event.allDay
+        ? 'all day'
+        : formatDurationMinutes((Date.parse(event.endUtc) - Date.parse(event.startUtc)) / 60_000)
+    case 'date':
+      return formatDate(event.startUtc, locale, event.timezone)
+    case 'notes':
+      return event.description.trim() ? clippedDetail(event.description) : 'no notes saved'
+  }
+}
+
+function calendarAttributeAnswer(
+  events: readonly EventOccurrence[],
+  reminders: readonly ReminderEntity[],
+  detail: Exclude<CalendarDetailRequest, 'details'>,
+  locale: string
+): string {
+  const eventFacts = events.map((event) => ({
+    title: event.title,
+    value: eventAttributeValue(event, detail, locale)
+  }))
+  const reminderFacts = reminders.map((reminder) => ({
+    title: reminder.title,
+    value:
+      detail === 'location'
+        ? 'reminders do not have rooms or locations'
+        : detail === 'date'
+          ? formatDate(reminder.dueAtUtc, locale, reminder.timezone)
+          : detail === 'notes'
+            ? reminder.notes.trim()
+              ? clippedDetail(reminder.notes)
+              : 'no notes saved'
+            : detail === 'duration'
+              ? 'reminders do not have a duration'
+              : formatTime(reminder.dueAtUtc, locale, reminder.timezone)
+  }))
+  const facts = [...eventFacts, ...reminderFacts]
+  if (facts.length === 0) return 'I could not find a matching calendar item.'
+  const cleanValue = (value: string): string => value.trim().replace(/[.!?]+$/gu, '')
+  if (facts.length === 1) return `${facts[0]?.title} — ${cleanValue(facts[0]?.value ?? '')}.`
+  return `${facts.map((fact) => `“${fact.title}” — ${cleanValue(fact.value)}`).join('; ')}.`
 }
 
 function commandQuestion(command: CalendarIRResolved): string {
@@ -1434,8 +1638,18 @@ export class PersistentAssistantService {
       (normalizedPreviousUser && looksLikeCalendarReadRequest(normalizedPreviousUser)
         ? normalizedPreviousUser
         : null)
-    const detailFollowUp = isCalendarDetailFollowUp(normalizedInput) && previousReadText !== null
-    const interpretedText = detailFollowUp ? previousReadText : contextualInput
+    const requestedDetailFollowUp = calendarDetailFollowUp(normalizedInput)
+    if (requestedDetailFollowUp && previousReadText === null) {
+      return this.respond(conversation.id, id, request.range, {
+        kind: 'clarification',
+        text: 'Which event, class, or reminder do you mean?',
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
+      })
+    }
+    const detailFollowUp = previousReadText === null ? null : requestedDetailFollowUp
+    const interpretedText = detailFollowUp ? (previousReadText ?? contextualInput) : contextualInput
     const referenceExpandedText = expandPluralDialogueReference(
       interpretedText,
       conversation.dialogueState,
@@ -1488,7 +1702,7 @@ export class PersistentAssistantService {
       requestId: id,
       text: routedText,
       previousUserText:
-        !detailFollowUp &&
+        detailFollowUp === null &&
         (lastAssistant?.text.trim().endsWith('?') || contextualFollowUp) &&
         previousUser
           ? normalizedPreviousUser
@@ -3397,7 +3611,7 @@ export class PersistentAssistantService {
     conversationId: string,
     command: CalendarIRResolved,
     range: CalendarSnapshotRequest,
-    forceDetails = false
+    followUpDetail: CalendarDetailRequest | null = null
   ): AssistantExchange {
     const preferences = this.repository.getPreferences()
     const id = command.requestId
@@ -3409,17 +3623,53 @@ export class PersistentAssistantService {
     })
     const question = commandQuestion(command)
     const asksForDetails =
-      forceDetails ||
+      followUpDetail === 'details' ||
       /\b(?:summari[sz]e|details?|more about|walk me through|tell me about|what(?:'s| is) happening|explain)\b/iu.test(
         question
       )
     const asksForLocation =
-      /\b(?:where|location|which (?:room|building|place)|how do i get)\b/iu.test(question)
-    const asksForTime =
-      /\b(?:when|what time|which time|start(?:s|ing)?|end(?:s|ing)?|duration|how long)\b/iu.test(
+      followUpDetail === 'location' ||
+      /\b(?:where|location|(?:what|which) (?:room|building|place)|how do i get)\b/iu.test(question)
+    const asksForStart =
+      followUpDetail === 'start' ||
+      /\b(?:(?:what|which) time .{0,50}\bstart|when .{0,50}\bstart|start time)\b/iu.test(question)
+    const asksForEnd =
+      followUpDetail === 'end' ||
+      /\b(?:(?:what|which) time .{0,50}\bend|when .{0,50}\bend|end time)\b/iu.test(question)
+    const asksForDuration =
+      followUpDetail === 'duration' || /\b(?:how long|duration)\b/iu.test(question)
+    const asksForDate =
+      followUpDetail === 'date' || /\b(?:what|which) (?:day|date)\b/iu.test(question)
+    const asksForNotes =
+      followUpDetail === 'notes' ||
+      /\b(?:what (?:should|do) i (?:bring|prepare|need)|notes?|instructions?|what(?:'s| is) .{0,40} about)\b/iu.test(
         question
       )
-    const expandedAnswer = asksForDetails || asksForLocation || asksForTime
+    const asksForTime =
+      followUpDetail === 'time' ||
+      asksForStart ||
+      asksForEnd ||
+      asksForDuration ||
+      /\b(?:when|what time|which time|start(?:s|ing)?|end(?:s|ing)?)\b/iu.test(question)
+    const requestedAttribute: Exclude<CalendarDetailRequest, 'details'> | null =
+      followUpDetail && followUpDetail !== 'details'
+        ? followUpDetail
+        : asksForLocation
+          ? 'location'
+          : asksForDuration
+            ? 'duration'
+            : asksForEnd
+              ? 'end'
+              : asksForStart
+                ? 'start'
+                : asksForDate
+                  ? 'date'
+                  : asksForNotes
+                    ? 'notes'
+                    : asksForTime
+                      ? 'time'
+                      : null
+    const expandedAnswer = asksForDetails || requestedAttribute !== null
     let text: string
     let relatedEventIds: string[] = []
     let relatedReminderIds: string[] = []
@@ -3496,9 +3746,20 @@ export class PersistentAssistantService {
               Date.parse(reminder.dueAtUtc) < Date.parse(queryEnd)
           )
           .sort((left, right) => Date.parse(left.dueAtUtc) - Date.parse(right.dueAtUtc))
-        const nextOnly = asksForSingleNextItem(question)
-        if (nextOnly) {
-          const next = [
+        const requestedSelection = calendarListSelection(question)
+        if (requestedSelection?.itemKind === 'class') {
+          const likelyClasses = occurrences.filter((occurrence) =>
+            isLikelyClassOccurrence(occurrence, this.repository.getEvent(occurrence.eventId))
+          )
+          occurrences = likelyClasses.length > 0 ? likelyClasses : occurrences
+          reminders = []
+        } else if (requestedSelection?.itemKind === 'event') {
+          reminders = []
+        } else if (requestedSelection?.itemKind === 'reminder') {
+          occurrences = []
+        }
+        if (requestedSelection) {
+          const ordered = [
             ...occurrences.map((occurrence) => ({
               kind: 'event' as const,
               at: occurrence.startUtc,
@@ -3509,14 +3770,47 @@ export class PersistentAssistantService {
               at: reminder.dueAtUtc,
               reminder
             }))
-          ]
-            .filter((item) => Date.parse(item.at) >= Date.parse(command.resolvedAt))
-            .sort((left, right) => Date.parse(left.at) - Date.parse(right.at))[0]
-          occurrences = next?.kind === 'event' ? [next.occurrence] : []
-          reminders = next?.kind === 'reminder' ? [next.reminder] : []
+          ].sort((left, right) => Date.parse(left.at) - Date.parse(right.at))
+          const selected =
+            requestedSelection.position.kind === 'next'
+              ? ordered.find((item) => Date.parse(item.at) >= Date.parse(command.resolvedAt))
+              : requestedSelection.position.kind === 'previous'
+                ? ordered
+                    .filter((item) => Date.parse(item.at) < Date.parse(command.resolvedAt))
+                    .at(-1)
+                : requestedSelection.position.kind === 'last'
+                  ? ordered.at(-1)
+                  : ordered[requestedSelection.position.index]
+          occurrences = selected?.kind === 'event' ? [selected.occurrence] : []
+          reminders = selected?.kind === 'reminder' ? [selected.reminder] : []
         }
         relatedEventIds = [...new Set(occurrences.map((item) => item.eventId))]
         relatedReminderIds = reminders.map((reminder) => reminder.id)
+        const nextOnly = requestedSelection?.position.kind === 'next'
+        const emptyText =
+          requestedSelection?.itemKind === 'class'
+            ? nextOnly
+              ? 'No classes coming up.'
+              : 'No classes scheduled.'
+            : requestedSelection?.itemKind === 'reminder'
+              ? nextOnly
+                ? 'No reminders coming up.'
+                : 'No reminders scheduled.'
+              : nextOnly
+                ? 'Nothing coming up.'
+                : 'Nothing scheduled.'
+        if (requestedAttribute) {
+          text =
+            occurrences.length + reminders.length > 0
+              ? calendarAttributeAnswer(
+                  occurrences,
+                  reminders,
+                  requestedAttribute,
+                  preferences.locale
+                )
+              : emptyText
+          break
+        }
         if (!expandedAnswer) {
           const orderedNames = [
             ...occurrences.map((occurrence) => ({
@@ -3528,7 +3822,7 @@ export class PersistentAssistantService {
             .sort((left, right) => Date.parse(left.at) - Date.parse(right.at))
             .map((item) => item.title)
           text = orderedNames.length
-            ? compactNameAnswer(orderedNames, preferences.locale, 'Nothing scheduled.')
+            ? compactNameAnswer(orderedNames, preferences.locale, emptyText)
             : this.groundedReply(
                 conversationId,
                 id,
@@ -3536,11 +3830,13 @@ export class PersistentAssistantService {
                 [],
                 nextOnly
                   ? ['Nothing coming up.', 'There’s nothing coming up.', 'Nothing is coming up.']
-                  : [
-                      'Nothing scheduled.',
-                      'There’s nothing scheduled.',
-                      'I found nothing scheduled.'
-                    ]
+                  : requestedSelection?.itemKind === 'class'
+                    ? ['No classes scheduled.', 'There are no classes scheduled.']
+                    : [
+                        'Nothing scheduled.',
+                        'There’s nothing scheduled.',
+                        'I found nothing scheduled.'
+                      ]
               )
           break
         }

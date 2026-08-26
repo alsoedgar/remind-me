@@ -41,6 +41,17 @@ describe('RemindCore INT8 runtime', () => {
     expect(result.eligibleForAssistance).toBe(false)
   })
 
+  it('recognizes ordinal class questions as calendar reads', async () => {
+    const planner = await RemindCorePlanner.load(modelRoot)
+    for (const text of [
+      "What's my first class today?",
+      'Which class comes second tomorrow?',
+      'Show me my next lecture'
+    ]) {
+      expect(planner.predict(text).operation).toBe('calendar.list')
+    }
+  })
+
   it('understands explicit multi-action boundaries without gaining write authority', async () => {
     const planner = await RemindCorePlanner.load(modelRoot)
     const result = planner.classifyAssistant(
