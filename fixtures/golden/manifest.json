@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "0.1",
+  "fixtureFile": "calendar-ir.v0.1.jsonl",
+  "count": 256,
+  "sha256": "24a059e0fcbed5f3edc4f37df92c05f71b197afb1649104934df323039a2c604",
+  "operationCounts": {
+    "assistant.clarify": 4,
+    "assistant.reject": 4,
+    "assistant.unsupported": 4,
+    "calendar.availability": 24,
+    "calendar.conflicts": 4,
+    "calendar.list": 6,
+    "calendar.search": 6,
+    "event.create": 80,
+    "event.delete": 16,
+    "event.duplicate": 8,
+    "event.move": 24,
+    "event.update": 16,
+    "import.propose": 4,
+    "reminder.complete": 4,
+    "reminder.create": 40,
+    "reminder.delete": 4,
+    "reminder.update": 8
+  },
+  "generator": "scripts/generate-golden-fixtures.ts"
+}

@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "0.1.0",
+  "generator": "scripts/build-assistant-corpus.ts curate",
+  "seed": 260826,
+  "registrySha256": "7da27bed9f18b097f40db8f09a6f9c8b0bcdfb0b9866dcdbc947a620bcd6163f",
+  "acceptedTemplatesPath": "ml/assistant_corpus/accepted/templates.json",
+  "acceptedTemplatesSha256": "f90bc522b78cfd763e72fa39526a15c8b5712aac925d1100ac1f3241d5fb2687",
+  "rows": 772,
+  "generatedMaterializations": 1176,
+  "deduplicatedMaterializations": 404,
+  "countsBySplit": {
+    "train": 280,
+    "development": 199,
+    "challenge": 293
+  },
+  "countsBySource": {
+    "project-seed": 497,
+    "qwen-paraphrase": 140,
+    "project-composition": 70,
+    "project-dialogue": 37,
+    "project-hard-negative": 28
+  },
+  "countsByNoise": {
+    "clean": 344,
+    "typo": 129,
+    "extra-space": 131,
+    "asr": 103,
+    "punctuation": 65
+  },
+  "coverageBySplit": {
+    "train": 42,
+    "development": 42,
+    "challenge": 42
+  },
+  "multiActionRows": 70,
+  "contextualRows": 37,
+  "maximumActions": 3,
+  "familySplitOverlap": 0,
+  "evaluation": {
+    "path": "evals/assistant/v0.1/scenarios.jsonl",
+    "sha256": "0adff837434c8902a720f6e85b9e5d1049e117619521d831ef04748a8c776ca5",
+    "acceptedExactOrNearDuplicates": 0,
+    "humanBlindExamplesUsed": 0
+  },
+  "provenance": {
+    "projectLabels": true,
+    "projectSlotValues": true,
+    "teacherUsed": true,
+    "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+    "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "teacherAuthoredLabels": 0,
+    "teacherAuthoredSlotValues": 0,
+    "pretrainedWeightsUsed": false,
+    "personalDataUsed": false
+  },
+  "files": {
+    "ml/assistant_corpus/data/train.jsonl": {
+      "rows": 280,
+      "sha256": "e786f9c199072892d0cee1a4a5373464c2c2ad40fb247fc47b79ff4156560494"
+    },
+    "ml/assistant_corpus/data/development.jsonl": {
+      "rows": 199,
+      "sha256": "517134c0c80f3a6c55b0ed1ab6c98fd2b2ec475e548f49692973d231e62e1de0"
+    },
+    "ml/assistant_corpus/data/challenge.jsonl": {
+      "rows": 293,
+      "sha256": "df7ed1435fa7eb0f8a7754ab82d1cb078ed30b24160e7ab9bcb1cb6e5594aa4c"
+    }
+  }
+}

@@ -1,0 +1,990 @@
+{
+  "schemaVersion": 1,
+  "provenance": {
+    "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+    "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "teacherLicense": "Apache-2.0",
+    "rawPath": "ml/teacher_assisted/raw/remindcore.json",
+    "rawSha256": "7b0b2a8cc96e99d3ddbf5433ef3b77f44d413bc73a24be706babccfb53ea8e00",
+    "teacherRole": "surface paraphrase only; project specifications supply labels and slots",
+    "pretrainedWeightsImportedIntoStudent": false,
+    "personalDataUsed": false
+  },
+  "templates": [
+    {
+      "id": "qwen-core-1830e76f72e1",
+      "operation": "event.create",
+      "template": "I need to create a new event titled <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-a4d64efe943e",
+      "operation": "event.create",
+      "template": "Could you help me set up a recurring event called <TITLE> for <DATE> at <TIME> with the rule <RECURRENCE>?",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-21b4c4a199bf",
+      "operation": "event.create",
+      "template": "I want to add an event named <TITLE> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-76f64e20a7af",
+      "operation": "event.create",
+      "template": "Let me create an event titled <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-65dba526d663",
+      "operation": "event.create",
+      "template": "I'll make a new event with the title <TITLE>, date <DATE>, time <TIME>, and recurrence <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "terse",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-18af98cb7612",
+      "operation": "event.create",
+      "template": "I need to set up a recurring event <TITLE> on <DATE> at <TIME> with the rule <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-1",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-6b3925c3e442",
+      "operation": "event.duplicate",
+      "template": "I need to duplicate the event at <TARGET> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-9dfb0d4f6c72",
+      "operation": "event.duplicate",
+      "template": "Could you help me copy an event with the same details as <TARGET> on <DATE> at <TIME> with the rule <RECURRENCE>?",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-526d9cc43b4f",
+      "operation": "event.duplicate",
+      "template": "I want to create a copy of the event <TARGET> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-0f4619aac50b",
+      "operation": "event.duplicate",
+      "template": "Let me make a copy of the event <TARGET> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-8982399bb50d",
+      "operation": "event.duplicate",
+      "template": "I'll copy the event <TARGET> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "terse",
+      "sourceBatch": "core-1",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-ceb22fdab28d",
+      "operation": "event.duplicate",
+      "template": "I need to duplicate the event <TARGET> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-1",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-2c24db8c13b1",
+      "operation": "event.update",
+      "template": "I want to rename the event <TARGET> to <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-890928328cc1",
+      "operation": "event.update",
+      "template": "I'll change the title of the event <TARGET> to <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-b40202205042",
+      "operation": "event.update",
+      "template": "I need to rename the event <TARGET> to <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-8939cca9bc67",
+      "operation": "event.update",
+      "template": "I'm going to update the event <TARGET> with the new title <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-725e7995e925",
+      "operation": "event.update",
+      "template": "I want to retitle the event <TARGET> to <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-3a264bc54394",
+      "operation": "event.update",
+      "template": "I'll retitle the event <TARGET> to <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-2",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-e8788ec4fd5f",
+      "operation": "event.move",
+      "template": "I want to move the event <TARGET> to <DATE> at <TIME>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-20cdda3ac680",
+      "operation": "event.move",
+      "template": "I'll relocate the event <TARGET> to <DATE> at <TIME>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-c5ba97ec1a3b",
+      "operation": "event.move",
+      "template": "I need to move the event <TARGET> to <DATE> at <TIME>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-3069154e2d63",
+      "operation": "event.move",
+      "template": "I'm going to move the event <TARGET> to <DATE> at <TIME>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-4fc0270de38e",
+      "operation": "event.move",
+      "template": "I want to reorganize the event <TARGET> to <DATE> at <TIME>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-ddc55dff77d2",
+      "operation": "event.move",
+      "template": "I'll reorganize the event <TARGET> to <DATE> at <TIME>.",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-2",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-de6f97a187f6",
+      "operation": "event.delete",
+      "template": "I need to delete the <TARGET> event from my calendar.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-2797632fea27",
+      "operation": "event.delete",
+      "template": "Can you help me delete the <TARGET> event?",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-fa4a5f21034a",
+      "operation": "event.delete",
+      "template": "I need to remove the <TARGET> event from my calendar.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-3",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-cfa18268ef59",
+      "operation": "reminder.create",
+      "template": "I need to create a reminder titled <TITLE> for <DATE> at <TIME> with a repeat rule of <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-bd292b6b679d",
+      "operation": "reminder.create",
+      "template": "I want to set a reminder titled <TITLE> for <DATE> at <TIME> with a repeat rule of <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-73a6ca40d343",
+      "operation": "reminder.create",
+      "template": "Can you help me create a reminder titled <TITLE> for <DATE> at <TIME> with a repeat rule of <RECURRENCE>?",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-89fd95cd2358",
+      "operation": "reminder.create",
+      "template": "I need to set a reminder for <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-repair-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-691bcd57170d",
+      "operation": "reminder.create",
+      "template": "I'll remember to mark <TITLE> as a reminder on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-repair-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-a0ba231133c0",
+      "operation": "reminder.create",
+      "template": "I'm setting a reminder for <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-repair-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-70f64c0e82a8",
+      "operation": "reminder.create",
+      "template": "I want to create a reminder titled <TITLE> for <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-repair-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-d21270809e44",
+      "operation": "reminder.create",
+      "template": "I'll set a reminder for <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "terse",
+      "sourceBatch": "core-repair-2",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-e9dd8c56f5f4",
+      "operation": "reminder.create",
+      "template": "I'm going to add a reminder titled <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-repair-2",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-042eb6f99502",
+      "operation": "reminder.update",
+      "template": "I want to change the title of my reminder <TARGET> to <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-4",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-4ba5125229a1",
+      "operation": "reminder.update",
+      "template": "I'm going to update the reminder <TARGET> with the new title <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-4",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-b35e2b1ce614",
+      "operation": "reminder.update",
+      "template": "I need to modify the reminder <TARGET> from its current title to <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-4",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-5df513e5e738",
+      "operation": "reminder.update",
+      "template": "I'll adjust the reminder <TARGET> to have the title <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-4",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-498c304ab8b9",
+      "operation": "reminder.update",
+      "template": "I want to rename the reminder <TARGET> to <TITLE>.",
+      "placeholders": [
+        "TARGET",
+        "TITLE"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-4",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-cd47b7d9a9d1",
+      "operation": "reminder.complete",
+      "template": "I want to mark the reminder <TARGET> as complete.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-4",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-882c98773610",
+      "operation": "reminder.complete",
+      "template": "I'm going to complete the reminder <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-4",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-54a07a846646",
+      "operation": "reminder.complete",
+      "template": "I need to mark the reminder <TARGET> as complete.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-4",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-d43f0da7014b",
+      "operation": "reminder.complete",
+      "template": "I'll mark the reminder <TARGET> as complete.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-4",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-7cbe4a798db8",
+      "operation": "reminder.complete",
+      "template": "I want to finish the reminder <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-4",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-1bbb179798b3",
+      "operation": "reminder.delete",
+      "template": "I need to remove the reminder that's scheduled for <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-5",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-606360a5b966",
+      "operation": "reminder.delete",
+      "template": "I need to delete the reminder that's set for <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-5",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-d5de92c3bf54",
+      "operation": "reminder.delete",
+      "template": "I need to delete the reminder <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-repair-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-ee5c0ab98716",
+      "operation": "reminder.delete",
+      "template": "I'll remove the reminder <TARGET> soon.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-repair-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-399421a23ad7",
+      "operation": "reminder.delete",
+      "template": "Let me delete the reminder <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-repair-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-3c38c7034999",
+      "operation": "reminder.delete",
+      "template": "I want to delete the reminder <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-repair-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-6ee9e197a0c5",
+      "operation": "reminder.delete",
+      "template": "I'll delete the reminder <TARGET> in a moment.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-repair-3",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-3b45c205d529",
+      "operation": "reminder.delete",
+      "template": "I need to delete the reminder <TARGET> quickly.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "terse",
+      "sourceBatch": "core-repair-3",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-3849d6248a7f",
+      "operation": "calendar.list",
+      "template": "What's going on <DATE> at <TIME>?",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-5",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-09c709195efc",
+      "operation": "calendar.list",
+      "template": "I want to know what's scheduled during <DATE> and <TIME>?",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "terse",
+      "sourceBatch": "core-5",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-2eefff0201b0",
+      "operation": "calendar.list",
+      "template": "What's happening <DATE> at <TIME>?",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-5",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-cc6c0dbb002a",
+      "operation": "calendar.search",
+      "template": "I need to find a calendar item that matches <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-6",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-dc79faeca77b",
+      "operation": "calendar.search",
+      "template": "Can you help me locate a calendar entry for <TARGET>?",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-6",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-8b1d9ac5d7a4",
+      "operation": "calendar.search",
+      "template": "I want to check if there's a calendar item with <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-6",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-1e21034dcf4a",
+      "operation": "calendar.search",
+      "template": "Could you assist me in finding a calendar item named <TARGET>?",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-6",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-a0b7a4a51478",
+      "operation": "calendar.search",
+      "template": "I need to search for a calendar item with the target <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "terse",
+      "sourceBatch": "core-6",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-9bd4db2d5497",
+      "operation": "calendar.search",
+      "template": "I'm trying to find a calendar item that includes <TARGET>.",
+      "placeholders": [
+        "TARGET"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-6",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-7502814f2222",
+      "operation": "calendar.availability",
+      "template": "I need to check if <DATE> is free at <TIME>.",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "voice",
+      "sourceBatch": "core-6",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-de18d6498ad4",
+      "operation": "calendar.availability",
+      "template": "Can you tell me if <DATE> is available at <TIME>?",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-6",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-a4012a4d55de",
+      "operation": "calendar.availability",
+      "template": "I want to confirm if <DATE> is free at <TIME>.",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-6",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-42fe6da40cd8",
+      "operation": "calendar.availability",
+      "template": "Could you help me determine if <DATE> is available at <TIME>?",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-6",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-1284089b44af",
+      "operation": "calendar.availability",
+      "template": "I'm trying to find out if <DATE> is available at <TIME>.",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-6",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-core-e9e4e8a0389a",
+      "operation": "calendar.conflicts",
+      "template": "I need to know if there are any conflicts <DATE> <TIME> in my schedule.",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-7",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-a6d20f6ba868",
+      "operation": "calendar.conflicts",
+      "template": "Can you check if there's a conflict <DATE> <TIME> in my calendar?",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "polite",
+      "sourceBatch": "core-7",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-f5001b57e13f",
+      "operation": "calendar.conflicts",
+      "template": "Do you have any conflicts <DATE> <TIME> scheduled?",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "conversational",
+      "sourceBatch": "core-7",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-96bb538097f6",
+      "operation": "calendar.conflicts",
+      "template": "I'm trying to schedule something <DATE> <TIME> and want to know if there's a conflict.",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "casual",
+      "sourceBatch": "core-7",
+      "split": "train"
+    },
+    {
+      "id": "qwen-core-60b9fd343879",
+      "operation": "calendar.conflicts",
+      "template": "Is there a conflict <DATE> <TIME> in my calendar?",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "register": "indirect",
+      "sourceBatch": "core-7",
+      "split": "challenge"
+    }
+  ],
+  "ood": [
+    {
+      "id": "qwen-ood-cd153d3c18e7",
+      "text": "Hello! How can I assist you today?",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-3b8ed1a3b888",
+      "text": "I want to add a new task to my to-do list.",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-18c9094c739f",
+      "text": "Let's see, what's the weather like today?",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-a9ce827b7e83",
+      "text": "A good knowledge question should have a clear answer and be based on factual information.",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-b79e7c44b615",
+      "text": "To improve writing skills, regular practice is essential.",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-1f65ddc7c9f9",
+      "text": "Reviewing and revising the text helps ensure clarity and coherence.",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-400cc84350b3",
+      "text": "What was the first day of the week in the Gregorian calendar?",
+      "split": "challenge"
+    },
+    {
+      "id": "qwen-ood-5d806674e1cb",
+      "text": "How do I determine the day of the week for a given date?",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-2d29434f5164",
+      "text": "What is the difference between a calendar and a schedule?",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-4fffe68992af",
+      "text": "How do I find out the current date and time in another timezone?",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-f56d30d3327b",
+      "text": "What is the purpose of the Unix epoch time?",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-c84ba46c8a04",
+      "text": "How do I convert a date from one format to another?",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-3ec397f167a6",
+      "text": "I'm really free this weekend, so I can plan a trip to the beach.",
+      "split": "train"
+    },
+    {
+      "id": "qwen-ood-971979d7678f",
+      "text": "I need to move my files to a new location, so I can free up space on my computer.",
+      "split": "challenge"
+    }
+  ],
+  "challengeInstantiationsPerTemplate": 12
+}

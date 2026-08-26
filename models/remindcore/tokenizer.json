@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "kind": "token-free-hashed-features",
+  "normalization": "Unicode NFKC, lowercase, whitespace compaction",
+  "tokenPattern": "[A-Za-z0-9]+(?:['\u2019-][A-Za-z0-9]+)*|[^\\s]",
+  "hashAlgorithm": "FNV-1a 32-bit over UTF-8",
+  "globalBuckets": 131072,
+  "tokenBuckets": 131072,
+  "unknownToken": null,
+  "assistantBuckets": 8192,
+  "assistantMaximumActions": 3,
+  "assistantFeatureEncoder": {
+    "normalization": "Unicode NFKC, lowercase, whitespace compaction",
+    "hashAlgorithm": "FNV-1a 32-bit over UTF-8",
+    "wordNgrams": [
+      1,
+      2
+    ],
+    "skipBigrams": 2,
+    "characterNgrams": [],
+    "projectSignals": true,
+    "typedContext": true,
+    "segmenter": "right-biased punctuation/conjunction clauses v1"
+  }
+}

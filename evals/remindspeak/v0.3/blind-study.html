@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>RemindSpeak blind response study</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #3c2f2f;
+        --muted: #715f55;
+        --paper: #f8f1e6;
+        --card: #ead8c4;
+        --accent: #b98469;
+        --line: #3c2f2f;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        color: var(--ink);
+        font:
+          16px/1.5 system-ui,
+          sans-serif;
+        background: var(--paper);
+      }
+      main {
+        width: min(980px, calc(100% - 32px));
+        margin: 32px auto 80px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+      }
+      .intro,
+      .case,
+      .export {
+        padding: 22px;
+        margin: 18px 0;
+        background: #fffaf2;
+        border: 2px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 5px 5px 0 #765f58;
+      }
+      .meta,
+      .facts {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .responses {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin: 16px 0;
+      }
+      .response {
+        padding: 16px;
+        background: var(--card);
+        border: 2px solid var(--line);
+        border-radius: 13px;
+      }
+      .response strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.75rem;
+        letter-spacing: 0.12em;
+      }
+      .question {
+        padding-top: 12px;
+        border-top: 1px dashed #8a766d;
+      }
+      .choices {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+      .choices label {
+        cursor: pointer;
+      }
+      input {
+        accent-color: var(--accent);
+      }
+      button {
+        padding: 12px 18px;
+        color: var(--ink);
+        font-weight: 800;
+        background: var(--accent);
+        border: 2px solid var(--line);
+        border-radius: 10px;
+        box-shadow: 3px 3px 0 #765f58;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .error {
+        color: #8c2f24;
+        font-weight: 700;
+      }
+      .success {
+        color: #426248;
+        font-weight: 700;
+      }
+      @media (max-width: 680px) {
+        .responses {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <section class="intro">
+        <p>PRIVATE · OFFLINE · BLINDED</p>
+        <h1>Which reply feels better?</h1>
+        <p>
+          Compare each pair for naturalness, fit to the requested voice, and clarity. Dynamic
+          calendar facts are shown separately so you can also flag a reply that changes or invents
+          them. The source order is randomized and is not present in this file.
+        </p>
+        <label
+          >Anonymous participant code
+          <input id="participant" minlength="10" pattern="anonymous-[a-z0-9-]+"
+        /></label>
+        <p id="progress"></p>
+      </section>
+      <div id="cases"></div>
+      <section class="export">
+        <label><input id="human" type="checkbox" /> I completed these judgments myself.</label
+        ><br /><label
+          ><input id="blind" type="checkbox" /> I did not view the separate source key.</label
+        >
+        <p id="message"></p>
+        <button id="download">Validate and download response</button>
+      </section>
+    </main>
+    <script>
+      const study = {
+        schemaVersion: 1,
+        studyId: 'remindspeak-v0.3-blind-a-b',
+        design: 'within-subject randomized blinded A/B',
+        caseCount: 24,
+        sourceDisclosure: 'Source labels are stored only in the separate sealed key.',
+        cases: [
+          {
+            id: 'proposal-cozy',
+            scenario:
+              'The user asked to add a study block and is reviewing the draft before anything saves.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [
+              { key: 'SUMMARY', value: 'Study block on Thursday from 4:00 PM to 5:30 PM' }
+            ],
+            responseA:
+              'Proposed change: Study block on Thursday from 4:00 PM to 5:30 PM. Review it before saving.',
+            responseB:
+              'I’ve got the shape of it. Your proposed change is Study block on Thursday from 4:00 PM to 5:30 PM — Take a look before I save it.'
+          },
+          {
+            id: 'proposal-concise',
+            scenario: 'The user asked to repeat a workout and wants a brief confirmation preview.',
+            desiredVoice: 'concise',
+            verifiedFacts: [
+              { key: 'SUMMARY', value: 'Workout every Tuesday and Saturday at 7:00 AM' }
+            ],
+            responseA:
+              'Workout every Tuesday and Saturday at 7:00 AM — You can adjust any detail first.',
+            responseB: 'Draft: Workout every Tuesday and Saturday at 7:00 AM. Nothing is saved yet.'
+          },
+          {
+            id: 'created-polished',
+            scenario: 'A reviewed event was just saved locally.',
+            desiredVoice: 'polished',
+            verifiedFacts: [
+              { key: 'RECEIPT', value: 'Created “Lunch with Maya” on September 4 at 12:30 PM.' }
+            ],
+            responseA:
+              'Created “Lunch with Maya” on September 4 at 12:30 PM. The operation is complete.',
+            responseB:
+              'All set. Your new plan is saved. Created “Lunch with Maya” on September 4 at 12:30 PM.'
+          },
+          {
+            id: 'updated-cozy',
+            scenario: 'The user moved an existing appointment after approving the edit.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [{ key: 'RECEIPT', value: 'Moved “Dentist” to Friday at 10:00 AM.' }],
+            responseA:
+              'That’s adjusted. I reshaped that plan for you. Moved “Dentist” to Friday at 10:00 AM.',
+            responseB: 'Updated. Moved “Dentist” to Friday at 10:00 AM.'
+          },
+          {
+            id: 'deleted-concise',
+            scenario: 'The user approved deleting one reminder.',
+            desiredVoice: 'concise',
+            verifiedFacts: [{ key: 'RECEIPT', value: 'Deleted reminder “Renew library book”.' }],
+            responseA: 'Deleted reminder “Renew library book”. You can undo this action.',
+            responseB: 'The deletion is complete. Deleted reminder “Renew library book”.'
+          },
+          {
+            id: 'completed-cozy',
+            scenario: 'The user completed a reminder and wants a light acknowledgement.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [
+              { key: 'RECEIPT', value: 'Completed reminder “Submit scholarship form”.' }
+            ],
+            responseA: 'Completed. Completed reminder “Submit scholarship form”.',
+            responseB:
+              'That’s checked off. That reminder is finished now. Completed reminder “Submit scholarship form”. — On to whatever matters next.'
+          },
+          {
+            id: 'availability-free',
+            scenario: 'The user asked whether a specific time is free.',
+            desiredVoice: 'concise',
+            verifiedFacts: [
+              { key: 'SLOT', value: 'Friday from 2:00 PM to 3:00 PM' },
+              { key: 'DETAIL', value: 'you have no calendar events in that window' }
+            ],
+            responseA:
+              'I checked the exact stretch you mentioned. For Friday from 2:00 PM to 3:00 PM, you have no calendar events in that window. If you want, you can try another window.',
+            responseB: 'Friday from 2:00 PM to 3:00 PM: you have no calendar events in that window.'
+          },
+          {
+            id: 'availability-busy',
+            scenario: 'The user asked whether a window is open, but one event overlaps it.',
+            desiredVoice: 'polished',
+            verifiedFacts: [
+              { key: 'SLOT', value: 'Monday from 11:30 AM to 1:00 PM' },
+              { key: 'DETAIL', value: 'it overlaps “Team review” from noon to 12:45 PM' }
+            ],
+            responseA:
+              'Looking at Monday from 11:30 AM to 1:00 PM, it overlaps “Team review” from noon to 12:45 PM. I can check a nearby time too.',
+            responseB:
+              'Availability for Monday from 11:30 AM to 1:00 PM: it overlaps “Team review” from noon to 12:45 PM.'
+          },
+          {
+            id: 'summary-cozy',
+            scenario: 'The user asked for a friendly overview of tomorrow.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [
+              { key: 'SUMMARY', value: 'Design critique at 10:00 AM; lab at 2:00 PM' }
+            ],
+            responseA:
+              'The schedule comes to Design critique at 10:00 AM; lab at 2:00 PM. Ask about any item and I’ll zoom in.',
+            responseB: 'Schedule summary: Design critique at 10:00 AM; lab at 2:00 PM.'
+          },
+          {
+            id: 'summary-polished',
+            scenario: 'The user asked for a clear overview of a busy day.',
+            desiredVoice: 'polished',
+            verifiedFacts: [
+              { key: 'SUMMARY', value: 'four items running from 9:00 AM through 6:00 PM' }
+            ],
+            responseA:
+              'I checked the schedule. I found four items running from 9:00 AM through 6:00 PM. I kept the summary to the relevant items.',
+            responseB: 'Your calendar contains four items running from 9:00 AM through 6:00 PM.'
+          },
+          {
+            id: 'next-item-concise',
+            scenario: 'The user asked only what comes next.',
+            desiredVoice: 'concise',
+            verifiedFacts: [{ key: 'SUMMARY', value: 'Data Structures lecture at 2:00 PM' }],
+            responseA: 'Data Structures lecture at 2:00 PM — Ask me to open it for more.',
+            responseB: 'Next: Data Structures lecture at 2:00 PM.'
+          },
+          {
+            id: 'item-details-polished',
+            scenario: 'The user asked for the location and time of a selected class.',
+            desiredVoice: 'polished',
+            verifiedFacts: [{ key: 'SUMMARY', value: 'Calculus III at 1:00 PM in Adams Hall 311' }],
+            responseA:
+              'Here’s the useful detail. What I have for it is Calculus III at 1:00 PM in Adams Hall 311 — I can help change any part of it.',
+            responseB: 'Event details: Calculus III at 1:00 PM in Adams Hall 311.'
+          },
+          {
+            id: 'empty-cozy',
+            scenario: 'The user asked about a day with no events or reminders.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [],
+            responseA: 'The calendar is quiet. That part of the calendar is open.',
+            responseB: 'Nothing is scheduled.'
+          },
+          {
+            id: 'empty-concise',
+            scenario: 'The user asked what comes next, but there is no future item.',
+            desiredVoice: 'concise',
+            verifiedFacts: [],
+            responseA:
+              'You have some breathing room. There’s nothing scheduled. You can leave it open or add something.',
+            responseB: 'Nothing is coming up.'
+          },
+          {
+            id: 'conversation-cozy',
+            scenario: 'The user said hello and asked what the assistant can do.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [
+              {
+                key: 'DETAIL',
+                value: 'I can plan, change, search, and explain your local calendar'
+              }
+            ],
+            responseA: 'I can plan, change, search, and explain your local calendar.',
+            responseB:
+              'What I can tell you is I can plan, change, search, and explain your local calendar — I’m happy to keep talking it through.'
+          },
+          {
+            id: 'conversation-polished',
+            scenario: 'The user asked how the private assistant is built.',
+            desiredVoice: 'polished',
+            verifiedFacts: [
+              {
+                key: 'DETAIL',
+                value: 'the native models run locally and calendar writes require review'
+              }
+            ],
+            responseA:
+              'Good question. The helpful version is this: the native models run locally and calendar writes require review — We can keep the conversation going from there.',
+            responseB: 'Answer: the native models run locally and calendar writes require review.'
+          },
+          {
+            id: 'memory-cozy',
+            scenario: 'The user asked what preference the assistant remembers.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [{ key: 'DETAIL', value: 'you prefer morning meetings' }],
+            responseA: 'Saved memory: you prefer morning meetings.',
+            responseB:
+              'I found the context you shared with me. I have this saved for you: you prefer morning meetings — Tell me if that should be updated.'
+          },
+          {
+            id: 'undo-concise',
+            scenario: 'The user asked to undo the most recent calendar change.',
+            desiredVoice: 'concise',
+            verifiedFacts: [
+              { key: 'RECEIPT', value: 'Restored “Project sync” to Wednesday at 3:00 PM.' }
+            ],
+            responseA:
+              'Restored “Project sync” to Wednesday at 3:00 PM. — The rest of your calendar stayed put.',
+            responseB: 'Undone. Restored “Project sync” to Wednesday at 3:00 PM.'
+          },
+          {
+            id: 'rejected-cozy',
+            scenario: 'The user declined a draft, so no calendar write occurred.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [{ key: 'SUMMARY', value: 'move every class to Friday' }],
+            responseA: 'Cancelled proposal: move every class to Friday. Nothing changed.',
+            responseB:
+              'Nothing was saved from that draft. move every class to Friday — We can start fresh whenever you want.'
+          },
+          {
+            id: 'clarification-polished',
+            scenario: 'The request is missing one required scheduling detail.',
+            desiredVoice: 'polished',
+            verifiedFacts: [{ key: 'DETAIL', value: 'Which Tuesday did you mean?' }],
+            responseA:
+              'I paused because Which Tuesday did you mean? — A short correction is enough.',
+            responseB: 'Clarification required: Which Tuesday did you mean?'
+          },
+          {
+            id: 'conflict-cozy',
+            scenario: 'The assistant found an overlap while reviewing a proposed event.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [
+              { key: 'SUMMARY', value: '“Office hours” overlaps “Physics lab” by thirty minutes' }
+            ],
+            responseA:
+              'I found this overlap: “Office hours” overlaps “Physics lab” by thirty minutes. I haven’t changed either plan.',
+            responseB: 'Conflict: “Office hours” overlaps “Physics lab” by thirty minutes.'
+          },
+          {
+            id: 'unsupported-polished',
+            scenario: 'The user asked for live information that the offline app cannot verify.',
+            desiredVoice: 'polished',
+            verifiedFacts: [
+              { key: 'DETAIL', value: 'I need a connected source to verify live flight status' }
+            ],
+            responseA:
+              'Unsupported request: I need a connected source to verify live flight status.',
+            responseB:
+              'That sits outside my local calendar tools. I’m limited here because I need a connected source to verify live flight status — I can still help if there’s a calendar angle.'
+          },
+          {
+            id: 'error-cozy',
+            scenario: 'A local operation stopped safely and left the calendar unchanged.',
+            desiredVoice: 'cozy',
+            verifiedFacts: [{ key: 'DETAIL', value: 'the selected event no longer exists' }],
+            responseA: 'Error: the selected event no longer exists.',
+            responseB:
+              'Something in the local path didn’t finish. For this attempt, the selected event no longer exists — Your existing plans are still safe.'
+          },
+          {
+            id: 'details-concise',
+            scenario: 'The user asked for a compact reminder detail.',
+            desiredVoice: 'concise',
+            verifiedFacts: [{ key: 'SUMMARY', value: 'reminder “Call Dad” at 6:00 PM' }],
+            responseA: 'reminder “Call Dad” at 6:00 PM.',
+            responseB:
+              'Let’s zoom in on that one. reminder “Call Dad” at 6:00 PM — Every editable detail is available if you want to change it.'
+          }
+        ]
+      }
+      const root = document.getElementById('cases')
+      const participant = document.getElementById('participant')
+      participant.value = 'anonymous-' + crypto.randomUUID().slice(0, 12)
+      const esc = (s) => {
+        const d = document.createElement('div')
+        d.textContent = s
+        return d.innerHTML
+      }
+      for (const c of study.cases) {
+        const section = document.createElement('section')
+        section.className = 'case'
+        section.dataset.id = c.id
+        section.innerHTML =
+          '<h2>' +
+          esc(c.scenario) +
+          '</h2><p class="meta">Desired voice: <strong>' +
+          esc(c.desiredVoice) +
+          '</strong></p><p class="facts"><strong>Verified content:</strong> ' +
+          (c.verifiedFacts.length
+            ? c.verifiedFacts.map((f) => esc(f.value)).join(' · ')
+            : 'No dynamic facts are required.') +
+          '</p><div class="responses"><div class="response"><strong>RESPONSE A</strong>' +
+          esc(c.responseA) +
+          '</div><div class="response"><strong>RESPONSE B</strong>' +
+          esc(c.responseB) +
+          '</div></div><div class="question"><strong>Overall preference</strong><div class="choices">' +
+          ['A', 'B', 'tie']
+            .map(
+              (v) =>
+                '<label><input type="radio" name="pref-' +
+                c.id +
+                '" value="' +
+                v +
+                '"> ' +
+                (v === 'tie' ? 'Tie' : v) +
+                '</label>'
+            )
+            .join('') +
+          '</div></div><div class="question"><strong>Which response preserves all verified content?</strong><div class="choices">' +
+          ['A', 'B', 'both', 'neither']
+            .map(
+              (v) =>
+                '<label><input type="radio" name="fact-' +
+                c.id +
+                '" value="' +
+                v +
+                '"> ' +
+                v +
+                '</label>'
+            )
+            .join('') +
+          '</div></div>'
+        root.append(section)
+      }
+      function read(name) {
+        return document.querySelector('input[name="' + name + '"]:checked')?.value ?? null
+      }
+      function update() {
+        const done = study.cases.filter((c) => read('pref-' + c.id) && read('fact-' + c.id)).length
+        document.getElementById('progress').textContent =
+          done + ' of ' + study.cases.length + ' comparisons complete'
+      }
+      document.addEventListener('change', update)
+      update()
+      document.getElementById('download').onclick = () => {
+        const message = document.getElementById('message')
+        const judgments = study.cases.map((c) => ({
+          caseId: c.id,
+          preference: read('pref-' + c.id),
+          factFaithfulness: read('fact-' + c.id)
+        }))
+        if (
+          !/^anonymous-[a-z0-9-]{6,32}$/.test(participant.value) ||
+          judgments.some((j) => !j.preference || !j.factFaithfulness) ||
+          !document.getElementById('human').checked ||
+          !document.getElementById('blind').checked
+        ) {
+          message.className = 'error'
+          message.textContent =
+            'Complete every comparison, both attestations, and a valid anonymous code first.'
+          return
+        }
+        const response = {
+          schemaVersion: 1,
+          studyId: study.studyId,
+          participantId: participant.value,
+          attestation: { humanCompleted: true, sourceKeyNotViewed: true },
+          judgments
+        }
+        const blob = new Blob([JSON.stringify(response, null, 2) + '\n'], {
+          type: 'application/json'
+        })
+        const a = document.createElement('a')
+        a.href = URL.createObjectURL(blob)
+        a.download = 'remindspeak-response-' + participant.value + '.json'
+        a.click()
+        URL.revokeObjectURL(a.href)
+        message.className = 'success'
+        message.textContent = 'Response downloaded. Return that JSON file to the study organizer.'
+      }
+    </script>
+  </body>
+</html>

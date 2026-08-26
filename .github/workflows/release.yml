@@ -1,0 +1,165 @@
+name: Signed cross-platform release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag (for example v0.1.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-models:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: pnpm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            ml/remindcore/pyproject.toml
+            ml/remindspeak/pyproject.toml
+            ml/planscan/pyproject.toml
+      - run: pnpm install --frozen-lockfile
+      - run: python -m pip install --disable-pip-version-check -e ml/remindcore -e ml/remindspeak -e ml/planscan
+      - run: pnpm models:fetch
+      - run: python ml/remindcore/pipeline.py all
+      - run: python ml/remindspeak/pipeline.py all
+      - run: python ml/planscan/pipeline.py all
+      - run: pnpm models:onnx:export && pnpm release-probes:generate && pnpm models:verify
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-local-models
+          path: models
+          if-no-files-found: error
+          retention-days: 3
+
+  build:
+    needs: prepare-models
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            arch: x64
+            signing: windows
+            artifact: release-windows-x64
+          - os: ubuntu-24.04
+            arch: x64
+            signing: none
+            artifact: release-linux-x64
+          - os: macos-26
+            arch: arm64
+            signing: macos
+            artifact: release-macos-arm64
+          - os: macos-26-intel
+            arch: x64
+            signing: macos
+            artifact: release-macos-x64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: pnpm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pnpm install --frozen-lockfile
+      - run: python -m pip install --disable-pip-version-check -e ml/remindcore -e ml/remindspeak -e ml/planscan
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-local-models
+          path: models
+      - name: Require Windows signing credentials
+        if: matrix.signing == 'windows'
+        run: pnpm exec tsx scripts/check-signing-env.ts windows
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+      - name: Require macOS signing and notarization credentials
+        if: matrix.signing == 'macos'
+        run: pnpm exec tsx scripts/check-signing-env.ts macos
+        env:
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Verify release candidate on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum pnpm verify
+      - name: Verify release candidate
+        if: runner.os != 'Linux'
+        run: pnpm verify
+      - name: Build signed Windows installers
+        if: matrix.signing == 'windows'
+        run: pnpm package:installer
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+      - name: Build signed and notarized macOS installers
+        if: matrix.signing == 'macos'
+        run: pnpm release:prepare && pnpm --filter @remind-me/desktop build && pnpm --filter @remind-me/desktop exec electron-builder --mac dmg zip --publish never -c.mac.notarize=true
+        env:
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      - name: Build Linux installers
+        if: matrix.signing == 'none'
+        run: pnpm package:installer
+      - run: pnpm package:audit
+      - name: Audit signed release artifacts
+        if: matrix.signing != 'none'
+        run: pnpm package:artifacts:audit -- --require-signature
+      - name: Audit Linux release artifacts
+        if: matrix.signing == 'none'
+        run: pnpm package:artifacts:audit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist/*.exe
+            dist/*.blockmap
+            dist/*.dmg
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.deb
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 'release-*'
+          path: release-assets
+      - name: Create immutable GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --generate-notes
+          gh release upload "$RELEASE_TAG" release-assets/*/* --clobber

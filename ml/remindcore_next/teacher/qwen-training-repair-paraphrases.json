@@ -1,0 +1,512 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": "0.1.0",
+  "teacher": {
+    "modelId": "Qwen3-1.7B-Q4_K_M",
+    "byteLength": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "license": "Apache-2.0"
+  },
+  "generation": {
+    "seed": 2608250,
+    "temperature": 0.7,
+    "topK": 30,
+    "topP": 0.85,
+    "thoughtTokens": 0,
+    "contextSize": 8192,
+    "device": "cpu"
+  },
+  "kind": "assistant-paraphrases",
+  "batches": [
+    {
+      "id": "remindcore-next-repair-1",
+      "jobIds": [
+        "remindcore-next:calendar.event.create:repair",
+        "remindcore-next:calendar.event.duplicate:repair",
+        "remindcore-next:calendar.event.update:repair"
+      ],
+      "promptSha256": "316d8c305c7baedd8a4d30b3a25866592be7a3702d126ad2fa981fde745de651",
+      "elapsedMs": 69813,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.event.create:repair",
+            "paraphrases": [
+              "book <TITLE> for <DATE> at <TIME>",
+              "book <TITLE> on <DATE> at <TIME>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.event.duplicate:repair",
+            "paraphrases": [
+              "duplicate <TARGET> to <DATE> at <TIME>",
+              "copy <TARGET> to <DATE> at <TIME>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.event.update:repair",
+            "paraphrases": [
+              "rename <TARGET> to <NEW_TITLE>",
+              "rename <TARGET> to <NEW_TITLE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-2",
+      "jobIds": [
+        "remindcore-next:calendar.event.move:repair",
+        "remindcore-next:calendar.event.delete:repair",
+        "remindcore-next:calendar.reminder.create:repair"
+      ],
+      "promptSha256": "93b457b067cd0ff87028aae0a2d3c2e664d179b95eddd3a09f0dc33f0a3d9634",
+      "elapsedMs": 41644,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.event.move:repair",
+            "paraphrases": [
+              "shift <TARGET> to <DATE> at <TIME>",
+              "move <TARGET> to <DATE> at <TIME>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.event.delete:repair",
+            "paraphrases": [
+              "delete <TARGET>",
+              "cancel the event called <TARGET>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.reminder.create:repair",
+            "paraphrases": [
+              "reminder <TITLE> on <DATE> at <TIME>",
+              "remind me to <TITLE> on <DATE> at <TIME>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-3",
+      "jobIds": [
+        "remindcore-next:calendar.reminder.update:repair",
+        "remindcore-next:calendar.reminder.complete:repair",
+        "remindcore-next:calendar.reminder.delete:repair"
+      ],
+      "promptSha256": "2d9cf591ce54f09375012f4b91ff0a8cc77215e92295075ecb2ebf8854643f17",
+      "elapsedMs": 36006,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.reminder.update:repair",
+            "paraphrases": [
+              "edit <TARGET> to <NEW_TITLE>",
+              "update <TARGET> to <NEW_TITLE>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.reminder.complete:repair",
+            "paraphrases": [
+              "done <TARGET>",
+              "mark <TARGET> complete"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.reminder.delete:repair",
+            "paraphrases": [
+              "dismiss <TARGET> reminder",
+              "delete <TARGET> reminder"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-4",
+      "jobIds": [
+        "remindcore-next:calendar.query.list:repair",
+        "remindcore-next:calendar.query.search:repair",
+        "remindcore-next:calendar.query.availability:repair"
+      ],
+      "promptSha256": "16db8bf18c2f87f09ec31017be23d1370d37bbaf845bd49fd2186cd2be551a58",
+      "elapsedMs": 36918,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.query.list:repair",
+            "paraphrases": [
+              "<DATE> plans list",
+              "list <DATE> schedule"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.query.search:repair",
+            "paraphrases": [
+              "locate <TARGET> in my calendar",
+              "find <TARGET> in my calendar"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.query.availability:repair",
+            "paraphrases": [
+              "free <DATE> at <TIME>",
+              "am I free on <DATE> at <TIME>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-5",
+      "jobIds": [
+        "remindcore-next:calendar.query.conflicts:repair",
+        "remindcore-next:calendar.query.next:repair",
+        "remindcore-next:calendar.query.details:repair"
+      ],
+      "promptSha256": "e1425e0aae4d25e7504e752d4c058c09f17727c764d0629f4ba1210e57ae4514",
+      "elapsedMs": 37390,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.query.conflicts:repair",
+            "paraphrases": [
+              "<DATE> overlap check",
+              "Check <DATE> overlap for conflicts."
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.query.next:repair",
+            "paraphrases": [
+              "upcoming <TARGET> schedule",
+              "Get the upcoming <TARGET> schedule."
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.query.details:repair",
+            "paraphrases": [
+              "<TARGET> location details",
+              "Get the <TARGET> location details."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-6",
+      "jobIds": [
+        "remindcore-next:calendar.query.summary:repair",
+        "remindcore-next:calendar.schedule.copy-day:repair",
+        "remindcore-next:calendar.schedule.clear:repair"
+      ],
+      "promptSha256": "f8f75d6eac0b086047aa62cdc8db47a1243543905dcdcb192a674ba26b1a6a9c",
+      "elapsedMs": 37714,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.query.summary:repair",
+            "paraphrases": [
+              "overview <DATE> schedule",
+              "get an overview of <DATE> schedule"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.schedule.copy-day:repair",
+            "paraphrases": [
+              "mirror <SOURCE_DATE> to <DESTINATION_DAYS>",
+              "duplicate <SOURCE_DATE> to <DESTINATION_DAYS>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.schedule.clear:repair",
+            "paraphrases": [
+              "delete all events in <RANGE>",
+              "remove <RANGE> events"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-7",
+      "jobIds": [
+        "remindcore-next:calendar.import.document:repair",
+        "remindcore-next:calendar.import.file:repair",
+        "remindcore-next:calendar.export.file:repair"
+      ],
+      "promptSha256": "435eb4debd7360a230a3d8562296f566c3b2b21918247436f39236ae32eabe0a",
+      "elapsedMs": 38699,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.import.document:repair",
+            "paraphrases": [
+              "read the attached <FILE_KIND> and propose its dates",
+              "read the attached <FILE_KIND> and suggest its dates"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.import.file:repair",
+            "paraphrases": [
+              "import my <FILE_KIND> calendar file",
+              "import my <FILE_KIND> calendar file"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.export.file:repair",
+            "paraphrases": [
+              "export my calendar as <FILE_KIND>",
+              "export my calendar as <FILE_KIND>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-8",
+      "jobIds": [
+        "remindcore-next:assistant.chat.respond:repair",
+        "remindcore-next:assistant.help:repair",
+        "remindcore-next:assistant.identity:repair"
+      ],
+      "promptSha256": "09e0bd306cf1d5f6923d18150db736c5135e4ab936ecef242cf140a6dbc8bfff",
+      "elapsedMs": 35892,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.chat.respond:repair",
+            "paraphrases": [
+              "explain <TOPIC> in simple terms",
+              "generate an <TOPIC> explanation for me"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.help:repair",
+            "paraphrases": [
+              "show me examples of requests you understand",
+              "provide a list of <TOPIC> examples"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.identity:repair",
+            "paraphrases": [
+              "introduce yourself to me",
+              "describe your <TOPIC> role"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-9",
+      "jobIds": [
+        "remindcore-next:assistant.architecture:repair",
+        "remindcore-next:assistant.local-time:repair",
+        "remindcore-next:assistant.wellbeing:repair"
+      ],
+      "promptSha256": "d61a5bc5cbd0c638a2246b40eb8b4be82b1672738d1ca1c6272a0152ca681c34",
+      "elapsedMs": 35896,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.architecture:repair",
+            "paraphrases": [
+              "<TARGET> local models power this app",
+              "local models that drive this app"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.local-time:repair",
+            "paraphrases": [
+              "<TARGET> date from my device",
+              "date from my device"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.wellbeing:repair",
+            "paraphrases": [
+              "<TARGET> there, how are you doing",
+              "there, how are you doing"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-10",
+      "jobIds": [
+        "remindcore-next:assistant.thanks:repair",
+        "remindcore-next:assistant.goodbye:repair",
+        "remindcore-next:assistant.memory.set-name:repair"
+      ],
+      "promptSha256": "c59e3848225c8c5f29bc20a7f9749ab94d8ab1792532c0ba7b8afe7019f535b6",
+      "elapsedMs": 35005,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.memory.set-name:repair",
+            "paraphrases": [
+              "call that my name is <NAME>",
+              "call me <NAME>"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.memory.set-name:repair",
+            "paraphrases": [
+              "use that my name is <NAME>",
+              "use me <NAME>"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.memory.set-name:repair",
+            "paraphrases": [
+              "set that my name is <NAME>",
+              "set me <NAME>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-11",
+      "jobIds": [
+        "remindcore-next:assistant.memory.remember:repair",
+        "remindcore-next:assistant.memory.recall:repair",
+        "remindcore-next:assistant.memory.forget:repair"
+      ],
+      "promptSha256": "88c439bde4a1ad11c5b59ca2d1476e75abb2909b652e66df43ec7d71e309793a",
+      "elapsedMs": 32476,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.memory.remember:repair",
+            "paraphrases": [
+              "<MEMORY> preference",
+              "set <MEMORY> preference"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.memory.recall:repair",
+            "paraphrases": [
+              "recall <MEMORY> memory",
+              "retrieve <MEMORY> memory"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.memory.forget:repair",
+            "paraphrases": [
+              "remove <MEMORY> memory",
+              "erase <MEMORY> memory"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-12",
+      "jobIds": [
+        "remindcore-next:assistant.memory.forget-all:repair",
+        "remindcore-next:app.navigation.open:repair",
+        "remindcore-next:app.appearance.update:repair"
+      ],
+      "promptSha256": "de3410d82c74b37ea5584d74a54ad129a2981c0eef2b8da1ad7f562dccd82213",
+      "elapsedMs": 36307,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.memory.forget-all:repair",
+            "paraphrases": [
+              "clear <VIEW> to be forgotten",
+              "show <VIEW> to be forgotten"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.navigation.open:repair",
+            "paraphrases": [
+              "show <VIEW> to be opened",
+              "open <VIEW> to be shown"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.appearance.update:repair",
+            "paraphrases": [
+              "color <COLOR> to be updated",
+              "update <COLOR> to be changed"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-13",
+      "jobIds": [
+        "remindcore-next:app.window.set-mode:repair",
+        "remindcore-next:app.window.set-pinned:repair",
+        "remindcore-next:app.startup.configure:repair"
+      ],
+      "promptSha256": "2b6a25b31541100abef999d0e2b43287d280d5f3ee5af72c0fa1459886d680b7",
+      "elapsedMs": 35583,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:app.window.set-mode:repair",
+            "paraphrases": [
+              "<MODE> widget to be set",
+              "set <MODE> mode for the window"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.window.set-pinned:repair",
+            "paraphrases": [
+              "pin the window as a top window",
+              "make this window the top window"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.startup.configure:repair",
+            "paraphrases": [
+              "login to configure the startup",
+              "configure the startup when signing in"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-repair-14",
+      "jobIds": [
+        "remindcore-next:app.model.install:repair",
+        "remindcore-next:app.model.enable:repair",
+        "remindcore-next:app.model.remove:repair"
+      ],
+      "promptSha256": "1c376c728d803ba0bd674bde0ecca6847657586d031924418e58843a65b924dd",
+      "elapsedMs": 32728,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:app.model.remove:repair",
+            "paraphrases": [
+              "uninstall the optional language pack",
+              "remove the optional language pack"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.model.enable:repair",
+            "paraphrases": [
+              "disable the installed language fallback",
+              "disable the installed language pack"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.model.install:repair",
+            "paraphrases": [
+              "install the optional local language model",
+              "install the optional language model"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

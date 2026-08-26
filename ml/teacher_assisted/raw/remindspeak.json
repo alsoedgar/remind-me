@@ -1,0 +1,726 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": "0.1.0",
+  "teacher": {
+    "modelId": "Qwen3-1.7B-Q4_K_M",
+    "byteLength": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "license": "Apache-2.0"
+  },
+  "generation": {
+    "seed": 2608250,
+    "temperature": 0.7,
+    "topK": 30,
+    "topP": 0.85,
+    "thoughtTokens": 0,
+    "contextSize": 8192,
+    "device": "cpu"
+  },
+  "kind": "remindspeak",
+  "batches": [
+    {
+      "id": "speak-1",
+      "specs": [
+        {
+          "speechAct": "proposal",
+          "signature": ["SUMMARY"],
+          "meaning": "present an unsaved draft for review"
+        }
+      ],
+      "promptSha256": "3049830d8d13bace8fd7576029da611f2f835cb5d4ae31c5293e41df541e3c05",
+      "elapsedMs": 36429,
+      "output": {
+        "items": [
+          {
+            "speechAct": "proposal",
+            "head": "lead",
+            "text": "i need to remind",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "proposal",
+            "head": "body",
+            "text": "<SUMMARY>1",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "proposal",
+            "head": "body",
+            "text": "<SUMMARY>2",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "proposal",
+            "head": "close",
+            "text": "i need to remind",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "proposal",
+            "head": "lead",
+            "text": "i need to remind",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "proposal",
+            "head": "body",
+            "text": "<SUMMARY>1",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "proposal",
+            "head": "body",
+            "text": "<SUMMARY>2",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "proposal",
+            "head": "close",
+            "text": "i need to remind",
+            "styleTag": "warm"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-2",
+      "specs": [
+        {
+          "speechAct": "creation-confirmed",
+          "signature": ["RECEIPT"],
+          "meaning": "confirm a reviewed creation was saved"
+        }
+      ],
+      "promptSha256": "91b90d0217ed7033506ecf31f4b167dcd187d58429c68060b2d64a43ff56415c",
+      "elapsedMs": 37144,
+      "output": {
+        "items": [
+          {
+            "speechAct": "creation-confirmed",
+            "head": "lead",
+            "text": "confirm",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "creation-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> was saved.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "creation-confirmed",
+            "head": "body",
+            "text": "confirm that <RECEIPT> was saved.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "creation-confirmed",
+            "head": "close",
+            "text": "ready to help.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "creation-confirmed",
+            "head": "lead",
+            "text": "acknowledge",
+            "styleTag": "formal"
+          },
+          {
+            "speechAct": "creation-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> has been received.",
+            "styleTag": "formal"
+          },
+          {
+            "speechAct": "creation-confirmed",
+            "head": "body",
+            "text": "acknowledge that <RECEIPT> has been received.",
+            "styleTag": "formal"
+          },
+          {
+            "speechAct": "creation-confirmed",
+            "head": "close",
+            "text": "awaiting instructions.",
+            "styleTag": "formal"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-3",
+      "specs": [
+        {
+          "speechAct": "update-confirmed",
+          "signature": ["RECEIPT"],
+          "meaning": "confirm a reviewed update was saved"
+        }
+      ],
+      "promptSha256": "fe2f975e26370fdd9f83210a5e8314c14a48ef9bf227c4306a6cd5dc20597c75",
+      "elapsedMs": 35459,
+      "output": {
+        "items": [
+          {
+            "speechAct": "update-confirmed",
+            "head": "lead",
+            "text": "update",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "update-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> <RECEIPT>",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "update-confirmed",
+            "head": "body",
+            "text": "confirming <RECEIPT>",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "update-confirmed",
+            "head": "close",
+            "text": "saved.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "update-confirmed",
+            "head": "lead",
+            "text": "refresh",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "update-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> <RECEIPT>",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "update-confirmed",
+            "head": "body",
+            "text": "confirming <RECEIPT>",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "update-confirmed",
+            "head": "close",
+            "text": "saved.",
+            "styleTag": "warm"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-4",
+      "specs": [
+        {
+          "speechAct": "deletion-confirmed",
+          "signature": ["RECEIPT"],
+          "meaning": "confirm a reviewed deletion was applied"
+        }
+      ],
+      "promptSha256": "3aeaf20c4fe988856203fa0b6d6e326704cd6448eab87f7b02b3c2ef370e306d",
+      "elapsedMs": 34461,
+      "output": {
+        "items": [
+          {
+            "speechAct": "deletion-confirmed",
+            "head": "lead",
+            "text": "confirm",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "deletion-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> was applied.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "deletion-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> is confirmed.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "deletion-confirmed",
+            "head": "close",
+            "text": "done.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "deletion-confirmed",
+            "head": "lead",
+            "text": "verify",
+            "styleTag": "formal"
+          },
+          {
+            "speechAct": "deletion-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> was applied.",
+            "styleTag": "formal"
+          },
+          {
+            "speechAct": "deletion-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> is verified.",
+            "styleTag": "formal"
+          },
+          {
+            "speechAct": "deletion-confirmed",
+            "head": "close",
+            "text": "done.",
+            "styleTag": "formal"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-5",
+      "specs": [
+        {
+          "speechAct": "completion-confirmed",
+          "signature": ["RECEIPT"],
+          "meaning": "confirm a reminder was completed"
+        }
+      ],
+      "promptSha256": "8a67c8fdd22c3a0afccb8f3db7d1c2707343ad140b1ab78adb6a3cd8c8288f79",
+      "elapsedMs": 44709,
+      "output": {
+        "items": [
+          {
+            "speechAct": "completion-confirmed",
+            "head": "lead",
+            "text": "hello",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "completion-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT>",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "completion-confirmed",
+            "head": "body",
+            "text": "this is a test",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "completion-confirmed",
+            "head": "close",
+            "text": "goodbye",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "completion-confirmed",
+            "head": "lead",
+            "text": "hi",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "completion-confirmed",
+            "head": "body",
+            "text": "<RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT> <RECEIPT>",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "completion-confirmed",
+            "head": "body",
+            "text": "this is a test",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "completion-confirmed",
+            "head": "close",
+            "text": "goodbye",
+            "styleTag": "warm"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-6",
+      "specs": [
+        {
+          "speechAct": "availability-answer",
+          "signature": ["SLOT", "DETAIL"],
+          "meaning": "state a verified availability result"
+        }
+      ],
+      "promptSha256": "7e92064f710781e7638509796a815ce8e98f04647874d557cec9e55a645ef419",
+      "elapsedMs": 30888,
+      "output": {
+        "items": [
+          {
+            "speechAct": "availability-answer",
+            "head": "lead",
+            "text": "i",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "availability-answer",
+            "head": "body",
+            "text": "<SLOT> <DETAIL>",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "availability-answer",
+            "head": "body",
+            "text": "<SLOT> <DETAIL>",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "availability-answer",
+            "head": "close",
+            "text": "i",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "availability-answer",
+            "head": "lead",
+            "text": "you",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "availability-answer",
+            "head": "body",
+            "text": "<SLOT> <DETAIL>",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "availability-answer",
+            "head": "body",
+            "text": "<SLOT> <DETAIL>",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "availability-answer",
+            "head": "close",
+            "text": "you",
+            "styleTag": "neutral"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-7",
+      "specs": [
+        {
+          "speechAct": "schedule-summary",
+          "signature": ["SUMMARY"],
+          "meaning": "summarize verified calendar items"
+        }
+      ],
+      "promptSha256": "d2bf8bc1125864c74968715d6c8634441c46dc3e4d1b6c3d1ea8f6591e412f18",
+      "elapsedMs": 36348,
+      "output": {
+        "items": [
+          {
+            "speechAct": "schedule-summary",
+            "head": "lead",
+            "text": "today's",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "schedule-summary",
+            "head": "body",
+            "text": "<SUMMARY>it's a busy day with multiple appointments.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "schedule-summary",
+            "head": "body",
+            "text": " <SUMMARY>the meetings are scheduled for 10am and 2pm.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "schedule-summary",
+            "head": "close",
+            "text": "time to plan your schedule.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "schedule-summary",
+            "head": "lead",
+            "text": "today's",
+            "styleTag": "formal"
+          },
+          {
+            "speechAct": "schedule-summary",
+            "head": "body",
+            "text": "<SUMMARY>you have a key presentation tomorrow.",
+            "styleTag": "formal"
+          },
+          {
+            "speechAct": "schedule-summary",
+            "head": "body",
+            "text": " <SUMMARY>the client is expecting a detailed report.",
+            "styleTag": "formal"
+          },
+          {
+            "speechAct": "schedule-summary",
+            "head": "close",
+            "text": "make sure to prepare your materials.",
+            "styleTag": "formal"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-8",
+      "specs": [
+        {
+          "speechAct": "clarification",
+          "signature": ["DETAIL"],
+          "meaning": "ask for a missing detail without implying a write"
+        }
+      ],
+      "promptSha256": "8d80615de5d0a889a8b4303228d293651fcc1e984bf39f17286dea312248c7e2",
+      "elapsedMs": 34316,
+      "output": {
+        "items": [
+          {
+            "speechAct": "clarification",
+            "head": "lead",
+            "text": "i see you're trying to schedule a meeting",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "clarification",
+            "head": "body",
+            "text": "<DETAIL> is missing",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "clarification",
+            "head": "body",
+            "text": "<DETAIL> is missing",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "clarification",
+            "head": "close",
+            "text": "i see you're trying to schedule a meeting",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "clarification",
+            "head": "lead",
+            "text": "i noticed you're trying to schedule a meeting",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "clarification",
+            "head": "body",
+            "text": "<DETAIL> is missing",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "clarification",
+            "head": "body",
+            "text": "<DETAIL> is missing",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "clarification",
+            "head": "close",
+            "text": "i noticed you're trying to schedule a meeting",
+            "styleTag": "warm"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-9",
+      "specs": [
+        {
+          "speechAct": "conflict-warning",
+          "signature": ["SUMMARY"],
+          "meaning": "warn about a verified overlap without changing anything"
+        }
+      ],
+      "promptSha256": "f79927ee62d5aed88ea23b415f63186480b30181122dafbe5f3ab3800af52f46",
+      "elapsedMs": 35900,
+      "output": {
+        "items": [
+          {
+            "speechAct": "conflict-warning",
+            "head": "lead",
+            "text": "alert",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "conflict-warning",
+            "head": "body",
+            "text": "<SUMMARY> is a conflict in the schedule.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "conflict-warning",
+            "head": "body",
+            "text": "The conflict is between <SUMMARY> and <SUMARY>.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "conflict-warning",
+            "head": "close",
+            "text": "notify me to avoid the conflict.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "conflict-warning",
+            "head": "lead",
+            "text": "notify",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "conflict-warning",
+            "head": "body",
+            "text": "<SUMMARY> is a conflict in the schedule.",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "conflict-warning",
+            "head": "body",
+            "text": "The conflict is between <SUMMARY> and <SUMARY>.",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "conflict-warning",
+            "head": "close",
+            "text": "alert me to avoid the conflict.",
+            "styleTag": "warm"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-10",
+      "specs": [
+        {
+          "speechAct": "unsupported",
+          "signature": ["DETAIL"],
+          "meaning": "explain an honest capability boundary"
+        }
+      ],
+      "promptSha256": "0d46fb5260818f25d450a4acab74b6cc16e1715712d1d817fcfcd45255eb0bca",
+      "elapsedMs": 29524,
+      "output": {
+        "items": [
+          {
+            "speechAct": "unsupported",
+            "head": "lead",
+            "text": "a",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "unsupported",
+            "head": "body",
+            "text": "<DETAIL> <DETAIL>",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "unsupported",
+            "head": "body",
+            "text": "<DETAIL> <DETAIL>",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "unsupported",
+            "head": "close",
+            "text": "a",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "unsupported",
+            "head": "lead",
+            "text": "a",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "unsupported",
+            "head": "body",
+            "text": "<DETAIL> <DETAIL>",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "unsupported",
+            "head": "body",
+            "text": "<DETAIL> <DETAIL>",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "unsupported",
+            "head": "close",
+            "text": "a",
+            "styleTag": "warm"
+          }
+        ]
+      }
+    },
+    {
+      "id": "speak-11",
+      "specs": [
+        {
+          "speechAct": "error",
+          "signature": ["DETAIL"],
+          "meaning": "explain a contained local failure"
+        }
+      ],
+      "promptSha256": "1796458d275529f61ffdae7730a0d422a61d93ad25d521d226de742c4f5abbd5",
+      "elapsedMs": 32980,
+      "output": {
+        "items": [
+          {
+            "speechAct": "error",
+            "head": "lead",
+            "text": "the day is",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "error",
+            "head": "body",
+            "text": "<DETAIL>the event is postponed due to technical issues.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "error",
+            "head": "body",
+            "text": "the calendar is now updated",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "error",
+            "head": "close",
+            "text": "waiting for your confirmation.",
+            "styleTag": "neutral"
+          },
+          {
+            "speechAct": "error",
+            "head": "lead",
+            "text": "the day is",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "error",
+            "head": "body",
+            "text": "<DETAIL>the event is postponed due to technical issues.",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "error",
+            "head": "body",
+            "text": "the calendar is now updated",
+            "styleTag": "warm"
+          },
+          {
+            "speechAct": "error",
+            "head": "close",
+            "text": "waiting for your confirmation.",
+            "styleTag": "warm"
+          }
+        ]
+      }
+    }
+  ]
+}

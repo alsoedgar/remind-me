@@ -1,0 +1,74 @@
+[
+  {
+    "id": "voice-001",
+    "tags": ["american", "reminder", "time-expression"],
+    "typed": "Remind me to call Mary tomorrow at 6 PM",
+    "transcript": "REMIND ME TO CALL MARY TO MORROW AT SIX P M"
+  },
+  {
+    "id": "voice-002",
+    "tags": ["american", "event", "time-range"],
+    "typed": "Block focus time next Friday from 2 PM to 4 PM",
+    "transcript": "BLOCK FOCUS TIME NEXT FRIDAY FROM TWO IN THE AFTERNOON TO FOUR IN THE AFTERNOON"
+  },
+  {
+    "id": "voice-003",
+    "tags": ["availability", "spaced-meridiem"],
+    "typed": "Am I free Friday from 2 PM to 4 PM?",
+    "transcript": "AM I FREE FRIDAY FROM TWO P M TO FOUR P M"
+  },
+  {
+    "id": "voice-004",
+    "tags": ["reminder", "spoken-minutes"],
+    "typed": "Remind me to take a break Tuesday at 9:30 AM",
+    "transcript": "REMIND ME TO TAKE A BREAK TUESDAY AT NINE THIRTY A M"
+  },
+  {
+    "id": "voice-005",
+    "tags": ["british-expression", "half-past"],
+    "typed": "Schedule tea Friday at 6:30 PM",
+    "transcript": "SCHEDULE TEA FRIDAY AT HALF PAST SIX P M"
+  },
+  {
+    "id": "voice-006",
+    "tags": ["british-expression", "quarter-hours"],
+    "typed": "Block study time Friday from 2:15 PM to 4:45 PM",
+    "transcript": "BLOCK STUDY TIME FRIDAY FROM QUARTER PAST TWO P M TO QUARTER TO FIVE P M"
+  },
+  {
+    "id": "voice-007",
+    "tags": ["query", "uppercase"],
+    "typed": "What do I have today?",
+    "transcript": "WHAT DO I HAVE TODAY"
+  },
+  {
+    "id": "voice-008",
+    "tags": ["conflicts", "period"],
+    "typed": "Do I have conflicts tomorrow morning?",
+    "transcript": "DO I HAVE CONFLICTS TO MORROW MORNING"
+  },
+  {
+    "id": "voice-009",
+    "tags": ["reminder", "noon"],
+    "typed": "Remind me to eat lunch tomorrow at noon",
+    "transcript": "REMIND ME TO EAT LUNCH TO MORROW AT NOON"
+  },
+  {
+    "id": "voice-010",
+    "tags": ["event", "midnight"],
+    "typed": "Schedule server check Friday at midnight",
+    "transcript": "SCHEDULE SERVER CHECK FRIDAY AT MIDNIGHT"
+  },
+  {
+    "id": "voice-011",
+    "tags": ["accent-lexicon", "reminder"],
+    "typed": "Remind me to ring Mum Monday at 8 AM",
+    "transcript": "REMIND ME TO RING MUM MONDAY AT EIGHT A M"
+  },
+  {
+    "id": "voice-012",
+    "tags": ["multi-day", "uppercase"],
+    "typed": "Block vacation from August 25 through August 28",
+    "transcript": "BLOCK VACATION FROM AUGUST 25 THROUGH AUGUST 28"
+  }
+]

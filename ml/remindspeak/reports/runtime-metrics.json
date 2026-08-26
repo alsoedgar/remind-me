@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "model": {
+    "available": true,
+    "id": "remindspeak-phrase-lattice-28m-en-phase6",
+    "version": "0.3.0",
+    "architecture": "PhraseLattice conditional surface generator",
+    "parameterCount": 28311984,
+    "quantization": "symmetric-int8-per-output-channel",
+    "modelBytes": 223187,
+    "workingSetBytes": 28311552,
+    "mode": "protected-overgenerate-rerank",
+    "candidateCount": 5,
+    "teacherUsed": true,
+    "networkRequired": false,
+    "error": null
+  },
+  "metrics": {
+    "fixtureExamples": 250,
+    "candidateSchemaValidity": 1,
+    "protectedFactRetention": 1,
+    "unsafeStaticLiteralRate": 0,
+    "exactReferenceTopRate": 0.436,
+    "referenceInTopFiveRate": 0.832,
+    "recentExactRepeatRate": 0,
+    "latencyMs": {
+      "median": 5.178899999999885,
+      "p95": 8.207700000000159
+    },
+    "totalEvaluationMs": 2352.7579
+  },
+  "assertions": {
+    "teacherUsed": true,
+    "pretrainedWeightsUsed": false,
+    "networkRequired": false,
+    "exactPlaceholderSetRequired": true,
+    "deterministicFallbackVerified": true,
+    "protectedSpeechActCount": 18,
+    "projectAuthoredSurfaceAtoms": 432,
+    "localPreferenceBiasBounded": true,
+    "humanPreferenceStudyStatus": "awaiting-participants",
+    "humanPreferenceGatePassed": false
+  }
+}

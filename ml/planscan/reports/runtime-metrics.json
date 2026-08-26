@@ -1,0 +1,474 @@
+{
+  "schemaVersion": 1,
+  "fixturePages": 96,
+  "model": {
+    "available": true,
+    "id": "planscan-spatialhashgraph-5m-en",
+    "version": "0.1.0",
+    "architecture": "SpatialHashGraph",
+    "parameterCount": 5242880,
+    "quantization": "per-output-channel symmetric INT8",
+    "modelBytes": 22667,
+    "workingSetBytes": 5242880,
+    "mode": "evidence-gated-spatial-graph",
+    "teacherUsed": false,
+    "networkRequired": false,
+    "error": null
+  },
+  "runtime": {
+    "entityMicroF1": 1,
+    "evidenceCoverage": 1,
+    "executionEquivalence": {
+      "bornDigital": 1,
+      "scanned": 0.7916666666666666
+    },
+    "deterministicPlannerEquivalence": {
+      "bornDigital": 0.8541666666666666,
+      "scanned": 0.7291666666666666
+    },
+    "latencyMs": {
+      "median": 2.873600000000124,
+      "p95": 5.613000000000056,
+      "maximum": 34.34050000000002
+    },
+    "diagnostics": [
+      {
+        "id": "planscan:test:28",
+        "templateFamily": "sunrise-agenda",
+        "method": "ocr",
+        "expected": [
+          "event|client workshop|september 7, 2026|9:00 am - 10:00 am|cedar lab",
+          "event|dinner reservation|september 11, 2026|2:00 pm - 3:30 pm|studio a",
+          "reminder|call the dentist|september 18, 2026|6:00 pm|north hall"
+        ],
+        "actual": [
+          "event|client workshop|september 7, 2026|9:00 am - 10:00 am|cedar lab",
+          "event|dinner reservation|september 11, 2026|2:00 pm - 3:30 pm|stud1o a",
+          "reminder|call the dentist|september 18, 2026|6:00 pm|north hall"
+        ]
+      },
+      {
+        "id": "planscan:test:29",
+        "templateFamily": "rotation-matrix",
+        "method": "ocr",
+        "expected": [
+          "event|portfolio review|september 11, 2026|6:00 pm|garden pavilion",
+          "reminder|submit portfolio|september 18, 2026|8:30 am - 9:15 am|reading room",
+          "event|course registration|october 3, 2026|noon|room 204"
+        ],
+        "actual": [
+          "event|portfolio review|september 11, 2026|6:00 pm|garden pavilion",
+          "reminder|submit portfolio|september 18, 2026|8:30 am - 9:15 am|reading room",
+          "event|course registration|october 3, 2026|noon|"
+        ]
+      },
+      {
+        "id": "planscan:test:46",
+        "templateFamily": "itinerary-bands",
+        "method": "ocr",
+        "expected": [
+          "event|community meeting|september 18, 2026|noon|gate c12",
+          "event|research check-in|october 3, 2026|4:45 pm - 5:30 pm|cedar lab",
+          "event|flight to portland|august 26, 2026|10:00 am|studio a",
+          "event|renew library card|august 28, 2026|7:15 pm|north hall"
+        ],
+        "actual": [
+          "event|community meeting|september 18, 2026|noon|gate c12",
+          "event|research check-in|october 3, 2026|4:45 pm - 5:30 pm|cedar lab",
+          "event|flight to portland|august 26, 2026|10:00 am|studio a",
+          "event|renew library card|august 28, 2026|7:15 pm|"
+        ]
+      },
+      {
+        "id": "planscan:test:68",
+        "templateFamily": "sunrise-agenda",
+        "method": "ocr",
+        "expected": [
+          "event|client workshop|september 7, 2026|9:00 am - 10:00 am|cedar lab",
+          "event|dinner reservation|september 11, 2026|2:00 pm - 3:30 pm|studio a",
+          "reminder|call the dentist|september 18, 2026|6:00 pm|north hall"
+        ],
+        "actual": [
+          "event|client workshop|september 7, 2026|9:00 am - 10:00 am|cedar lab",
+          "event|dinner reservation|september 11, 2026|2:00 pm - 3:30 pm|stud1o a",
+          "reminder|call the dentist|september 18, 2026|6:00 pm|north hall"
+        ]
+      },
+      {
+        "id": "planscan:test:69",
+        "templateFamily": "rotation-matrix",
+        "method": "ocr",
+        "expected": [
+          "event|portfolio review|september 11, 2026|6:00 pm|garden pavilion",
+          "reminder|submit portfolio|september 18, 2026|8:30 am - 9:15 am|reading room"
+        ],
+        "actual": [
+          "event|portfolio review|september 11, 2026|6:00 pm|",
+          "reminder|submit portfolio|september 18, 2026|8:30 am - 9:15 am|reading room"
+        ]
+      },
+      {
+        "id": "planscan:test:70",
+        "templateFamily": "itinerary-bands",
+        "method": "ocr",
+        "expected": [
+          "reminder|lab orientation|september 18, 2026|noon|studio a",
+          "event|send travel forms|october 3, 2026|4:45 pm - 5:30 pm|north hall",
+          "event|project kickoff|august 26, 2026|10:00 am|community loft"
+        ],
+        "actual": [
+          "reminder|lab orientation|september 18, 2026|noon|studio a",
+          "event|send travel forms|october 3, 2026|4:45 pm - 5:30 pm|",
+          "event|project kickoff|august 26, 2026|10:00 am|community loft"
+        ]
+      },
+      {
+        "id": "planscan:test:71",
+        "templateFamily": "notebook-screenshot",
+        "method": "ocr",
+        "expected": [
+          "event|renew library card|october 3, 2026|10:00 am|reading room",
+          "event|community meeting|august 26, 2026|7:15 pm|room 204"
+        ],
+        "actual": [
+          "event|renew library card|october 3, 2026|10:00 am|reading room",
+          "event|community meeting|august 26, 2026|7:15 pm|r0om 204"
+        ]
+      },
+      {
+        "id": "planscan:test:77",
+        "templateFamily": "rotation-matrix",
+        "method": "ocr",
+        "expected": [
+          "event|volunteer shift|september 11, 2026|6:00 pm|main library",
+          "event|draft presentation|september 18, 2026|8:30 am - 9:15 am|garden pavilion",
+          "event|design review|october 3, 2026|noon|reading room"
+        ],
+        "actual": [
+          "event|volunteer shift|september 11, 2026|6:00 pm|main library",
+          "event|draft presentation|september 18, 2026|8:30 am - 9:15 am|garden pavilion",
+          "event|design review|october 3, 2026|noon|"
+        ]
+      },
+      {
+        "id": "planscan:test:78",
+        "templateFamily": "itinerary-bands",
+        "method": "ocr",
+        "expected": [
+          "event|call the dentist|september 18, 2026|noon|cedar lab",
+          "event|photography walk|october 3, 2026|4:45 pm - 5:30 pm|studio a",
+          "reminder|client workshop|august 26, 2026|10:00 am|north hall",
+          "event|dinner reservation|august 28, 2026|7:15 pm|community loft"
+        ],
+        "actual": [
+          "event|call the dentist|september 18, 2026|noon|",
+          "event|photography walk|october 3, 2026|4:45 pm - 5:30 pm|",
+          "reminder|client workshop|august 26, 2026|10:00 am|north hall",
+          "event|dinner reservation|august 28, 2026|7:15 pm|community loft"
+        ]
+      },
+      {
+        "id": "planscan:test:86",
+        "templateFamily": "itinerary-bands",
+        "method": "ocr",
+        "expected": [
+          "event|community meeting|september 18, 2026|noon|gate c12",
+          "event|research check-in|october 3, 2026|4:45 pm - 5:30 pm|cedar lab"
+        ],
+        "actual": [
+          "event|community meeting|september 18, 2026|noon|gate c12",
+          "event|research check-in|october 3, 2026|4:45 pm - 5:30 pm|"
+        ]
+      }
+    ],
+    "plannerDiagnostics": [
+      {
+        "id": "planscan:test:0",
+        "method": "native-text",
+        "expected": [
+          "reminder|project kickoff|2026-08-26|09:00|",
+          "event|morning focus block|2026-08-28|14:00|north hall",
+          "event|lab orientation|2026-08-30|18:00|community loft"
+        ],
+        "actual": [
+          "reminder|project kickoff|2026-08-25|09:00|",
+          "event|morning focus block|2026-08-28|14:00|north hall",
+          "event|lab orientation|2026-08-30|18:00|community loft"
+        ]
+      },
+      {
+        "id": "planscan:test:28",
+        "method": "ocr",
+        "expected": [
+          "event|client workshop|2026-09-07|09:00|cedar lab",
+          "event|dinner reservation|2026-09-11|14:00|studio a",
+          "reminder|call the dentist|2026-09-18|18:00|"
+        ],
+        "actual": [
+          "event|client workshop|2026-08-25|09:00|cedar lab",
+          "event|dinner reservation|2026-09-11|14:00|stud1o a",
+          "reminder|call the dentist|2026-09-18|18:00|"
+        ]
+      },
+      {
+        "id": "planscan:test:29",
+        "method": "ocr",
+        "expected": [
+          "event|portfolio review|2026-09-11|18:00|garden pavilion",
+          "reminder|submit portfolio|2026-09-18|08:30|",
+          "event|course registration|2026-10-03|12:00|room 204"
+        ],
+        "actual": [
+          "event|portfolio review|2026-09-11|18:00|garden pavilion",
+          "reminder|submit portfolio|2026-09-18|08:30|",
+          "event|course registration|2026-10-03|12:00|"
+        ]
+      },
+      {
+        "id": "planscan:test:26",
+        "method": "native-text",
+        "expected": [
+          "event|community meeting|2026-08-30|12:00|gate c12",
+          "event|research check-in|2026-09-02|16:45|cedar lab",
+          "event|flight to portland|2026-09-07|10:00|studio a",
+          "event|renew library card|2026-09-11|19:15|north hall"
+        ],
+        "actual": [
+          "event|community meeting|2026-08-30|12:00|gate c12",
+          "event|research check-in|2026-09-02|16:45|cedar lab",
+          "event|flight to portland|2026-08-25|10:00|studio a",
+          "event|renew library card|2026-09-11|19:15|north hall"
+        ]
+      },
+      {
+        "id": "planscan:test:27",
+        "method": "native-text",
+        "expected": [
+          "event|design review|2026-09-02|10:00|main library",
+          "event|team retrospective|2026-09-07|19:15|garden pavilion",
+          "event|volunteer shift|2026-09-11|09:00|reading room"
+        ],
+        "actual": [
+          "event|design review|2026-09-02|10:00|main library",
+          "event|team retrospective|2026-08-25|19:15|garden pavilion",
+          "event|volunteer shift|2026-09-11|09:00|reading room"
+        ]
+      },
+      {
+        "id": "planscan:test:46",
+        "method": "ocr",
+        "expected": [
+          "event|community meeting|2026-09-18|12:00|gate c12",
+          "event|research check-in|2026-10-03|16:45|cedar lab",
+          "event|flight to portland|2026-08-26|10:00|studio a",
+          "event|renew library card|2026-08-28|19:15|north hall"
+        ],
+        "actual": [
+          "event|community meeting|2026-09-18|12:00|gate c12",
+          "event|research check-in|2026-10-03|16:45|cedar lab",
+          "event|flight to portland|2026-08-26|10:00|studio a",
+          "event|renew library card|2026-08-28|19:15|"
+        ]
+      },
+      {
+        "id": "planscan:test:54",
+        "method": "ocr",
+        "expected": [
+          "event|studio critique|2026-09-18|12:00|community loft",
+          "reminder|portfolio review|2026-10-03|16:45|",
+          "event|submit portfolio|2026-08-26|10:00|cedar lab"
+        ],
+        "actual": [
+          "event|studio critique|2026-09-18|12:00|community loft",
+          "reminder|portfolio review|2026-10-03|16:45|",
+          "event|submit portfolio|2026-08-25|10:00|cedar lab"
+        ]
+      },
+      {
+        "id": "planscan:test:55",
+        "method": "ocr",
+        "expected": [
+          "reminder|morning focus block|2026-10-03|10:00|",
+          "event|lab orientation|2026-08-26|19:15|main library",
+          "event|send travel forms|2026-08-28|09:00|garden pavilion"
+        ],
+        "actual": [
+          "reminder|morning focus block|2026-10-03|10:00|",
+          "event|lab orientation|2026-08-25|19:15|main library",
+          "event|send travel forms|2026-08-28|09:00|garden pavilion"
+        ]
+      },
+      {
+        "id": "planscan:test:56",
+        "method": "native-text",
+        "expected": [
+          "event|flight to portland|2026-08-26|09:00|gate c12",
+          "event|renew library card|2026-08-28|14:00|cedar lab"
+        ],
+        "actual": [
+          "event|flight to portland|2026-08-25|09:00|gate c12",
+          "event|renew library card|2026-08-28|14:00|cedar lab"
+        ]
+      },
+      {
+        "id": "planscan:test:68",
+        "method": "ocr",
+        "expected": [
+          "event|client workshop|2026-09-07|09:00|cedar lab",
+          "event|dinner reservation|2026-09-11|14:00|studio a",
+          "reminder|call the dentist|2026-09-18|18:00|"
+        ],
+        "actual": [
+          "event|client workshop|2026-09-07|09:00|cedar lab",
+          "event|dinner reservation|2026-09-11|14:00|stud1o a",
+          "reminder|call the dentist|2026-09-18|18:00|"
+        ]
+      },
+      {
+        "id": "planscan:test:69",
+        "method": "ocr",
+        "expected": [
+          "event|portfolio review|2026-09-11|18:00|garden pavilion",
+          "reminder|submit portfolio|2026-09-18|08:30|"
+        ],
+        "actual": [
+          "event|portfolio review|2026-09-11|18:00|",
+          "reminder|submit portfolio|2026-09-18|08:30|"
+        ]
+      },
+      {
+        "id": "planscan:test:70",
+        "method": "ocr",
+        "expected": [
+          "reminder|lab orientation|2026-09-18|12:00|",
+          "event|send travel forms|2026-10-03|16:45|north hall",
+          "event|project kickoff|2026-08-26|10:00|community loft"
+        ],
+        "actual": [
+          "reminder|lab orientation|2026-09-18|12:00|",
+          "event|send travel forms|2026-10-03|16:45|",
+          "event|project kickoff|2026-08-26|10:00|community loft"
+        ]
+      },
+      {
+        "id": "planscan:test:71",
+        "method": "ocr",
+        "expected": [
+          "event|renew library card|2026-10-03|10:00|reading room",
+          "event|community meeting|2026-08-26|19:15|room 204"
+        ],
+        "actual": [
+          "event|renew library card|2026-10-03|10:00|reading room",
+          "event|community meeting|2026-08-26|19:15|r0om 204"
+        ]
+      },
+      {
+        "id": "planscan:test:77",
+        "method": "ocr",
+        "expected": [
+          "event|volunteer shift|2026-09-11|18:00|main library",
+          "event|draft presentation|2026-09-18|08:30|garden pavilion",
+          "event|design review|2026-10-03|12:00|reading room"
+        ],
+        "actual": [
+          "event|volunteer shift|2026-09-11|18:00|main library",
+          "event|draft presentation|2026-09-18|08:30|garden pavilion",
+          "event|design review|2026-10-03|12:00|"
+        ]
+      },
+      {
+        "id": "planscan:test:78",
+        "method": "ocr",
+        "expected": [
+          "event|call the dentist|2026-09-18|12:00|cedar lab",
+          "event|photography walk|2026-10-03|16:45|studio a",
+          "reminder|client workshop|2026-08-26|10:00|",
+          "event|dinner reservation|2026-08-28|19:15|community loft"
+        ],
+        "actual": [
+          "event|call the dentist|2026-09-18|12:00|",
+          "event|photography walk|2026-10-03|16:45|",
+          "reminder|client workshop|2026-08-26|10:00|",
+          "event|dinner reservation|2026-08-28|19:15|community loft"
+        ]
+      },
+      {
+        "id": "planscan:test:84",
+        "method": "ocr",
+        "expected": [
+          "event|submit portfolio|2026-09-07|09:00|community loft",
+          "reminder|course registration|2026-09-11|14:00|",
+          "event|studio critique|2026-09-18|18:00|cedar lab"
+        ],
+        "actual": [
+          "event|submit portfolio|2026-08-25|09:00|community loft",
+          "reminder|course registration|2026-09-11|14:00|",
+          "event|studio critique|2026-09-18|18:00|cedar lab"
+        ]
+      },
+      {
+        "id": "planscan:test:81",
+        "method": "native-text",
+        "expected": [
+          "event|research check-in|2026-08-28|18:00|reading room",
+          "event|flight to portland|2026-08-30|08:30|room 204",
+          "event|renew library card|2026-09-02|12:00|online",
+          "event|community meeting|2026-09-07|16:45|main library"
+        ],
+        "actual": [
+          "event|research check-in|2026-08-28|18:00|reading room",
+          "event|flight to portland|2026-08-30|08:30|room 204",
+          "event|renew library card|2026-09-02|12:00|online",
+          "event|community meeting|2026-08-25|16:45|main library"
+        ]
+      },
+      {
+        "id": "planscan:test:82",
+        "method": "native-text",
+        "expected": [
+          "event|team retrospective|2026-08-30|12:00|north hall",
+          "event|volunteer shift|2026-09-02|16:45|community loft",
+          "event|draft presentation|2026-09-07|10:00|gate c12"
+        ],
+        "actual": [
+          "event|team retrospective|2026-08-30|12:00|north hall",
+          "event|volunteer shift|2026-09-02|16:45|community loft",
+          "event|draft presentation|2026-08-25|10:00|gate c12"
+        ]
+      },
+      {
+        "id": "planscan:test:86",
+        "method": "ocr",
+        "expected": [
+          "event|community meeting|2026-09-18|12:00|gate c12",
+          "event|research check-in|2026-10-03|16:45|cedar lab"
+        ],
+        "actual": [
+          "event|community meeting|2026-09-18|12:00|gate c12",
+          "event|research check-in|2026-10-03|16:45|"
+        ]
+      },
+      {
+        "id": "planscan:test:83",
+        "method": "native-text",
+        "expected": [
+          "event|dinner reservation|2026-09-02|10:00|room 204",
+          "event|call the dentist|2026-09-07|19:15|online",
+          "reminder|photography walk|2026-09-11|09:00|"
+        ],
+        "actual": [
+          "event|dinner reservation|2026-09-02|10:00|room 204",
+          "event|call the dentist|2026-08-25|19:15|online",
+          "reminder|photography walk|2026-09-11|09:00|"
+        ]
+      }
+    ]
+  },
+  "safety": {
+    "everyValueHasExactSourceEvidence": true,
+    "modelHasNoStorageHandle": true,
+    "deterministicCalendarCompilerRetained": true,
+    "explicitBatchReviewRequired": true,
+    "rulesFallbackRetained": true
+  }
+}

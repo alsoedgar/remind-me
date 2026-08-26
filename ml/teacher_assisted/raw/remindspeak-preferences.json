@@ -1,0 +1,571 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": "0.1.0",
+  "teacher": {
+    "modelId": "Qwen3-1.7B-Q4_K_M",
+    "byteLength": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "license": "Apache-2.0"
+  },
+  "generation": {
+    "seed": 2608250,
+    "temperature": 0.7,
+    "topK": 30,
+    "topP": 0.85,
+    "thoughtTokens": 0,
+    "contextSize": 8192,
+    "device": "cpu"
+  },
+  "kind": "remindspeak-preferences",
+  "batches": [
+    {
+      "id": "preference-proposal",
+      "caseIds": [
+        "speak-pref:proposal:minimal",
+        "speak-pref:proposal:warm",
+        "speak-pref:proposal:formal",
+        "speak-pref:proposal:playful",
+        "speak-pref:proposal:proactive",
+        "speak-pref:proposal:neutral"
+      ],
+      "promptSha256": "0d6749dbacf28a9d11c620da9e34ede2550b8641e4d5c5dadf2ca894e9bd3738",
+      "elapsedMs": 85529,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:proposal:formal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:proposal:playful",
+            "choice": 3
+          },
+          {
+            "id": "speak-pref:proposal:proactive",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:proposal:neutral",
+            "choice": 2
+          },
+          {
+            "id": "speak-pref:proposal:warm",
+            "choice": 1
+          },
+          {
+            "id": "speak-pref:proposal:formal",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-creation-confirmed",
+      "caseIds": [
+        "speak-pref:creation-confirmed:minimal",
+        "speak-pref:creation-confirmed:warm",
+        "speak-pref:creation-confirmed:formal",
+        "speak-pref:creation-confirmed:playful",
+        "speak-pref:creation-confirmed:proactive",
+        "speak-pref:creation-confirmed:neutral"
+      ],
+      "promptSha256": "8c7a76b10d2e56a80b50596c65e38ac19bb37a1ad04073e6d048c22076e83cc0",
+      "elapsedMs": 80829,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:creation-confirmed:neutral",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:creation-confirmed:playful",
+            "choice": 3
+          },
+          {
+            "id": "speak-pref:creation-confirmed:proactive",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:creation-confirmed:formal",
+            "choice": 2
+          },
+          {
+            "id": "speak-pref:creation-confirmed:warm",
+            "choice": 1
+          },
+          {
+            "id": "speak-pref:creation-confirmed:neutral",
+            "choice": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-update-confirmed",
+      "caseIds": [
+        "speak-pref:update-confirmed:minimal",
+        "speak-pref:update-confirmed:warm",
+        "speak-pref:update-confirmed:formal",
+        "speak-pref:update-confirmed:playful",
+        "speak-pref:update-confirmed:proactive",
+        "speak-pref:update-confirmed:neutral"
+      ],
+      "promptSha256": "2186a7cefaa4411460858e78aeb7e9dab4ed6bee4f06e7f15ba3729a1bcf132b",
+      "elapsedMs": 86019,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:update-confirmed:minimal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:update-confirmed:warm",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:update-confirmed:formal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:update-confirmed:playful",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:update-confirmed:proactive",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:update-confirmed:neutral",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-deletion-confirmed",
+      "caseIds": [
+        "speak-pref:deletion-confirmed:minimal",
+        "speak-pref:deletion-confirmed:warm",
+        "speak-pref:deletion-confirmed:formal",
+        "speak-pref:deletion-confirmed:playful",
+        "speak-pref:deletion-confirmed:proactive",
+        "speak-pref:deletion-confirmed:neutral"
+      ],
+      "promptSha256": "bb753769ddcbe05ef545d42c91e4114b9479ac6e36c7779ffbd8939705f1a86b",
+      "elapsedMs": 91404,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:deletion-confirmed:minimal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:deletion-confirmed:warm",
+            "choice": 1
+          },
+          {
+            "id": "speak-pref:deletion-confirmed:formal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:deletion-confirmed:playful",
+            "choice": 2
+          },
+          {
+            "id": "speak-pref:deletion-confirmed:proactive",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:deletion-confirmed:neutral",
+            "choice": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-completion-confirmed",
+      "caseIds": [
+        "speak-pref:completion-confirmed:minimal",
+        "speak-pref:completion-confirmed:warm",
+        "speak-pref:completion-confirmed:formal",
+        "speak-pref:completion-confirmed:playful",
+        "speak-pref:completion-confirmed:proactive",
+        "speak-pref:completion-confirmed:neutral"
+      ],
+      "promptSha256": "5b88f1b2b42c252f77fdec47d52fda0d118d078c73ab03e13686ab3d0776b5a2",
+      "elapsedMs": 83567,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:completion-confirmed:formal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:completion-confirmed:playful",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:completion-confirmed:proactive",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:completion-confirmed:neutral",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:completion-confirmed:warm",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:completion-confirmed:playful",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-availability-answer",
+      "caseIds": [
+        "speak-pref:availability-answer:minimal",
+        "speak-pref:availability-answer:warm",
+        "speak-pref:availability-answer:formal",
+        "speak-pref:availability-answer:playful",
+        "speak-pref:availability-answer:proactive",
+        "speak-pref:availability-answer:neutral"
+      ],
+      "promptSha256": "c5d96c913720ecf01d2dd3db870f1be9dbed5934913ec410871f22273685efca",
+      "elapsedMs": 92616,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:availability-answer:playful",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:availability-answer:proactive",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:availability-answer:neutral",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:availability-answer:formal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:availability-answer:warm",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:availability-answer:minimal",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-schedule-summary",
+      "caseIds": [
+        "speak-pref:schedule-summary:minimal",
+        "speak-pref:schedule-summary:warm",
+        "speak-pref:schedule-summary:formal",
+        "speak-pref:schedule-summary:playful",
+        "speak-pref:schedule-summary:proactive",
+        "speak-pref:schedule-summary:neutral"
+      ],
+      "promptSha256": "a33e41ebfd8db08773966274a7f0403ecab7daa48ec28f1890a4c21a7d4a5b7b",
+      "elapsedMs": 93517,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:schedule-summary:formal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:schedule-summary:playful",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:schedule-summary:proactive",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:schedule-summary:neutral",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:schedule-summary:warm",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:schedule-summary:proactive",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-clarification",
+      "caseIds": [
+        "speak-pref:clarification:minimal",
+        "speak-pref:clarification:warm",
+        "speak-pref:clarification:formal",
+        "speak-pref:clarification:playful",
+        "speak-pref:clarification:proactive",
+        "speak-pref:clarification:neutral"
+      ],
+      "promptSha256": "0c033bde31ad80b414b8bbda22d2f30b3f85672d5d2c18429b935599b726f950",
+      "elapsedMs": 81992,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:clarification:playful",
+            "choice": 3
+          },
+          {
+            "id": "speak-pref:clarification:proactive",
+            "choice": 3
+          },
+          {
+            "id": "speak-pref:clarification:neutral",
+            "choice": 3
+          },
+          {
+            "id": "speak-pref:clarification:warm",
+            "choice": 3
+          },
+          {
+            "id": "speak-pref:clarification:formal",
+            "choice": 3
+          },
+          {
+            "id": "speak-pref:clarification:proactive",
+            "choice": 3
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-conflict-warning",
+      "caseIds": [
+        "speak-pref:conflict-warning:minimal",
+        "speak-pref:conflict-warning:warm",
+        "speak-pref:conflict-warning:formal",
+        "speak-pref:conflict-warning:playful",
+        "speak-pref:conflict-warning:proactive",
+        "speak-pref:conflict-warning:neutral"
+      ],
+      "promptSha256": "4a39125849fe9df0b9cf1205b0daf8d8f358884074ca77ba453688e1a9fab8b4",
+      "elapsedMs": 86446,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:conflict-warning:minimal",
+            "choice": 1
+          },
+          {
+            "id": "speak-pref:conflict-warning:warm",
+            "choice": 3
+          },
+          {
+            "id": "speak-pref:conflict-warning:formal",
+            "choice": 2
+          },
+          {
+            "id": "speak-pref:conflict-warning:playful",
+            "choice": 1
+          },
+          {
+            "id": "speak-pref:conflict-warning:proactive",
+            "choice": 1
+          },
+          {
+            "id": "speak-pref:conflict-warning:neutral",
+            "choice": 2
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-unsupported",
+      "caseIds": [
+        "speak-pref:unsupported:minimal",
+        "speak-pref:unsupported:warm",
+        "speak-pref:unsupported:formal",
+        "speak-pref:unsupported:playful",
+        "speak-pref:unsupported:proactive",
+        "speak-pref:unsupported:neutral"
+      ],
+      "promptSha256": "3289e8eeb15b55eeabae72d1221ae3cbc16c65894e356e65e2e5c7f58a28c7f4",
+      "elapsedMs": 97389,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:unsupported:formal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:unsupported:playful",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:unsupported:proactive",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:unsupported:neutral",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:unsupported:warm",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:unsupported:proactive",
+            "choice": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-error",
+      "caseIds": [
+        "speak-pref:error:minimal",
+        "speak-pref:error:warm",
+        "speak-pref:error:formal",
+        "speak-pref:error:playful",
+        "speak-pref:error:proactive",
+        "speak-pref:error:neutral"
+      ],
+      "promptSha256": "a95d418f3f9ff75b6399ad3933b3fba593bbe990427cc63e2fc1bacde91edf2d",
+      "elapsedMs": 85919,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:error:playful",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:error:proactive",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:error:neutral",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:error:formal",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:error:warm",
+            "choice": 0
+          },
+          {
+            "id": "speak-pref:error:playful",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-repair-proposal-minimal",
+      "caseIds": ["speak-pref:proposal:minimal"],
+      "promptSha256": "9f44d0c4d78318f741fe9be7360049439b6f08c2f296a67cffc0d1ef913cfaea",
+      "elapsedMs": 22937,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:proposal:minimal",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-repair-creation-confirmed-minimal",
+      "caseIds": ["speak-pref:creation-confirmed:minimal"],
+      "promptSha256": "dbbf05793d71e3f36c7b91eea6a2a0de1cd7b0a28f01fedf2b2a8552ede37477",
+      "elapsedMs": 16279,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:creation-confirmed:minimal",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-repair-completion-confirmed-minimal",
+      "caseIds": ["speak-pref:completion-confirmed:minimal"],
+      "promptSha256": "882821ff3f2885dc9cfa64c9d8cae4b19e64e9d2f33d895d3638b8e1cc4a6903",
+      "elapsedMs": 16176,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:completion-confirmed:minimal",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-repair-schedule-summary-minimal",
+      "caseIds": ["speak-pref:schedule-summary:minimal"],
+      "promptSha256": "bf152f14b171e59d0b447f56fe29e99b47ea68aff5d965475a2686260a804dd1",
+      "elapsedMs": 15149,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:schedule-summary:minimal",
+            "choice": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-repair-clarification-minimal",
+      "caseIds": ["speak-pref:clarification:minimal"],
+      "promptSha256": "5227e11a8d4fd49b3376ac4c6a764b0c4185cb578d7ff1eaad1b9f20c069177d",
+      "elapsedMs": 13936,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:clarification:minimal",
+            "choice": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-repair-unsupported-minimal",
+      "caseIds": ["speak-pref:unsupported:minimal"],
+      "promptSha256": "60f8fcdca2ea18a578eaceb0a50775f529f36fbf1cd662a5a628cdd5fc9a56fe",
+      "elapsedMs": 16203,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:unsupported:minimal",
+            "choice": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "preference-repair-error-minimal",
+      "caseIds": ["speak-pref:error:minimal"],
+      "promptSha256": "72cc78d87a5d2037071fd565e129fe3de736850624cc38ff778415e297097633",
+      "elapsedMs": 15877,
+      "output": {
+        "choices": [
+          {
+            "id": "speak-pref:error:minimal",
+            "choice": 1
+          }
+        ]
+      }
+    }
+  ]
+}

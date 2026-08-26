@@ -1,0 +1,2406 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "0.1.0",
+  "provenance": {
+    "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+    "teacherByteLength": 1282439264,
+    "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "teacherLicense": "Apache-2.0",
+    "teacherRole": "delexicalized surface paraphrase only",
+    "labelAuthority": "project-authored capability registry and semantic seed programs",
+    "pretrainedWeightsImportedIntoStudent": false,
+    "personalCalendarDataUsed": false,
+    "humanConversationLogsUsed": false,
+    "humanBlindExamplesUsed": 0,
+    "rawPath": "ml/assistant_corpus/raw/qwen-paraphrases.json",
+    "rawSha256": "b8d07526d22dd21016fbb93f92eeb0d328f5fecfac60bc88f04d838336bc074a",
+    "jobsPath": "ml/assistant_corpus/raw/teacher-jobs.json",
+    "jobsSha256": "68760769e91e2671d1601f86d768b06dd466dc97e117c87edbd552daa4e402ab",
+    "repairJobsPath": "ml/assistant_corpus/raw/teacher-repair-jobs.json",
+    "repairJobsSha256": "0a70c2b36e467c381fc3e5e1ceb4aa2c6b2536780b0acc122334bb3f8325411d",
+    "registrySha256": "7da27bed9f18b097f40db8f09a6f9c8b0bcdfb0b9866dcdbc947a620bcd6163f",
+    "frozenEvaluationPath": "evals/assistant/v0.1/scenarios.jsonl",
+    "frozenEvaluationSha256": "0adff837434c8902a720f6e85b9e5d1049e117619521d831ef04748a8c776ca5",
+    "frozenEvaluationRole": "contamination rejection only; never supplied to the teacher"
+  },
+  "templates": [
+    {
+      "id": "project-a46eeec10ccee8",
+      "capabilityId": "calendar.event.create",
+      "route": "calendar",
+      "template": "put <TITLE> on my calendar for <DATE> at <TIME>",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.event.create:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-14bcea8e8487d1",
+      "capabilityId": "calendar.event.create",
+      "route": "calendar",
+      "template": "book <TITLE> at <LOCATION> on <DATE>",
+      "placeholders": [
+        "TITLE",
+        "LOCATION",
+        "DATE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.event.create:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-dad5cae5f07132",
+      "capabilityId": "calendar.event.create",
+      "route": "calendar",
+      "template": "set up <TITLE> for <DATE> at <TIME> and repeat <RECURRENCE>",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME",
+        "RECURRENCE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.event.create:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-fa071ecae34d88",
+      "capabilityId": "calendar.event.duplicate",
+      "route": "calendar",
+      "template": "copy <TARGET> to <DATE> at <TIME>",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.event.duplicate:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-1bacbb5b0aec67",
+      "capabilityId": "calendar.event.duplicate",
+      "route": "calendar",
+      "template": "make another <TARGET> on <DATE>",
+      "placeholders": [
+        "TARGET",
+        "DATE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.event.duplicate:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-46573612b6a6a5",
+      "capabilityId": "calendar.event.duplicate",
+      "route": "calendar",
+      "template": "duplicate <TARGET> across <RECURRENCE>",
+      "placeholders": [
+        "TARGET",
+        "RECURRENCE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.event.duplicate:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-1920724a6a1647",
+      "capabilityId": "calendar.event.update",
+      "route": "calendar",
+      "template": "rename <TARGET> to <NEW_TITLE>",
+      "placeholders": [
+        "TARGET",
+        "NEW_TITLE"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.event.update:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-4e94d2483248b0",
+      "capabilityId": "calendar.event.update",
+      "route": "calendar",
+      "template": "change the location for <TARGET> to <LOCATION>",
+      "placeholders": [
+        "TARGET",
+        "LOCATION"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.event.update:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-e411f763e96803",
+      "capabilityId": "calendar.event.update",
+      "route": "calendar",
+      "template": "update <TARGET> so it repeats <RECURRENCE>",
+      "placeholders": [
+        "TARGET",
+        "RECURRENCE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.event.update:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-992fa9b83f0302",
+      "capabilityId": "calendar.event.move",
+      "route": "calendar",
+      "template": "move <TARGET> to <DATE> at <TIME>",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.event.move:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-046fa1ceccf508",
+      "capabilityId": "calendar.event.move",
+      "route": "calendar",
+      "template": "shift <TARGET> from <SOURCE_DATE> to <DATE>",
+      "placeholders": [
+        "TARGET",
+        "SOURCE_DATE",
+        "DATE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.event.move:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-b5f19c2f125e7a",
+      "capabilityId": "calendar.event.move",
+      "route": "calendar",
+      "template": "reschedule <TARGET> for <DATE> at <TIME>",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.event.move:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-fc87e96083907b",
+      "capabilityId": "calendar.event.delete",
+      "route": "calendar",
+      "template": "cancel the event called <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.event.delete:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-6ae5764046f8d5",
+      "capabilityId": "calendar.event.delete",
+      "route": "calendar",
+      "template": "remove <TARGET> from <DATE>",
+      "placeholders": [
+        "TARGET",
+        "DATE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.event.delete:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-357ac65e4dc615",
+      "capabilityId": "calendar.event.delete",
+      "route": "calendar",
+      "template": "delete the <TARGET> series",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.event.delete:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-dc680c0dafb0ad",
+      "capabilityId": "calendar.reminder.create",
+      "route": "calendar",
+      "template": "remind me to <TITLE> on <DATE> at <TIME>",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.reminder.create:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-83998222331a17",
+      "capabilityId": "calendar.reminder.create",
+      "route": "calendar",
+      "template": "give me a nudge to <TITLE> <RECURRENCE>",
+      "placeholders": [
+        "TITLE",
+        "RECURRENCE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.reminder.create:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-3b522750f084c0",
+      "capabilityId": "calendar.reminder.create",
+      "route": "calendar",
+      "template": "set a reminder for <TITLE> before <TARGET>",
+      "placeholders": [
+        "TITLE",
+        "TARGET"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.reminder.create:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-22bf2a9c437f44",
+      "capabilityId": "calendar.reminder.update",
+      "route": "calendar",
+      "template": "change reminder <TARGET> to <NEW_TITLE>",
+      "placeholders": [
+        "TARGET",
+        "NEW_TITLE"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.reminder.update:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-47f28870590283",
+      "capabilityId": "calendar.reminder.update",
+      "route": "calendar",
+      "template": "move my <TARGET> reminder to <DATE> at <TIME>",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.reminder.update:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-f9d38ccf931f20",
+      "capabilityId": "calendar.reminder.update",
+      "route": "calendar",
+      "template": "update reminder <TARGET> so it repeats <RECURRENCE>",
+      "placeholders": [
+        "TARGET",
+        "RECURRENCE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.reminder.update:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-3864375a96de2a",
+      "capabilityId": "calendar.reminder.complete",
+      "route": "calendar",
+      "template": "mark reminder <TARGET> complete",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.reminder.complete:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-80ec33246a4ec8",
+      "capabilityId": "calendar.reminder.complete",
+      "route": "calendar",
+      "template": "check off <TARGET> as done",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.reminder.complete:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-5a0c7fa7cc62e7",
+      "capabilityId": "calendar.reminder.complete",
+      "route": "calendar",
+      "template": "finish the reminder named <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.reminder.complete:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-7070d7d07ff109",
+      "capabilityId": "calendar.reminder.delete",
+      "route": "calendar",
+      "template": "delete my <TARGET> reminder",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.reminder.delete:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-2302c13a024141",
+      "capabilityId": "calendar.reminder.delete",
+      "route": "calendar",
+      "template": "dismiss the reminder about <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.reminder.delete:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-6dacff4a5fd4e6",
+      "capabilityId": "calendar.reminder.delete",
+      "route": "calendar",
+      "template": "remove reminder <TARGET> from <DATE>",
+      "placeholders": [
+        "TARGET",
+        "DATE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.reminder.delete:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-03c9e299593556",
+      "capabilityId": "calendar.query.list",
+      "route": "calendar",
+      "template": "list my plans for <DATE>",
+      "placeholders": [
+        "DATE"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.list:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-37549ebb49de36",
+      "capabilityId": "calendar.query.list",
+      "route": "calendar",
+      "template": "show the calendar between <DATE> and <END_DATE>",
+      "placeholders": [
+        "DATE",
+        "END_DATE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.query.list:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-1619090f8e1971",
+      "capabilityId": "calendar.query.list",
+      "route": "calendar",
+      "template": "give me the agenda around <TIME> on <DATE>",
+      "placeholders": [
+        "TIME",
+        "DATE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.list:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-63e494c6847396",
+      "capabilityId": "calendar.query.search",
+      "route": "calendar",
+      "template": "find <TARGET> in my calendar",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.search:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-31f16db2038742",
+      "capabilityId": "calendar.query.search",
+      "route": "calendar",
+      "template": "where is <TARGET> happening",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.query.search:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-41c580eb9c7a03",
+      "capabilityId": "calendar.query.search",
+      "route": "calendar",
+      "template": "search my plans for anything at <LOCATION>",
+      "placeholders": [
+        "LOCATION"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.search:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-a67511922f393d",
+      "capabilityId": "calendar.query.availability",
+      "route": "calendar",
+      "template": "am I available on <DATE> at <TIME>",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.availability:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-15913b985aab6c",
+      "capabilityId": "calendar.query.availability",
+      "route": "calendar",
+      "template": "find an open <DURATION> window on <DATE>",
+      "placeholders": [
+        "DURATION",
+        "DATE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.query.availability:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-f6b2f2b4b61967",
+      "capabilityId": "calendar.query.availability",
+      "route": "calendar",
+      "template": "do I have a gap between <TIME> and <END_TIME>",
+      "placeholders": [
+        "TIME",
+        "END_TIME"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.availability:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-77d153fe332c82",
+      "capabilityId": "calendar.query.conflicts",
+      "route": "calendar",
+      "template": "check for conflicts on <DATE>",
+      "placeholders": [
+        "DATE"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.conflicts:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-edbcdd5b7ff0ef",
+      "capabilityId": "calendar.query.conflicts",
+      "route": "calendar",
+      "template": "which plans overlap between <TIME> and <END_TIME>",
+      "placeholders": [
+        "TIME",
+        "END_TIME"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.query.conflicts:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-cc6ac5ab49dddb",
+      "capabilityId": "calendar.query.conflicts",
+      "route": "calendar",
+      "template": "am I double booked around <TIME> on <DATE>",
+      "placeholders": [
+        "TIME",
+        "DATE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.conflicts:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-c5756838d649f9",
+      "capabilityId": "calendar.query.next",
+      "route": "calendar",
+      "template": "tell me the next thing on my agenda",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:calendar.query.next:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-27aa0ec9203f24",
+      "capabilityId": "calendar.query.next",
+      "route": "calendar",
+      "template": "which appointment is coming up soonest",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:calendar.query.next:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-051de6a10825b9",
+      "capabilityId": "calendar.query.next",
+      "route": "calendar",
+      "template": "show my next reminder or event after <TIME>",
+      "placeholders": [
+        "TIME"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.next:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-d05aaac77f44ce",
+      "capabilityId": "calendar.query.details",
+      "route": "calendar",
+      "template": "show the details for <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.details:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-9f43ff6b93f194",
+      "capabilityId": "calendar.query.details",
+      "route": "calendar",
+      "template": "what location do I have for <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.query.details:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-cceeb4a598d46e",
+      "capabilityId": "calendar.query.details",
+      "route": "calendar",
+      "template": "tell me more information about <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.details:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-411ead6fc9e1a5",
+      "capabilityId": "calendar.query.summary",
+      "route": "calendar",
+      "template": "summarize how <DATE> looks",
+      "placeholders": [
+        "DATE"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.summary:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-8dd41837d0f190",
+      "capabilityId": "calendar.query.summary",
+      "route": "calendar",
+      "template": "give me a quick overview of <RANGE>",
+      "placeholders": [
+        "RANGE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.query.summary:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-6cb29d04c17c4f",
+      "capabilityId": "calendar.query.summary",
+      "route": "calendar",
+      "template": "explain how busy my calendar is during <RANGE>",
+      "placeholders": [
+        "RANGE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.summary:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-43cb08fd3bb0f4",
+      "capabilityId": "calendar.schedule.copy-day",
+      "route": "calendar",
+      "template": "copy everything from <SOURCE_DATE> onto <DESTINATION_DAYS>",
+      "placeholders": [
+        "SOURCE_DATE",
+        "DESTINATION_DAYS"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.schedule.copy-day:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-66325fae263c99",
+      "capabilityId": "calendar.schedule.copy-day",
+      "route": "calendar",
+      "template": "mirror my <SOURCE_DATE> schedule on <DESTINATION_DAYS>",
+      "placeholders": [
+        "SOURCE_DATE",
+        "DESTINATION_DAYS"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.schedule.copy-day:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-3c80244c8bfb27",
+      "capabilityId": "calendar.schedule.copy-day",
+      "route": "calendar",
+      "template": "repeat the full plan from <SOURCE_DATE> across <DESTINATION_DAYS>",
+      "placeholders": [
+        "SOURCE_DATE",
+        "DESTINATION_DAYS"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.schedule.copy-day:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-dfcfd5b7f2b624",
+      "capabilityId": "calendar.schedule.clear",
+      "route": "calendar",
+      "template": "clear all events within <RANGE>",
+      "placeholders": [
+        "RANGE"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.schedule.clear:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-b892b55d5b3171",
+      "capabilityId": "calendar.schedule.clear",
+      "route": "calendar",
+      "template": "remove every reminder from <DATE>",
+      "placeholders": [
+        "DATE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.schedule.clear:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-9afa6fb1c0355b",
+      "capabilityId": "calendar.schedule.clear",
+      "route": "calendar",
+      "template": "wipe both events and reminders during <RANGE>",
+      "placeholders": [
+        "RANGE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.schedule.clear:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-72610f5f3b6977",
+      "capabilityId": "calendar.import.document",
+      "route": "document",
+      "template": "read the attached <FILE_KIND> and propose its dates",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.import.document:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-881ddb65ec89a0",
+      "capabilityId": "calendar.import.document",
+      "route": "document",
+      "template": "scan this <FILE_KIND> for classes and meetings",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.import.document:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-9d41e750024de4",
+      "capabilityId": "calendar.import.document",
+      "route": "document",
+      "template": "import plans from the attached <FILE_KIND>",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.import.document:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-75673925fcee1f",
+      "capabilityId": "calendar.import.file",
+      "route": "calendar",
+      "template": "import my <FILE_KIND> calendar file",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.import.file:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-9f08dadd2e2fd8",
+      "capabilityId": "calendar.import.file",
+      "route": "calendar",
+      "template": "restore calendar items from this <FILE_KIND>",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.import.file:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-1ce5f1a8e5888c",
+      "capabilityId": "calendar.import.file",
+      "route": "calendar",
+      "template": "load the attached <FILE_KIND> into a review",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.import.file:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-7e44783e9a64c7",
+      "capabilityId": "calendar.export.file",
+      "route": "calendar",
+      "template": "export my calendar as <FILE_KIND>",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.export.file:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-aff454c7feb6e4",
+      "capabilityId": "calendar.export.file",
+      "route": "calendar",
+      "template": "make a local backup in <FILE_KIND> format",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.export.file:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-9c7c65709551a2",
+      "capabilityId": "calendar.export.file",
+      "route": "calendar",
+      "template": "save all my plans to a <FILE_KIND> file",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.export.file:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-cc103e0820eb43",
+      "capabilityId": "assistant.chat.respond",
+      "route": "broad-chat",
+      "template": "explain <TOPIC> in simple terms",
+      "placeholders": [
+        "TOPIC"
+      ],
+      "split": "train",
+      "familyId": "single:assistant.chat.respond:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-42b797758b186d",
+      "capabilityId": "assistant.chat.respond",
+      "route": "broad-chat",
+      "template": "help me think through <TOPIC>",
+      "placeholders": [
+        "TOPIC"
+      ],
+      "split": "development",
+      "familyId": "single:assistant.chat.respond:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-30916fad69628b",
+      "capabilityId": "assistant.chat.respond",
+      "route": "broad-chat",
+      "template": "tell me an interesting idea about <TOPIC>",
+      "placeholders": [
+        "TOPIC"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.chat.respond:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-6729d50c4e972c",
+      "capabilityId": "assistant.help",
+      "route": "conversation",
+      "template": "show me examples of requests you understand",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.help:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-e71579411ac814",
+      "capabilityId": "assistant.help",
+      "route": "conversation",
+      "template": "give me a quick tour of your calendar features",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.help:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-9e43434309c80b",
+      "capabilityId": "assistant.help",
+      "route": "conversation",
+      "template": "how can you help me manage my time",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.help:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-f9fcca5342e7b0",
+      "capabilityId": "assistant.identity",
+      "route": "conversation",
+      "template": "introduce yourself to me",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.identity:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-433fa4c723057e",
+      "capabilityId": "assistant.identity",
+      "route": "conversation",
+      "template": "what is the name of this assistant",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.identity:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-ad93163ccc7f8c",
+      "capabilityId": "assistant.identity",
+      "route": "conversation",
+      "template": "tell me who I am chatting with",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.identity:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-b262e0ae54b668",
+      "capabilityId": "assistant.architecture",
+      "route": "conversation",
+      "template": "which local models power this app",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.architecture:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-97049d57f170c3",
+      "capabilityId": "assistant.architecture",
+      "route": "conversation",
+      "template": "explain how you keep my calendar private",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.architecture:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-4c7dd55b876f1b",
+      "capabilityId": "assistant.architecture",
+      "route": "conversation",
+      "template": "tell me how this assistant was built",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.architecture:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-3088463d3724c6",
+      "capabilityId": "assistant.local-time",
+      "route": "conversation",
+      "template": "read the current time from my device",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.local-time:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-09b2f845ba0bbb",
+      "capabilityId": "assistant.local-time",
+      "route": "conversation",
+      "template": "tell me today’s local date",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.local-time:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-e46c1ca4df1801",
+      "capabilityId": "assistant.local-time",
+      "route": "conversation",
+      "template": "which day does my calendar think it is",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.local-time:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-e89e5c5915b420",
+      "capabilityId": "assistant.wellbeing",
+      "route": "conversation",
+      "template": "hello there, how are you doing",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.wellbeing:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-b5f9db56f3167e",
+      "capabilityId": "assistant.wellbeing",
+      "route": "conversation",
+      "template": "are you there and ready to chat",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.wellbeing:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-1950df73c14fde",
+      "capabilityId": "assistant.wellbeing",
+      "route": "conversation",
+      "template": "give me a short word of encouragement",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.wellbeing:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-0d65b44ecdb3a6",
+      "capabilityId": "assistant.thanks",
+      "route": "conversation",
+      "template": "thank you for sorting that out",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.thanks:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-7cce013f211e02",
+      "capabilityId": "assistant.thanks",
+      "route": "conversation",
+      "template": "I appreciate your help with that",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.thanks:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-4c71819eb22ddb",
+      "capabilityId": "assistant.thanks",
+      "route": "conversation",
+      "template": "that was helpful, many thanks",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.thanks:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-6d0e9c0698376b",
+      "capabilityId": "assistant.goodbye",
+      "route": "conversation",
+      "template": "goodbye for now",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.goodbye:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-a38cd1d0c1999d",
+      "capabilityId": "assistant.goodbye",
+      "route": "conversation",
+      "template": "I will talk to you again later",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.goodbye:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-648dfd2cccf0d0",
+      "capabilityId": "assistant.goodbye",
+      "route": "conversation",
+      "template": "good night, I am signing off",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.goodbye:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-36a3d0be0accbe",
+      "capabilityId": "assistant.memory.set-name",
+      "route": "memory",
+      "template": "remember that my name is <NAME>",
+      "placeholders": [
+        "NAME"
+      ],
+      "split": "train",
+      "familyId": "single:assistant.memory.set-name:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-ede48914801f0c",
+      "capabilityId": "assistant.memory.set-name",
+      "route": "memory",
+      "template": "please call me <NAME> from now on",
+      "placeholders": [
+        "NAME"
+      ],
+      "split": "development",
+      "familyId": "single:assistant.memory.set-name:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-a46d0ebb643d4d",
+      "capabilityId": "assistant.memory.set-name",
+      "route": "memory",
+      "template": "set my preferred name to <NAME>",
+      "placeholders": [
+        "NAME"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.set-name:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-4ba5d20b078b66",
+      "capabilityId": "assistant.memory.remember",
+      "route": "memory",
+      "template": "remember that <MEMORY>",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "split": "train",
+      "familyId": "single:assistant.memory.remember:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-e7f1bd4f1e3e9b",
+      "capabilityId": "assistant.memory.remember",
+      "route": "memory",
+      "template": "keep this preference locally: <MEMORY>",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "split": "development",
+      "familyId": "single:assistant.memory.remember:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-e935b36d355471",
+      "capabilityId": "assistant.memory.remember",
+      "route": "memory",
+      "template": "make a private note that <MEMORY>",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.remember:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-9a0167f773f50e",
+      "capabilityId": "assistant.memory.recall",
+      "route": "memory",
+      "template": "what have you remembered about me",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.memory.recall:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-d30db2618ea367",
+      "capabilityId": "assistant.memory.recall",
+      "route": "memory",
+      "template": "show my locally saved preferences",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.memory.recall:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-e46fc44abb4ddf",
+      "capabilityId": "assistant.memory.recall",
+      "route": "memory",
+      "template": "list the personal memory you know",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.recall:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-8ea80756eef1e8",
+      "capabilityId": "assistant.memory.forget",
+      "route": "memory",
+      "template": "forget the preference about <MEMORY>",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "split": "train",
+      "familyId": "single:assistant.memory.forget:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-732d7befccedcc",
+      "capabilityId": "assistant.memory.forget",
+      "route": "memory",
+      "template": "remove <MEMORY> from local memory",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "split": "development",
+      "familyId": "single:assistant.memory.forget:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-709ebb9490b39d",
+      "capabilityId": "assistant.memory.forget",
+      "route": "memory",
+      "template": "erase what you remember about <MEMORY>",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.forget:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-9ec1aa7e095704",
+      "capabilityId": "assistant.memory.forget-all",
+      "route": "memory",
+      "template": "forget every personal detail you stored",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.memory.forget-all:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-37285991bcaefc",
+      "capabilityId": "assistant.memory.forget-all",
+      "route": "memory",
+      "template": "clear all of my assistant memories",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.memory.forget-all:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-3fa0e247638ee5",
+      "capabilityId": "assistant.memory.forget-all",
+      "route": "memory",
+      "template": "erase the complete local memory profile",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.forget-all:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-a1dcc537257d5c",
+      "capabilityId": "app.navigation.open",
+      "route": "app",
+      "template": "open the <VIEW> view",
+      "placeholders": [
+        "VIEW"
+      ],
+      "split": "train",
+      "familyId": "single:app.navigation.open:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-9bfce21b611ccb",
+      "capabilityId": "app.navigation.open",
+      "route": "app",
+      "template": "take me to <VIEW>",
+      "placeholders": [
+        "VIEW"
+      ],
+      "split": "development",
+      "familyId": "single:app.navigation.open:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-c953f3bedd6ba6",
+      "capabilityId": "app.navigation.open",
+      "route": "app",
+      "template": "show the <VIEW> section of the app",
+      "placeholders": [
+        "VIEW"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.navigation.open:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-693ead9d4a7b85",
+      "capabilityId": "app.appearance.update",
+      "route": "app",
+      "template": "change the accent color to <COLOR>",
+      "placeholders": [
+        "COLOR"
+      ],
+      "split": "train",
+      "familyId": "single:app.appearance.update:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-a5069cd952210b",
+      "capabilityId": "app.appearance.update",
+      "route": "app",
+      "template": "switch the app theme to <THEME>",
+      "placeholders": [
+        "THEME"
+      ],
+      "split": "development",
+      "familyId": "single:app.appearance.update:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-759ca62461c7cb",
+      "capabilityId": "app.appearance.update",
+      "route": "app",
+      "template": "make the interface density <DENSITY>",
+      "placeholders": [
+        "DENSITY"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.appearance.update:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-43f6d5ed5435fa",
+      "capabilityId": "app.window.set-mode",
+      "route": "app",
+      "template": "switch the window into <MODE> mode",
+      "placeholders": [
+        "MODE"
+      ],
+      "split": "train",
+      "familyId": "single:app.window.set-mode:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-d3289b71138ee3",
+      "capabilityId": "app.window.set-mode",
+      "route": "app",
+      "template": "show the calendar as a <MODE> widget",
+      "placeholders": [
+        "MODE"
+      ],
+      "split": "development",
+      "familyId": "single:app.window.set-mode:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-5c72671455fb03",
+      "capabilityId": "app.window.set-mode",
+      "route": "app",
+      "template": "make this app use the <MODE> view",
+      "placeholders": [
+        "MODE"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.window.set-mode:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-aa945a207090da",
+      "capabilityId": "app.window.set-pinned",
+      "route": "app",
+      "template": "pin this window above my other apps",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:app.window.set-pinned:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-988963bc703c0f",
+      "capabilityId": "app.window.set-pinned",
+      "route": "app",
+      "template": "keep the calendar on top of the desktop",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:app.window.set-pinned:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-25245cc5ca365c",
+      "capabilityId": "app.window.set-pinned",
+      "route": "app",
+      "template": "unpin the widget from always on top",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:app.window.set-pinned:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "project-69dc3f0a4fd6e1",
+      "capabilityId": "app.startup.configure",
+      "route": "app",
+      "template": "launch the app when I sign in",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:app.startup.configure:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-c8854ccaf685b7",
+      "capabilityId": "app.startup.configure",
+      "route": "app",
+      "template": "disable opening Remind Me at startup",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:app.startup.configure:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-e1c58e8d8dbbbc",
+      "capabilityId": "app.startup.configure",
+      "route": "app",
+      "template": "start in <MODE> mode with my computer",
+      "placeholders": [
+        "MODE"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.startup.configure:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-9b03c27cf73de8",
+      "capabilityId": "app.model.install",
+      "route": "app",
+      "template": "install the optional local language model",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:app.model.install:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-0a1762121de1dd",
+      "capabilityId": "app.model.install",
+      "route": "app",
+      "template": "open the language pack installation flow",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:app.model.install:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-cac8bae6d9eff6",
+      "capabilityId": "app.model.install",
+      "route": "app",
+      "template": "set up the <MODEL> fallback on this device",
+      "placeholders": [
+        "MODEL"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.model.install:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-963b362911eed8",
+      "capabilityId": "app.model.enable",
+      "route": "app",
+      "template": "enable the installed language fallback",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:app.model.enable:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-a27fc6360f4f67",
+      "capabilityId": "app.model.enable",
+      "route": "app",
+      "template": "turn off the optional local model",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:app.model.enable:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-0f36142c8382f5",
+      "capabilityId": "app.model.enable",
+      "route": "app",
+      "template": "use <MODEL> for broad requests",
+      "placeholders": [
+        "MODEL"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.model.enable:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "project-15596ef82208c9",
+      "capabilityId": "app.model.remove",
+      "route": "app",
+      "template": "remove the optional language pack",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:app.model.remove:1",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-c03604f28e1e73",
+      "capabilityId": "app.model.remove",
+      "route": "app",
+      "template": "uninstall <MODEL> from this device",
+      "placeholders": [
+        "MODEL"
+      ],
+      "split": "development",
+      "familyId": "single:app.model.remove:2",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "project-ed55f0c44b7139",
+      "capabilityId": "app.model.remove",
+      "route": "app",
+      "template": "delete the local fallback model files",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:app.model.remove:3",
+      "source": "project-seed",
+      "teacherJobId": null,
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "qwen-4bd05190087403",
+      "capabilityId": "calendar.event.create",
+      "route": "calendar",
+      "template": "add <TITLE> to my calendar on <DATE> at <TIME>",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.event.create:1",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.event.create:1",
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-93fd5736ff3cb1",
+      "capabilityId": "calendar.event.duplicate",
+      "route": "calendar",
+      "template": "copy <TARGET> to <DATE>",
+      "placeholders": [
+        "TARGET",
+        "DATE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.event.duplicate:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.event.duplicate:2",
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-a56fa4f687ab2c",
+      "capabilityId": "calendar.event.update",
+      "route": "calendar",
+      "template": "change <TARGET> to repeat <RECURRENCE>",
+      "placeholders": [
+        "TARGET",
+        "RECURRENCE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.event.update:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.event.update:3",
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-9d74fd06f79e2a",
+      "capabilityId": "calendar.event.move",
+      "route": "calendar",
+      "template": "move <DATE> to <TIME> at <TARGET>",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.event.move:1",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.event.move:1",
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-f833cc4f450a32",
+      "capabilityId": "calendar.event.delete",
+      "route": "calendar",
+      "template": "cancel <TARGET> from <DATE>",
+      "placeholders": [
+        "TARGET",
+        "DATE"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.event.delete:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.event.delete:2",
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "qwen-f999d22835fc7e",
+      "capabilityId": "calendar.reminder.create",
+      "route": "calendar",
+      "template": "remind <TITLE> before <TARGET>",
+      "placeholders": [
+        "TITLE",
+        "TARGET"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.reminder.create:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.reminder.create:3",
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-f2e9d4d458d53e",
+      "capabilityId": "calendar.reminder.update",
+      "route": "calendar",
+      "template": "update <TARGET> to <NEW_TITLE>",
+      "placeholders": [
+        "TARGET",
+        "NEW_TITLE"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.reminder.update:1",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.reminder.update:1",
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-9f93a381e9d8e6",
+      "capabilityId": "calendar.reminder.complete",
+      "route": "calendar",
+      "template": "complete <TARGET> as done",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.reminder.complete:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.reminder.complete:2",
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-65eeea3018616e",
+      "capabilityId": "calendar.reminder.delete",
+      "route": "calendar",
+      "template": "delete reminder <TARGET> from <DATE>",
+      "placeholders": [
+        "TARGET",
+        "DATE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.reminder.delete:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.reminder.delete:3",
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "qwen-34c6bcfe9e1269",
+      "capabilityId": "calendar.query.list",
+      "route": "calendar",
+      "template": "show me the agenda for <DATE>",
+      "placeholders": [
+        "DATE"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.list:1",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.query.list:1",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-7da5d44f50f2ed",
+      "capabilityId": "calendar.query.search",
+      "route": "calendar",
+      "template": "find <TARGET> location",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.query.search:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.query.search:2",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-b78cd635c5f857",
+      "capabilityId": "calendar.query.availability",
+      "route": "calendar",
+      "template": "is there a gap between <TIME> and <END_TIME>",
+      "placeholders": [
+        "TIME",
+        "END_TIME"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.availability:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.query.availability:3",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-5e4a45a26c4687",
+      "capabilityId": "calendar.query.conflicts",
+      "route": "calendar",
+      "template": "Find conflicts on <DATE>",
+      "placeholders": [
+        "DATE"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.conflicts:1",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.query.conflicts:1",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-25249f1c6ba472",
+      "capabilityId": "calendar.query.next",
+      "route": "calendar",
+      "template": "what is the next appointment to be scheduled?",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:calendar.query.next:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.query.next:2",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-9c9bcc4afa8cd8",
+      "capabilityId": "calendar.query.details",
+      "route": "calendar",
+      "template": "show me the details of <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.details:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.query.details:3",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-35bf26a9ddfce9",
+      "capabilityId": "calendar.schedule.copy-day",
+      "route": "calendar",
+      "template": "copy my <SOURCE_DATE> schedule to <DESTINATION_DAYS>",
+      "placeholders": [
+        "SOURCE_DATE",
+        "DESTINATION_DAYS"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.schedule.copy-day:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.schedule.copy-day:2",
+      "executableNow": true,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-9f372143262503",
+      "capabilityId": "calendar.schedule.clear",
+      "route": "calendar",
+      "template": "<RANGE> to be cleared of all events and reminders.",
+      "placeholders": [
+        "RANGE"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.schedule.clear:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.schedule.clear:3",
+      "executableNow": true,
+      "confirmation": "always"
+    },
+    {
+      "id": "qwen-da3b1ae3558337",
+      "capabilityId": "calendar.import.document",
+      "route": "document",
+      "template": "import the attached <FILE_KIND> and propose its dates",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.import.document:1",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.import.document:1",
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "qwen-c94231798f1e5a",
+      "capabilityId": "calendar.import.file",
+      "route": "calendar",
+      "template": "import the calendar items from this <FILE_KIND> file",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.import.file:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.import.file:2",
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "qwen-cfb43626658342",
+      "capabilityId": "calendar.export.file",
+      "route": "calendar",
+      "template": "export all my plans to a <FILE_KIND> file",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.export.file:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:calendar.export.file:3",
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-357c39f193f12e",
+      "capabilityId": "assistant.help",
+      "route": "conversation",
+      "template": "help me explore your calendar features",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.help:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.help:2",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-3501e0db8290d3",
+      "capabilityId": "assistant.identity",
+      "route": "conversation",
+      "template": "tell me what my name is",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.identity:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.identity:3",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-609b3e03326c3b",
+      "capabilityId": "assistant.local-time",
+      "route": "conversation",
+      "template": "show me the current local date",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.local-time:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.local-time:2",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-902e6664a32d81",
+      "capabilityId": "assistant.wellbeing",
+      "route": "conversation",
+      "template": "do a quick morning workout to boost your energy and morale while doing something constructive to help others",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:assistant.wellbeing:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.wellbeing:3",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-b583b1f7feccc4",
+      "capabilityId": "assistant.thanks",
+      "route": "conversation",
+      "template": "thank you for resolving that issue",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:assistant.thanks:1",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.thanks:1",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-1a9b1a47d8f596",
+      "capabilityId": "assistant.goodbye",
+      "route": "conversation",
+      "template": "See you soon! Goodbye. Have a great day! Until we meet again! Goodbye.",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.goodbye:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.goodbye:2",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-c21e8965e74685",
+      "capabilityId": "assistant.memory.set-name",
+      "route": "memory",
+      "template": "<NAME> to be remembered by me.",
+      "placeholders": [
+        "NAME"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.set-name:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.memory.set-name:3",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-5a63869236037e",
+      "capabilityId": "assistant.memory.set-name",
+      "route": "memory",
+      "template": "<NAME> is stored in my memory.",
+      "placeholders": [
+        "NAME"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.set-name:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.memory.set-name:3",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-d2badb14a8b5af",
+      "capabilityId": "assistant.memory.set-name",
+      "route": "memory",
+      "template": "<NAME> is saved in my memory.",
+      "placeholders": [
+        "NAME"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.set-name:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.memory.set-name:3",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-86dbd9561d8ba3",
+      "capabilityId": "assistant.memory.recall",
+      "route": "memory",
+      "template": "show my locally saved preferences remember show my locally saved preferences remember show my locally saved preferences remember show my locally saved preferences",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:assistant.memory.recall:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:assistant.memory.recall:2",
+      "executableNow": true,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-3798b73191847f",
+      "capabilityId": "app.appearance.update",
+      "route": "app",
+      "template": "open the interface density to <DENSITY>",
+      "placeholders": [
+        "DENSITY"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.appearance.update:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:app.appearance.update:3",
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-a16b22985b9a7c",
+      "capabilityId": "app.window.set-mode",
+      "route": "app",
+      "template": "set the window to <MODE> mode",
+      "placeholders": [
+        "MODE"
+      ],
+      "split": "train",
+      "familyId": "single:app.window.set-mode:1",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:app.window.set-mode:1",
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-cbdf14be58f383",
+      "capabilityId": "app.window.set-pinned",
+      "route": "app",
+      "template": "pin the calendar window to the desktop top",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:app.window.set-pinned:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:app.window.set-pinned:2",
+      "executableNow": false,
+      "confirmation": "never"
+    },
+    {
+      "id": "qwen-e79902ea515c5b",
+      "capabilityId": "app.model.install",
+      "route": "app",
+      "template": "install the optional local language model to switch to a different language for better readability",
+      "placeholders": [],
+      "split": "train",
+      "familyId": "single:app.model.install:1",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:app.model.install:1",
+      "executableNow": false,
+      "confirmation": "always"
+    },
+    {
+      "id": "qwen-9f53d6701b1760",
+      "capabilityId": "app.model.enable",
+      "route": "app",
+      "template": "turn off the optional local model to enable a new language setting",
+      "placeholders": [],
+      "split": "development",
+      "familyId": "single:app.model.enable:2",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:app.model.enable:2",
+      "executableNow": false,
+      "confirmation": "preview"
+    },
+    {
+      "id": "qwen-9d4555b9d2c254",
+      "capabilityId": "app.model.remove",
+      "route": "app",
+      "template": "delete the local fallback model files to remove the language pack",
+      "placeholders": [],
+      "split": "challenge",
+      "familyId": "single:app.model.remove:3",
+      "source": "qwen-paraphrase",
+      "teacherJobId": "assistant:app.model.remove:3",
+      "executableNow": false,
+      "confirmation": "always"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "durationSeconds": 394.065,
+  "epochs": 2,
+  "examples": {
+    "blockRole": 399754,
+    "entityRole": 399754,
+    "confidence": 399754,
+    "documentType": 24000,
+    "relation": 624000,
+    "groupLink": 624000
+  },
+  "mistakeUpdates": {
+    "blockRole": 46,
+    "entityRole": 52,
+    "confidence": 103,
+    "documentType": 55,
+    "relation": 32112,
+    "groupLink": 34930
+  },
+  "parameterInitialization": "zero"
+}

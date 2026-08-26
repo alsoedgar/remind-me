@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "model": {
+    "id": "remindspeak-phrase-lattice-28m-en-phase6",
+    "version": "0.3.0",
+    "architecture": {
+      "name": "PhraseLattice conditional surface generator",
+      "parameterCount": 28311984,
+      "parameterInitialization": "zero",
+      "featureEncoder": "structured-response-plan-hashing",
+      "decoder": "overgenerate-validate-rerank protected phrase lattice",
+      "quantization": "symmetric-int8-per-output-channel"
+    },
+    "configurationBytes": 118750,
+    "compressedWeightBytes": 104437,
+    "uncompressedWeightBytes": 28311552
+  },
+  "dataset": {
+    "train": 31650,
+    "dev": 5000,
+    "test": 5000,
+    "manifestSha256": "e9b5a5ff6ed57b13785296dfd068cff1eb4aada81ebf50c387624620606fc3e9"
+  },
+  "metrics": {
+    "testExamples": 5000,
+    "floatHeadAccuracy": {
+      "lead": 0.8002,
+      "body": 0.6396,
+      "close": 0.83
+    },
+    "int8HeadAccuracy": {
+      "lead": 0.8006,
+      "body": 0.6396,
+      "close": 0.8296
+    },
+    "meanInt8HeadAccuracy": 0.7566,
+    "quantizationAccuracyReduction": 0.00039999999999995595,
+    "schemaValidCandidateRate": 1.0,
+    "protectedFactRetention": 1.0,
+    "unsupportedFactIntroductionRate": 0.0,
+    "candidateCombinationsPerAct": 350,
+    "candidateCombinationRange": {
+      "minimum": 175,
+      "maximum": 350
+    },
+    "candidateCombinationsByActAndSignature": {
+      "proposal:SUMMARY": 350,
+      "creation-confirmed:RECEIPT": 350,
+      "update-confirmed:RECEIPT": 350,
+      "deletion-confirmed:RECEIPT": 350,
+      "completion-confirmed:RECEIPT": 350,
+      "availability-answer:SLOT+DETAIL": 350,
+      "schedule-summary:SUMMARY": 350,
+      "next-item-answer:SUMMARY": 350,
+      "item-details-answer:SUMMARY": 350,
+      "empty-schedule-answer:": 350,
+      "conversation-answer:DETAIL": 350,
+      "memory-answer:DETAIL": 350,
+      "undo-confirmed:RECEIPT": 350,
+      "proposal-rejected:SUMMARY": 350,
+      "clarification:SUMMARY": 175,
+      "clarification:DETAIL": 175,
+      "conflict-warning:SUMMARY": 350,
+      "unsupported:DETAIL": 350,
+      "error:DETAIL": 350
+    },
+    "teacherPreferenceChallengeExamples": 11,
+    "teacherPreferenceFloatHeadAccuracy": {
+      "lead": 0.5454545454545454,
+      "body": 0.18181818181818182,
+      "close": 0.18181818181818182
+    },
+    "teacherPreferenceInt8HeadAccuracy": {
+      "lead": 0.5454545454545454,
+      "body": 0.18181818181818182,
+      "close": 0.18181818181818182
+    },
+    "meanTeacherPreferenceInt8HeadAccuracy": 0.30303030303030304,
+    "teacherUsed": true,
+    "pretrainedWeightsUsed": false,
+    "protectedSpeechActCount": 18,
+    "projectAuthoredSurfaceAtoms": 432,
+    "localPreferenceBiasBounded": true,
+    "humanPreferenceEvaluationComplete": false,
+    "engineeringPromotionGates": {
+      "meanInt8HeadAccuracyAtLeast70Percent": true,
+      "quantizationReductionAtMostOnePoint": true,
+      "allProtectedSpeechActsCovered": true,
+      "projectAtomInventoryComplete": true,
+      "workingTableBelow32MiB": true,
+      "compressedArtifactBelow512KiB": true,
+      "teacherPreferencesPresent": true,
+      "noPretrainedWeights": true,
+      "noPersonalData": true
+    }
+  },
+  "trainingHistory": {
+    "lead": [
+      {
+        "epoch": 1,
+        "mistakes": 8371,
+        "mistakeRate": 0.2644865718799368
+      },
+      {
+        "epoch": 2,
+        "mistakes": 6658,
+        "mistakeRate": 0.21036334913112165
+      },
+      {
+        "epoch": 3,
+        "mistakes": 6289,
+        "mistakeRate": 0.1987045813586098
+      },
+      {
+        "epoch": 4,
+        "mistakes": 6096,
+        "mistakeRate": 0.19260663507109005
+      }
+    ],
+    "body": [
+      {
+        "epoch": 1,
+        "mistakes": 14612,
+        "mistakeRate": 0.4616745655608215
+      },
+      {
+        "epoch": 2,
+        "mistakes": 11499,
+        "mistakeRate": 0.3633175355450237
+      },
+      {
+        "epoch": 3,
+        "mistakes": 10906,
+        "mistakeRate": 0.3445813586097946
+      },
+      {
+        "epoch": 4,
+        "mistakes": 10465,
+        "mistakeRate": 0.3306477093206951
+      }
+    ],
+    "close": [
+      {
+        "epoch": 1,
+        "mistakes": 7688,
+        "mistakeRate": 0.24290679304897314
+      },
+      {
+        "epoch": 2,
+        "mistakes": 6047,
+        "mistakeRate": 0.19105845181674566
+      },
+      {
+        "epoch": 3,
+        "mistakes": 5648,
+        "mistakeRate": 0.1784518167456556
+      },
+      {
+        "epoch": 4,
+        "mistakes": 5481,
+        "mistakeRate": 0.17317535545023696
+      }
+    ]
+  },
+  "elapsedSeconds": 18.519465400022455,
+  "limitations": [
+    "The current corpus and surface atoms are project-generated/project-authored, not an independent human blind set.",
+    "This prototype is a bounded conditional surface model, not an open-domain language model.",
+    "A randomized blinded study protocol is prepared, but the human preference gate has no participant judgments yet."
+  ]
+}

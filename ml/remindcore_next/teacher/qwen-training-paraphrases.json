@@ -1,0 +1,512 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": "0.1.0",
+  "teacher": {
+    "modelId": "Qwen3-1.7B-Q4_K_M",
+    "byteLength": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "license": "Apache-2.0"
+  },
+  "generation": {
+    "seed": 2608250,
+    "temperature": 0.7,
+    "topK": 30,
+    "topP": 0.85,
+    "thoughtTokens": 0,
+    "contextSize": 8192,
+    "device": "cpu"
+  },
+  "kind": "assistant-paraphrases",
+  "batches": [
+    {
+      "id": "remindcore-next-1",
+      "jobIds": [
+        "remindcore-next:calendar.event.create:train",
+        "remindcore-next:calendar.event.duplicate:train",
+        "remindcore-next:calendar.event.update:train"
+      ],
+      "promptSha256": "ba0e613121310f0f150a0338210dbc21e67b64a3cba2155096d0465e463a113e",
+      "elapsedMs": 67771,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.event.create:train",
+            "paraphrases": [
+              "add <TITLE> to <DATE> at <TIME>",
+              "add <TITLE> to <DATE> at <TIME>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.event.duplicate:train",
+            "paraphrases": [
+              "copy <TARGET> to <DATE> at <TIME>",
+              "copy <TARGET> to <DATE> at <TIME>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.event.update:train",
+            "paraphrases": [
+              "change <TARGET> to <NEW_TITLE>",
+              "change <TARGET> to <NEW_TITLE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-2",
+      "jobIds": [
+        "remindcore-next:calendar.event.move:train",
+        "remindcore-next:calendar.event.delete:train",
+        "remindcore-next:calendar.reminder.create:train"
+      ],
+      "promptSha256": "9d703699614b680e4f86c505f5b50d6f95cf11ea66b9daafa57c89dd8112433c",
+      "elapsedMs": 40591,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.reminder.create:train",
+            "paraphrases": [
+              "remind me <TITLE> on <DATE> at <TIME>",
+              "notify me <TITLE> at <DATE> <TIME>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.event.move:train",
+            "paraphrases": [
+              "move <TARGET> to <DATE> at <TIME>",
+              "shift <TARGET> to <DATE> <TIME>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.event.delete:train",
+            "paraphrases": [
+              "cancel the event called <TARGET>",
+              "remove <TARGET>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-3",
+      "jobIds": [
+        "remindcore-next:calendar.reminder.update:train",
+        "remindcore-next:calendar.reminder.complete:train",
+        "remindcore-next:calendar.reminder.delete:train"
+      ],
+      "promptSha256": "e02cc8ecbc553cd424f460c113b667758a0eb547c833d30930f731d11820c835",
+      "elapsedMs": 34909,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.reminder.update:train",
+            "paraphrases": [
+              "change <TARGET> to <NEW_TITLE>",
+              "update <TARGET> with <NEW_TITLE>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.reminder.complete:train",
+            "paraphrases": [
+              "mark <TARGET> complete",
+              "set <TARGET> as complete"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.reminder.delete:train",
+            "paraphrases": [
+              "delete <TARGET> reminder",
+              "remove <TARGET> reminder"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-4",
+      "jobIds": [
+        "remindcore-next:calendar.query.list:train",
+        "remindcore-next:calendar.query.search:train",
+        "remindcore-next:calendar.query.availability:train"
+      ],
+      "promptSha256": "d90196ee08930534e4a28047d199ddf43518c59089f1b635ae250ba19ddd1a65",
+      "elapsedMs": 37769,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.query.list:train",
+            "paraphrases": [
+              "show me my agenda for <DATE>",
+              "display my schedule for <DATE>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.query.search:train",
+            "paraphrases": [
+              "locate <TARGET> in my calendar",
+              "search for <TARGET> in my calendar"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.query.availability:train",
+            "paraphrases": [
+              "is <DATE> available at <TIME> for me?",
+              "is <DATE> available at <TIME> for me?"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-5",
+      "jobIds": [
+        "remindcore-next:calendar.query.conflicts:train",
+        "remindcore-next:calendar.query.next:train",
+        "remindcore-next:calendar.query.details:train"
+      ],
+      "promptSha256": "6aa163bcffcec6a017b1a10be525105fd6bb8446fccb5096f8d0fd29f373ede9",
+      "elapsedMs": 35823,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.query.details:train",
+            "paraphrases": [
+              "show the details for <TARGET>",
+              "display the information about <TARGET>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.query.next:train",
+            "paraphrases": [
+              "tell me the next thing on my agenda",
+              "find out what's next on my schedule"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.query.conflicts:train",
+            "paraphrases": [
+              "check for conflicts on <DATE>",
+              "analyze the schedule for overlapping bookings on <DATE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-6",
+      "jobIds": [
+        "remindcore-next:calendar.query.summary:train",
+        "remindcore-next:calendar.schedule.copy-day:train",
+        "remindcore-next:calendar.schedule.clear:train"
+      ],
+      "promptSha256": "088dbef273b3ff22a15c9dd466478fcf4c74a21820879f47dec7b593caf7a173",
+      "elapsedMs": 39786,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.query.summary:train",
+            "paraphrases": [
+              "summarize how <DATE> looks",
+              "generate a snapshot of <DATE>’s schedule"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.schedule.copy-day:train",
+            "paraphrases": [
+              "duplicate the <SOURCE_DATE> schedule to <DESTINATION_DAYS>",
+              "transfer the <SOURCE_DATE> events to <DESTINATION_DAYS>"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.schedule.clear:train",
+            "paraphrases": [
+              "remove all events from <RANGE>",
+              "eliminate the events within <RANGE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-7",
+      "jobIds": [
+        "remindcore-next:calendar.import.document:train",
+        "remindcore-next:calendar.import.file:train",
+        "remindcore-next:calendar.export.file:train"
+      ],
+      "promptSha256": "682ab46e08daffd443430e5e54c26f5266154ffe160a70c33abb239e1a23bffb",
+      "elapsedMs": 37990,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:calendar.import.document:train",
+            "paraphrases": [
+              "import the attached <FILE_KIND> document",
+              "import the <FILE_KIND> document for analysis"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.import.file:train",
+            "paraphrases": [
+              "import the <FILE_KIND> file calendar",
+              "import the <FILE_KIND> file calendar"
+            ]
+          },
+          {
+            "id": "remindcore-next:calendar.export.file:train",
+            "paraphrases": [
+              "export the <FILE_KIND> file as a calendar",
+              "export the <FILE_KIND> file as a calendar"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-8",
+      "jobIds": [
+        "remindcore-next:assistant.chat.respond:train",
+        "remindcore-next:assistant.help:train",
+        "remindcore-next:assistant.identity:train"
+      ],
+      "promptSha256": "7d450becc5a7b3e3a795033b8adab18f0c6147a10927c5f48731f7b3de09138a",
+      "elapsedMs": 30226,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.chat.respond:train",
+            "paraphrases": [
+              "explain <TOPIC> in simple terms",
+              "<TOPIC> explained in plain language"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.help:train",
+            "paraphrases": [
+              "help me understand what you can do",
+              "what can you do for me"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.identity:train",
+            "paraphrases": [
+              "introduce yourself to me",
+              "tell me about yourself"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-9",
+      "jobIds": [
+        "remindcore-next:assistant.architecture:train",
+        "remindcore-next:assistant.local-time:train",
+        "remindcore-next:assistant.wellbeing:train"
+      ],
+      "promptSha256": "69c5c2e13303c7e9dd74fedbcd0cab4fe0d78774691f9211870592dec055063a",
+      "elapsedMs": 37653,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.architecture:train",
+            "paraphrases": [
+              "<TARGET> to be powered by <TARGET> model",
+              "model <TARGET> to be powered by <TARGET> model"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.local-time:train",
+            "paraphrases": [
+              "<TARGET> to be read from my device",
+              "time <TARGET> to be read from my device"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.wellbeing:train",
+            "paraphrases": [
+              "<TARGET> to be said hello",
+              "doing <TARGET> to be said"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-10",
+      "jobIds": [
+        "remindcore-next:assistant.thanks:train",
+        "remindcore-next:assistant.goodbye:train",
+        "remindcore-next:assistant.memory.set-name:train"
+      ],
+      "promptSha256": "b2abd5de900f550610df192d52c6db7edebacbe114a186ae3eef6b9d74e18189",
+      "elapsedMs": 35187,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.memory.set-name:train",
+            "paraphrases": [
+              "<NAME> to be remembered",
+              "Name <NAME> to be recalled"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.memory.set-name:train",
+            "paraphrases": [
+              "<NAME> is to be retained",
+              "Name <NAME> is to be kept"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.memory.set-name:train",
+            "paraphrases": [
+              "<NAME> is to be noted",
+              "Name <NAME> is to be noted"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-11",
+      "jobIds": [
+        "remindcore-next:assistant.memory.remember:train",
+        "remindcore-next:assistant.memory.recall:train",
+        "remindcore-next:assistant.memory.forget:train"
+      ],
+      "promptSha256": "ded7ea6d856dda1c5990eb34416e3e1e09e874b2f97a8eb89e7c653627078a32",
+      "elapsedMs": 32737,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.memory.remember:train",
+            "paraphrases": [
+              "<MEMORY> to be remembered",
+              "remember <MEMORY>"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.memory.recall:train",
+            "paraphrases": [
+              "<MEMORY> to be recalled",
+              "remember <MEMORY>"
+            ]
+          },
+          {
+            "id": "remindcore-next:assistant.memory.forget:train",
+            "paraphrases": [
+              "<MEMORY> to be forgotten",
+              "forget <MEMORY>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-12",
+      "jobIds": [
+        "remindcore-next:assistant.memory.forget-all:train",
+        "remindcore-next:app.navigation.open:train",
+        "remindcore-next:app.appearance.update:train"
+      ],
+      "promptSha256": "5658e04ca433f9b629bd9aec6769122d5fac5892bebd37b98f53d9925c85a116",
+      "elapsedMs": 34788,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:assistant.memory.forget-all:train",
+            "paraphrases": [
+              "forget all memories",
+              "remove all stored information from memory"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.navigation.open:train",
+            "paraphrases": [
+              "open the <VIEW> view",
+              "access the <VIEW> interface"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.appearance.update:train",
+            "paraphrases": [
+              "change the accent color to <COLOR>",
+              "adjust the visual theme to <COLOR>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-13",
+      "jobIds": [
+        "remindcore-next:app.window.set-mode:train",
+        "remindcore-next:app.window.set-pinned:train",
+        "remindcore-next:app.startup.configure:train"
+      ],
+      "promptSha256": "811801b0618a37d9c6e8c8f96183ec9f8e8bb916c4e4c9cdd82affa8e5420f4e",
+      "elapsedMs": 35650,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:app.window.set-mode:train",
+            "paraphrases": [
+              "<MODE> the window into",
+              "switch the <MODE> window"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.window.set-pinned:train",
+            "paraphrases": [
+              "pin this window above my other apps",
+              "<MODE> this window above my other apps"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.startup.configure:train",
+            "paraphrases": [
+              "launch the app when I sign in",
+              "startup the app when I sign in"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "remindcore-next-14",
+      "jobIds": [
+        "remindcore-next:app.model.install:train",
+        "remindcore-next:app.model.enable:train",
+        "remindcore-next:app.model.remove:train"
+      ],
+      "promptSha256": "291737df5fd53469d0dffa7d2a75e5bba15758f46d7d80acc441ddb952d6b324",
+      "elapsedMs": 32276,
+      "output": {
+        "items": [
+          {
+            "id": "remindcore-next:app.model.remove:train",
+            "paraphrases": [
+              "remove the optional language pack",
+              "remove the optional language model"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.model.enable:train",
+            "paraphrases": [
+              "enable the installed language fallback",
+              "enable the installed language pack"
+            ]
+          },
+          {
+            "id": "remindcore-next:app.model.install:train",
+            "paraphrases": [
+              "install the optional local language model",
+              "install the optional language pack"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,756 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": "0.1.0",
+  "teacher": {
+    "modelId": "Qwen3-1.7B-Q4_K_M",
+    "byteLength": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "license": "Apache-2.0"
+  },
+  "generation": {
+    "seed": 2608250,
+    "temperature": 0.7,
+    "topK": 30,
+    "topP": 0.85,
+    "thoughtTokens": 0,
+    "contextSize": 8192,
+    "device": "cpu"
+  },
+  "kind": "remindcore",
+  "batches": [
+    {
+      "id": "core-1",
+      "specs": [
+        {
+          "operation": "event.create",
+          "placeholders": ["TITLE", "DATE", "TIME", "RECURRENCE"],
+          "meaning": "create one new calendar event with the supplied title, date, time, and repeat rule"
+        },
+        {
+          "operation": "event.duplicate",
+          "placeholders": ["TARGET", "DATE", "TIME", "RECURRENCE"],
+          "meaning": "make another copy of an existing event at the supplied date, time, and repeat rule"
+        }
+      ],
+      "promptSha256": "9540e8903e0c986ef6babc990412c380ce298108814299cfcabf6069879060b9",
+      "elapsedMs": 138509,
+      "output": {
+        "items": [
+          {
+            "operation": "event.create",
+            "template": "I need to create a new event titled <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+            "register": "voice"
+          },
+          {
+            "operation": "event.create",
+            "template": "Could you help me set up a recurring event called <TITLE> for <DATE> at <TIME> with the rule <RECURRENCE>?",
+            "register": "casual"
+          },
+          {
+            "operation": "event.create",
+            "template": "I want to add an event named <TITLE> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+            "register": "polite"
+          },
+          {
+            "operation": "event.create",
+            "template": "Let me create an event titled <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "event.create",
+            "template": "I'll make a new event with the title <TITLE>, date <DATE>, time <TIME>, and recurrence <RECURRENCE>.",
+            "register": "terse"
+          },
+          {
+            "operation": "event.create",
+            "template": "I need to set up a recurring event <TITLE> on <DATE> at <TIME> with the rule <RECURRENCE>.",
+            "register": "conversational"
+          },
+          {
+            "operation": "event.duplicate",
+            "template": "I need to duplicate the event at <TARGET> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+            "register": "voice"
+          },
+          {
+            "operation": "event.duplicate",
+            "template": "Could you help me copy an event with the same details as <TARGET> on <DATE> at <TIME> with the rule <RECURRENCE>?",
+            "register": "casual"
+          },
+          {
+            "operation": "event.duplicate",
+            "template": "I want to create a copy of the event <TARGET> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+            "register": "polite"
+          },
+          {
+            "operation": "event.duplicate",
+            "template": "Let me make a copy of the event <TARGET> on <DATE> at <TIME> with the recurrence <RECURRENCE>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "event.duplicate",
+            "template": "I'll copy the event < TARGET > on < DATE > at < TIME > with the recurrence < RECURRENCE >.",
+            "register": "terse"
+          },
+          {
+            "operation": "event.duplicate",
+            "template": "I need to duplicate the event < TARGET > on < DATE > at < TIME > with the recurrence < RECURRENCE >.",
+            "register": "conversational"
+          }
+        ]
+      }
+    },
+    {
+      "id": "core-2",
+      "specs": [
+        {
+          "operation": "event.update",
+          "placeholders": ["TARGET", "TITLE"],
+          "meaning": "rename an existing event from the supplied target reference to the supplied new title"
+        },
+        {
+          "operation": "event.move",
+          "placeholders": ["TARGET", "DATE", "TIME"],
+          "meaning": "move an existing event to the supplied date and time"
+        }
+      ],
+      "promptSha256": "52caa97c9d02c8758ea834458be9b547525e6aec0810efffee5e6cf7b74d4167",
+      "elapsedMs": 100335,
+      "output": {
+        "items": [
+          {
+            "operation": "event.update",
+            "template": "I want to rename the event <TARGET> to <TITLE>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "event.update",
+            "template": "I'll change the title of the event <TARGET> to <TITLE>.",
+            "register": "polite"
+          },
+          {
+            "operation": "event.update",
+            "template": "I need to rename the event <TARGET> to <TITLE>.",
+            "register": "casual"
+          },
+          {
+            "operation": "event.update",
+            "template": "I'm going to update the event <TARGET> with the new title <TITLE>.",
+            "register": "conversational"
+          },
+          {
+            "operation": "event.update",
+            "template": "I want to retitle the event <TARGET> to <TITLE>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "event.update",
+            "template": "I'll retitle the event <TARGET> to <TITLE>.",
+            "register": "polite"
+          },
+          {
+            "operation": "event.move",
+            "template": "I want to move the event <TARGET> to <DATE> at <TIME>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "event.move",
+            "template": "I'll relocate the event <TARGET> to <DATE> at <TIME>.",
+            "register": "polite"
+          },
+          {
+            "operation": "event.move",
+            "template": "I need to move the event < TARGET > to < DATE > at < TIME >.",
+            "register": "casual"
+          },
+          {
+            "operation": "event.move",
+            "template": "I'm going to move the event < TARGET > to < DATE > at < TIME >.",
+            "register": "conversational"
+          },
+          {
+            "operation": "event.move",
+            "template": "I want to reorganize the event < TARGET > to < DATE > at < TIME >.",
+            "register": "indirect"
+          },
+          {
+            "operation": "event.move",
+            "template": "I'll reorganize the event < TARGET > to < DATE > at < TIME >.",
+            "register": "polite"
+          }
+        ]
+      }
+    },
+    {
+      "id": "core-3",
+      "specs": [
+        {
+          "operation": "event.delete",
+          "placeholders": ["TARGET"],
+          "meaning": "remove the supplied existing calendar event"
+        },
+        {
+          "operation": "reminder.create",
+          "placeholders": ["TITLE", "DATE", "TIME", "RECURRENCE"],
+          "meaning": "create a reminder with the supplied title, date, time, and repeat rule"
+        }
+      ],
+      "promptSha256": "04dd3c9bc251716699653a45d8e4deda3030693cd63619a67ffb0b430852905f",
+      "elapsedMs": 106230,
+      "output": {
+        "items": [
+          {
+            "operation": "event.delete",
+            "template": "I need to delete the <TARGET> event from my calendar.",
+            "register": "voice"
+          },
+          {
+            "operation": "event.delete",
+            "template": "I want to remove the <TARGET> event that's scheduled for tomorrow.",
+            "register": "casual"
+          },
+          {
+            "operation": "event.delete",
+            "template": "Can you help me delete the <TARGET> event?",
+            "register": "polite"
+          },
+          {
+            "operation": "event.delete",
+            "template": "I need to delete the <TARGET> event from my calendar.",
+            "register": "indirect"
+          },
+          {
+            "operation": "event.delete",
+            "template": "I want to delete the <TARGET> event that's scheduled for tomorrow.",
+            "register": "terse"
+          },
+          {
+            "operation": "event.delete",
+            "template": "I need to remove the <TARGET> event from my calendar.",
+            "register": "conversational"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I need to create a reminder titled <TITLE> for <DATE> at <TIME> with a repeat rule of <RECURRENCE>.",
+            "register": "voice"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I want to set a reminder titled <TITLE> for <DATE> at <TIME> with a repeat rule of <RECURRENCE>.",
+            "register": "casual"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "Can you help me create a reminder titled <TITLE> for <DATE> at <TIME> with a repeat rule of <RECURRENCE>?",
+            "register": "polite"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I need to create a reminder titled <TITLE> for <DATE> at <TIME> with a repeat rule of <RECURRENCE>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I want to set a reminder titled <TITLE> for <DATE> at <TIME> with a repeat rule of <RECURRENCE>.",
+            "register": "terse"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I need to remove the <TARGET> event from my calendar.",
+            "register": "conversational"
+          }
+        ]
+      }
+    },
+    {
+      "id": "core-4",
+      "specs": [
+        {
+          "operation": "reminder.update",
+          "placeholders": ["TARGET", "TITLE"],
+          "meaning": "change the wording of an existing reminder from the supplied target to the supplied new title"
+        },
+        {
+          "operation": "reminder.complete",
+          "placeholders": ["TARGET"],
+          "meaning": "mark the supplied reminder complete"
+        }
+      ],
+      "promptSha256": "9f0774b707fe81373798b4b6d30628c42f2f538f09607962bef1970a080fa5e6",
+      "elapsedMs": 91075,
+      "output": {
+        "items": [
+          {
+            "operation": "reminder.update",
+            "template": "I want to change the title of my reminder <TARGET> to <TITLE>.",
+            "register": "voice"
+          },
+          {
+            "operation": "reminder.update",
+            "template": "I'm going to update the reminder <TARGET> with the new title <TITLE>.",
+            "register": "casual"
+          },
+          {
+            "operation": "reminder.update",
+            "template": "I need to modify the reminder <TARGET> from its current title to <TITLE>.",
+            "register": "polite"
+          },
+          {
+            "operation": "reminder.update",
+            "template": "I'll adjust the reminder <TARGET> to have the title <TITLE>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "reminder.update",
+            "template": "I want to rename the reminder <TARGET> to <TITLE>.",
+            "register": "conversational"
+          },
+          {
+            "operation": "reminder.update",
+            "template": "I'm going to update the reminder <TARGET> with the new title <TITLE>.",
+            "register": "terse"
+          },
+          {
+            "operation": "reminder.complete",
+            "template": "I want to mark the reminder <TARGET> as complete.",
+            "register": "voice"
+          },
+          {
+            "operation": "reminder.complete",
+            "template": "I'm going to complete the reminder <TARGET>.",
+            "register": "casual"
+          },
+          {
+            "operation": "reminder.complete",
+            "template": "I need to mark the reminder <TARGET> as complete.",
+            "register": "polite"
+          },
+          {
+            "operation": "reminder.complete",
+            "template": "I'll mark the reminder <TARGET> as complete.",
+            "register": "indirect"
+          },
+          {
+            "operation": "reminder.complete",
+            "template": "I want to finish the reminder <TARGET>.",
+            "register": "conversational"
+          },
+          {
+            "operation": "reminder.complete",
+            "template": "I'm going to complete the reminder <TARGET>.",
+            "register": "terse"
+          }
+        ]
+      }
+    },
+    {
+      "id": "core-5",
+      "specs": [
+        {
+          "operation": "reminder.delete",
+          "placeholders": ["TARGET"],
+          "meaning": "delete the supplied reminder without referring to a calendar event"
+        },
+        {
+          "operation": "calendar.list",
+          "placeholders": ["DATE", "TIME"],
+          "meaning": "summarize what is scheduled in the supplied date/time window"
+        }
+      ],
+      "promptSha256": "84b3e902363a49f01ea5b9f47c10c4da26460967d3c829c946346c140fbe1a74",
+      "elapsedMs": 91759,
+      "output": {
+        "items": [
+          {
+            "operation": "reminder.delete",
+            "template": "I need to remove the reminder that's scheduled for <TARGET>.",
+            "register": "voice"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "Can you summarize the events happening on <DATE> at <TIME>?",
+            "register": "polite"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "What's going on <DATE> at <TIME>?",
+            "register": "casual"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "Could you list the events for <DATE> at <TIME>?",
+            "register": "indirect"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "I want to know what's scheduled during <DATE> and <TIME>?",
+            "register": "terse"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "Please tell me about the events on <DATE> at <TIME>?",
+            "register": "conversational"
+          },
+          {
+            "operation": "reminder.delete",
+            "template": "I need to delete the reminder that's set for <TARGET>.",
+            "register": "voice"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "Can you summarize the events on <DATE> at <TIME>?",
+            "register": "polite"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "What's happening <DATE> at <TIME>?",
+            "register": "casual"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "Could you list the events for <DATE> at <TIME>?",
+            "register": "indirect"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "I want to know what's scheduled during <DATE> and <TIME>?",
+            "register": "terse"
+          },
+          {
+            "operation": "calendar.list",
+            "template": "Please tell me about the events on <DATE> at <TIME>?",
+            "register": "conversational"
+          }
+        ]
+      }
+    },
+    {
+      "id": "core-6",
+      "specs": [
+        {
+          "operation": "calendar.search",
+          "placeholders": ["TARGET"],
+          "meaning": "find a calendar item matching the supplied target"
+        },
+        {
+          "operation": "calendar.availability",
+          "placeholders": ["DATE", "TIME"],
+          "meaning": "ask whether the calendar is free in the supplied date/time window"
+        }
+      ],
+      "promptSha256": "82b5b43a4bbb5886ab1e23d9a121f8c56f527f8801f47b217066ea58e3af6cff",
+      "elapsedMs": 94541,
+      "output": {
+        "items": [
+          {
+            "operation": "calendar.search",
+            "template": "I need to find a calendar item that matches <TARGET>.",
+            "register": "voice"
+          },
+          {
+            "operation": "calendar.search",
+            "template": "Can you help me locate a calendar entry for <TARGET>?",
+            "register": "casual"
+          },
+          {
+            "operation": "calendar.search",
+            "template": "I want to check if there's a calendar item with <TARGET>.",
+            "register": "polite"
+          },
+          {
+            "operation": "calendar.search",
+            "template": "Could you assist me in finding a calendar item named <TARGET>?",
+            "register": "indirect"
+          },
+          {
+            "operation": "calendar.search",
+            "template": "I need to search for a calendar item with the target <TARGET>.",
+            "register": "terse"
+          },
+          {
+            "operation": "calendar.search",
+            "template": "I'm trying to find a calendar item that includes <TARGET>.",
+            "register": "conversational"
+          },
+          {
+            "operation": "calendar.availability",
+            "template": "I need to check if <DATE> is free at <TIME>.",
+            "register": "voice"
+          },
+          {
+            "operation": "calendar.availability",
+            "template": "Can you tell me if <DATE> is available at <TIME>?",
+            "register": "casual"
+          },
+          {
+            "operation": "calendar.availability",
+            "template": "I want to confirm if <DATE> is free at <TIME>.",
+            "register": "polite"
+          },
+          {
+            "operation": "calendar.availability",
+            "template": "Could you help me determine if <DATE> is available at <TIME>?",
+            "register": "indirect"
+          },
+          {
+            "operation": "calendar.availability",
+            "template": "I need to check if <DATE> is free at <TIME>.",
+            "register": "terse"
+          },
+          {
+            "operation": "calendar.availability",
+            "template": "I'm trying to find out if <DATE> is available at <TIME>.",
+            "register": "conversational"
+          }
+        ]
+      }
+    },
+    {
+      "id": "core-7",
+      "specs": [
+        {
+          "operation": "calendar.conflicts",
+          "placeholders": ["DATE", "TIME"],
+          "meaning": "ask whether scheduled items overlap in the supplied date/time window"
+        }
+      ],
+      "promptSha256": "3cb7e6d5b27131ff7f5fd8ccc69dce4e65e86347e2c84266f46344788cf8cd48",
+      "elapsedMs": 56948,
+      "output": {
+        "items": [
+          {
+            "operation": "calendar.conflicts",
+            "template": "I need to know if there are any conflicts <DATE> <TIME> in my schedule.",
+            "register": "indirect"
+          },
+          {
+            "operation": "calendar.conflicts",
+            "template": "Can you check if there's a conflict <DATE> <TIME> in my calendar?",
+            "register": "polite"
+          },
+          {
+            "operation": "calendar.conflicts",
+            "template": "Do you have any conflicts <DATE> <TIME> scheduled?",
+            "register": "conversational"
+          },
+          {
+            "operation": "calendar.conflicts",
+            "template": "I'm trying to schedule something <DATE> <TIME> and want to know if there's a conflict.",
+            "register": "casual"
+          },
+          {
+            "operation": "calendar.conflicts",
+            "template": "Is there a conflict <DATE> <TIME> in my calendar?",
+            "register": "indirect"
+          },
+          {
+            "operation": "calendar.conflicts",
+            "template": "I need to confirm if <DATE> <TIME> is free in my schedule.",
+            "register": "terse"
+          }
+        ]
+      }
+    },
+    {
+      "id": "core-ood-1",
+      "specs": [],
+      "promptSha256": "99f7c01a0ad036bf3c18879f9734057305968ccfd172948aa55a14da34627410",
+      "elapsedMs": 23024,
+      "output": {
+        "items": [
+          "Hello! How can I assist you today?",
+          "Can you help me set a reminder for tomorrow at 10 AM?",
+          "I need to schedule a meeting with Sarah at 3 PM today.",
+          "I want to add a new task to my to-do list.",
+          "Let's see, what's the weather like today?",
+          "How do I delete an existing reminder?"
+        ]
+      }
+    },
+    {
+      "id": "core-ood-2",
+      "specs": [],
+      "promptSha256": "a7774cbdbda4cde53c3e4671170e459fcf03a62753ad8694ac6556b0337bf871",
+      "elapsedMs": 21706,
+      "output": {
+        "items": [
+          "The user should start by outlining their main points before diving into details.",
+          "When writing an explanation, it's important to keep the language simple and clear.",
+          "A good knowledge question should have a clear answer and be based on factual information.",
+          "To improve writing skills, regular practice is essential.",
+          "Explanations should be structured to help the reader understand complex concepts.",
+          "Reviewing and revising the text helps ensure clarity and coherence."
+        ]
+      }
+    },
+    {
+      "id": "core-ood-3",
+      "specs": [],
+      "promptSha256": "9bbcddd2e7dc9bfe2ab57c2531b74725d57a852b5e92c1828144b507b93d30cc",
+      "elapsedMs": 20777,
+      "output": {
+        "items": [
+          "What was the first day of the week in the Gregorian calendar?",
+          "How do I determine the day of the week for a given date?",
+          "What is the difference between a calendar and a schedule?",
+          "How do I find out the current date and time in another timezone?",
+          "What is the purpose of the Unix epoch time?",
+          "How do I convert a date from one format to another?"
+        ]
+      }
+    },
+    {
+      "id": "core-ood-4",
+      "specs": [],
+      "promptSha256": "62311f40464caf520b8debf4535d35398a52202da9ab13bd7577e04d0b73d59d",
+      "elapsedMs": 27589,
+      "output": {
+        "items": [
+          "I'm really free this weekend, so I can plan a trip to the beach.",
+          "I'm busy this week, so I can't schedule a meeting with my friend.",
+          "I need to move my files to a new location, so I can free up space on my computer.",
+          "I'm not sure about my schedule, so I can check my event planner for help.",
+          "I need to schedule a meeting with my colleague, so I can plan a project update.",
+          "I'm not sure about my schedule, so I can check my event planner for help."
+        ]
+      }
+    },
+    {
+      "id": "core-repair-1",
+      "specs": [
+        {
+          "operation": "event.move",
+          "placeholders": ["TARGET", "DATE", "TIME"],
+          "meaning": "move an existing event to the supplied date and time"
+        }
+      ],
+      "promptSha256": "cf52d33dc99eba31dae9f194715374208a98ead1de3964718ce8fd3c6f106240",
+      "elapsedMs": 56137,
+      "output": {
+        "items": [
+          {
+            "operation": "event.move",
+            "template": "I need to move my event to <DATE> at <TIME>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "event.move",
+            "template": "I want to shift my event to <DATE> and <TIME>.",
+            "register": "casual"
+          },
+          {
+            "operation": "event.move",
+            "template": "I'll move my event to <DATE> and <TIME>.",
+            "register": "polite"
+          },
+          {
+            "operation": "event.move",
+            "template": "Let me adjust my event to <DATE> at <TIME>.",
+            "register": "conversational"
+          },
+          {
+            "operation": "event.move",
+            "template": "I'm going to move my event to <DATE> and <TIME>.",
+            "register": "terse"
+          },
+          {
+            "operation": "event.move",
+            "template": "I need to reorganize my event to <DATE> at <TIME>.",
+            "register": "voice"
+          }
+        ]
+      }
+    },
+    {
+      "id": "core-repair-2",
+      "specs": [
+        {
+          "operation": "reminder.create",
+          "placeholders": ["TITLE", "DATE", "TIME", "RECURRENCE"],
+          "meaning": "create a reminder with the supplied title, date, time, and repeat rule"
+        }
+      ],
+      "promptSha256": "7f0f0c1f06d022acdfa310828ad6399cd6a75c60010a9e6ea5d5e04c0d79fb8f",
+      "elapsedMs": 69238,
+      "output": {
+        "items": [
+          {
+            "operation": "reminder.create",
+            "template": "I need to set a reminder for <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I'll remember to mark <TITLE> as a reminder on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+            "register": "casual"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I'm setting a reminder for <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+            "register": "polite"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I want to create a reminder titled <TITLE> for <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+            "register": "conversational"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I'll set a reminder for <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+            "register": "terse"
+          },
+          {
+            "operation": "reminder.create",
+            "template": "I'm going to add a reminder titled <TITLE> on <DATE> at <TIME> with the repeat rule <RECURRENCE>.",
+            "register": "indirect"
+          }
+        ]
+      }
+    },
+    {
+      "id": "core-repair-3",
+      "specs": [
+        {
+          "operation": "reminder.delete",
+          "placeholders": ["TARGET"],
+          "meaning": "delete the supplied reminder without referring to a calendar event"
+        }
+      ],
+      "promptSha256": "4b7e32439316540e291ff76bf49f98fe7294f535d17eab59ed34c69297ef3ba8",
+      "elapsedMs": 45379,
+      "output": {
+        "items": [
+          {
+            "operation": "reminder.delete",
+            "template": "I need to delete the reminder <TARGET>.",
+            "register": "voice"
+          },
+          {
+            "operation": "reminder.delete",
+            "template": "I'll remove the reminder <TARGET> soon.",
+            "register": "casual"
+          },
+          {
+            "operation": "reminder.delete",
+            "template": "Let me delete the reminder <TARGET>.",
+            "register": "indirect"
+          },
+          {
+            "operation": "reminder.delete",
+            "template": "I want to delete the reminder <TARGET>.",
+            "register": "polite"
+          },
+          {
+            "operation": "reminder.delete",
+            "template": "I'll delete the reminder <TARGET> in a moment.",
+            "register": "conversational"
+          },
+          {
+            "operation": "reminder.delete",
+            "template": "I need to delete the reminder <TARGET> quickly.",
+            "register": "terse"
+          }
+        ]
+      }
+    }
+  ]
+}

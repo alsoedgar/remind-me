@@ -1,0 +1,28 @@
+{
+  "seed": 7312026,
+  "modelId": "remindcore-hashframe-4m-en-qwen-assisted",
+  "version": "0.2.0",
+  "contractVersion": "0.1",
+  "globalBuckets": 131072,
+  "tokenBuckets": 131072,
+  "operationOrderSeedOffsets": [0, 2, 8],
+  "minimumAssistedPrecision": 1.0,
+  "epochs": {
+    "operation": 4,
+    "ambiguity": 3,
+    "ood": 3,
+    "risk": 3,
+    "token": 3
+  },
+  "examples": {
+    "train": 36000,
+    "dev": 6000,
+    "test": 6000
+  },
+  "teacherCurriculum": {
+    "instantiationsPerTemplate": 40,
+    "oodRepeats": 20,
+    "residualStrengths": [0.0, 0.005, 0.01, 0.02, 0.04, 0.08, 0.12],
+    "maximumDevelopmentAccuracyDrop": 0.0005
+  }
+}

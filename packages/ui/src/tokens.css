@@ -1,0 +1,137 @@
+:root,
+[data-theme='morning-lo-fi'] {
+  color-scheme: light;
+  --color-base-bg-primary: #f7f0e3;
+  --color-base-bg-secondary: #fdfaf3;
+  --color-base-bg-card: #ebd9c5;
+  --color-base-bg-card-light: #f2e6d8;
+  --color-bg-primary: var(--color-base-bg-primary);
+  --color-bg-secondary: var(--color-base-bg-secondary);
+  --color-bg-card: var(--color-base-bg-card);
+  --color-bg-card-light: var(--color-base-bg-card-light);
+  --color-text-primary: #3c2f2f;
+  --color-text-secondary: #6f5b50;
+  --color-accent: #c08a6e;
+  --color-accent-hover: #a77c5c;
+  --color-border: #3c2f2f;
+  --color-progress: #eddccb;
+  --color-shadow: #3c2f2f;
+  --color-button-text: #241b1b;
+  --color-success: #55745d;
+  --color-warning: #a26e34;
+  --color-danger: #9a4f4f;
+  --color-focus: #3f6d85;
+  --glass-main-opacity: 66%;
+  --glass-surface-opacity: 78%;
+  --glass-card-opacity: 85%;
+  --glass-blur: 26px;
+  --glass-saturation: 122%;
+  --glass-start: #eac8bd;
+  --glass-end: #f4eadb;
+  --glass-glow: #d9b39a;
+  --glass-sheen: #ffffff;
+
+  --font-family-display: 'Trebuchet MS', 'Avenir Next', Avenir, sans-serif;
+  --font-family-body:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: clamp(1.55rem, 2vw, 2.1rem);
+  --font-size-hero: clamp(2rem, 4vw, 3.35rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+
+  --border-width: 3px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --shadow-offset-sm: 3px 3px 0 var(--color-shadow);
+  --shadow-offset-md: 5px 5px 0 var(--color-shadow);
+  --shadow-soft: 0 12px 30px rgb(60 47 47 / 12%);
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --nav-width: 15.5rem;
+  --content-max: 90rem;
+}
+
+[data-theme='soft-sunset'] {
+  color-scheme: light;
+  --color-base-bg-primary: #f4eae1;
+  --color-base-bg-secondary: #faede6;
+  --color-base-bg-card: #f2d1c9;
+  --color-base-bg-card-light: #f8dfda;
+  --color-text-primary: #3a2e32;
+  --color-text-secondary: #6e555b;
+  --color-accent: #dca396;
+  --color-accent-hover: #c98c7e;
+  --color-border: #3a2e32;
+  --color-progress: #eed3cd;
+  --color-shadow: #3a2e32;
+  --color-button-text: #291e21;
+  --color-success: #56725c;
+  --color-warning: #9b6634;
+  --color-danger: #9b4d59;
+  --color-focus: #426e86;
+}
+
+[data-theme='quiet-evening'] {
+  color-scheme: dark;
+  --color-base-bg-primary: #262228;
+  --color-base-bg-secondary: #302a30;
+  --color-base-bg-card: #40363d;
+  --color-base-bg-card-light: #4a3f46;
+  --color-text-primary: #f5ece3;
+  --color-text-secondary: #cebcb4;
+  --color-accent: #d5a28b;
+  --color-accent-hover: #e3b49f;
+  --color-border: #f0ddd1;
+  --color-progress: #55454d;
+  --color-shadow: #151217;
+  --color-button-text: #211a1e;
+  --color-success: #91b698;
+  --color-warning: #e1b06e;
+  --color-danger: #e38b91;
+  --color-focus: #8fc5dc;
+  --shadow-soft: 0 12px 30px rgb(0 0 0 / 28%);
+}
+
+:root[data-surface='frosted'],
+:root[data-surface='liquid'] {
+  --color-bg-primary: color-mix(
+    in srgb,
+    var(--color-base-bg-primary) var(--glass-main-opacity),
+    transparent
+  );
+  --color-bg-secondary: color-mix(
+    in srgb,
+    var(--color-base-bg-secondary) var(--glass-surface-opacity),
+    transparent
+  );
+  --color-bg-card: color-mix(
+    in srgb,
+    var(--color-base-bg-card) var(--glass-card-opacity),
+    transparent
+  );
+  --color-bg-card-light: color-mix(
+    in srgb,
+    var(--color-base-bg-card-light) var(--glass-card-opacity),
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-base: 0ms;
+  }
+}

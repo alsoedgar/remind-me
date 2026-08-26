@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-08-26T11:15:22.502Z",
+  "workload": "48-token-cap concise chat; first sample cold-prefix, next two prefix-reuse",
+  "model": {
+    "id": "qwen3-1.7b-q4",
+    "quantization": "Q4_K_M",
+    "bytes": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"
+  },
+  "machine": {
+    "platform": "win32",
+    "arch": "x64",
+    "logicalThreads": 24,
+    "totalMemoryGiB": 31.12,
+    "freeMemoryGiBAtStart": 7.83,
+    "backend": "cpu"
+  },
+  "modelLoadMs": 4075.03,
+  "integrityCheckMs": 1579.65,
+  "results": [
+    {
+      "threads": 16,
+      "contextCreateMs": 1191.33,
+      "samples": [
+        {
+          "elapsedMs": 5256.01,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 3.61,
+          "warm": false
+        },
+        {
+          "elapsedMs": 3314.74,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 5.73,
+          "warm": true
+        },
+        {
+          "elapsedMs": 3234.28,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 5.87,
+          "warm": true
+        }
+      ],
+      "warmMedianMs": 3234.28,
+      "warmP95Ms": 3314.74,
+      "rssMiB": 2335.8
+    }
+  ],
+  "fastestThreadPoint": 16,
+  "note": "This synthetic benchmark never reads calendar data, conversations, profile memory, or application state."
+}

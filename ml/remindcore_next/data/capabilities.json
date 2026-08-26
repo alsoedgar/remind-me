@@ -1,0 +1,868 @@
+{
+  "schemaVersion": 1,
+  "generator": "scripts/prepare-remindcore-next.ts",
+  "registrySha256": "7da27bed9f18b097f40db8f09a6f9c8b0bcdfb0b9866dcdbc947a620bcd6163f",
+  "provenance": {
+    "source": "project-authored AssistantPlan v2 capability registry",
+    "cueSource": "project-authored Phase 4 seed catalog; no heldout surface templates",
+    "heldoutRowsUsed": false,
+    "teacherAuthoredLabels": false
+  },
+  "capabilities": [
+    {
+      "id": "calendar.event.create",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Create event",
+      "description": "Create one reviewed event from grounded user fields.",
+      "aliases": [],
+      "cues": [
+        "add",
+        "book",
+        "calendar",
+        "schedule",
+        "set"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.event.duplicate",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Duplicate event",
+      "description": "Copy an existing event to another date or recurrence.",
+      "aliases": [],
+      "cues": [
+        "copy",
+        "duplicate",
+        "another",
+        "same"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.event.update",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Update event",
+      "description": "Rename or update event details and recurrence.",
+      "aliases": [],
+      "cues": [
+        "change",
+        "rename",
+        "update",
+        "edit"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.event.move",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Move event",
+      "description": "Move an event while retaining its validated duration.",
+      "aliases": [],
+      "cues": [
+        "move",
+        "shift",
+        "reschedule",
+        "push"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.event.delete",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Delete event",
+      "description": "Delete a selected event after explicit review.",
+      "aliases": [],
+      "cues": [
+        "cancel",
+        "delete",
+        "remove",
+        "drop"
+      ],
+      "confirmation": "always",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.reminder.create",
+      "route": "calendar",
+      "domain": "reminder",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Create reminder",
+      "description": "Create one reviewed reminder.",
+      "aliases": [],
+      "cues": [
+        "remind",
+        "reminder",
+        "nudge",
+        "alert"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.reminder.update",
+      "route": "calendar",
+      "domain": "reminder",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Update reminder",
+      "description": "Update reminder text, time, or recurrence.",
+      "aliases": [],
+      "cues": [
+        "change",
+        "edit",
+        "rename",
+        "update"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.reminder.complete",
+      "route": "calendar",
+      "domain": "reminder",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Complete reminder",
+      "description": "Complete a selected reminder.",
+      "aliases": [],
+      "cues": [
+        "complete",
+        "done",
+        "finish",
+        "check"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.reminder.delete",
+      "route": "calendar",
+      "domain": "reminder",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Delete reminder",
+      "description": "Delete a selected reminder after explicit review.",
+      "aliases": [],
+      "cues": [
+        "delete",
+        "dismiss",
+        "remove",
+        "clear"
+      ],
+      "confirmation": "always",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.query.list",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "List schedule",
+      "description": "List grounded event and reminder names for a time range.",
+      "aliases": [
+        "what do I have",
+        "agenda"
+      ],
+      "cues": [
+        "agenda",
+        "calendar",
+        "plans",
+        "scheduled"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.query.search",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Search schedule",
+      "description": "Search local titles, locations, and details.",
+      "aliases": [
+        "find",
+        "where"
+      ],
+      "cues": [
+        "find",
+        "locate",
+        "search",
+        "where",
+        "when"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.query.availability",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Check availability",
+      "description": "Answer whether a grounded time window is free.",
+      "aliases": [
+        "am I free",
+        "open time"
+      ],
+      "cues": [
+        "available",
+        "free",
+        "open",
+        "gap"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.query.conflicts",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "calendar-ir",
+      "title": "Check conflicts",
+      "description": "Find overlapping local event occurrences.",
+      "aliases": [
+        "overlap",
+        "double booked"
+      ],
+      "cues": [
+        "conflict",
+        "overlap",
+        "double",
+        "clash"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.query.next",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Next item",
+      "description": "Return the next relevant event or reminder briefly.",
+      "aliases": [
+        "next event",
+        "what is next"
+      ],
+      "cues": [
+        "next",
+        "upcoming",
+        "soonest"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.query.details",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Item details",
+      "description": "Return requested details for a focused calendar item.",
+      "aliases": [],
+      "cues": [
+        "details",
+        "location",
+        "information",
+        "tell"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.query.summary",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Schedule summary",
+      "description": "Summarize a grounded day or range at the requested detail level.",
+      "aliases": [],
+      "cues": [
+        "summarize",
+        "overview",
+        "shape",
+        "busy"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.schedule.copy-day",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Copy day schedule",
+      "description": "Copy every event from one day into reviewed weekday recurrences.",
+      "aliases": [],
+      "cues": [
+        "copy",
+        "mirror",
+        "repeat",
+        "reuse"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.schedule.clear",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Clear schedule",
+      "description": "Capture exact event or reminder IDs for one undoable destructive review.",
+      "aliases": [],
+      "cues": [
+        "clear",
+        "delete",
+        "remove",
+        "wipe"
+      ],
+      "confirmation": "always",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.import.document",
+      "route": "document",
+      "domain": "document",
+      "status": "app-ready",
+      "handler": "document-import",
+      "title": "Import document",
+      "description": "Extract reviewed proposals from a local PDF or image.",
+      "aliases": [
+        "import PDF",
+        "scan schedule"
+      ],
+      "cues": [
+        "import",
+        "read",
+        "scan",
+        "attach"
+      ],
+      "confirmation": "always",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.import.file",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "app-ready",
+      "handler": "main-process",
+      "title": "Import calendar file",
+      "description": "Import a reviewed local ICS or backup file.",
+      "aliases": [
+        "import ICS"
+      ],
+      "cues": [
+        "import",
+        "restore",
+        "load",
+        "open"
+      ],
+      "confirmation": "always",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "calendar.export.file",
+      "route": "calendar",
+      "domain": "calendar",
+      "status": "app-ready",
+      "handler": "main-process",
+      "title": "Export calendar",
+      "description": "Export local data through the existing save dialog.",
+      "aliases": [
+        "export calendar",
+        "backup"
+      ],
+      "cues": [
+        "export",
+        "backup",
+        "save",
+        "download"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.chat.respond",
+      "route": "broad-chat",
+      "domain": "conversation",
+      "status": "conditional",
+      "handler": "assistant-service",
+      "title": "Broad local conversation",
+      "description": "Answer broader dialogue through the optional local language pack.",
+      "aliases": [
+        "general question",
+        "chat"
+      ],
+      "cues": [
+        "explain",
+        "idea",
+        "think",
+        "help",
+        "tell"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": true
+    },
+    {
+      "id": "assistant.help",
+      "route": "conversation",
+      "domain": "conversation",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Help",
+      "description": "Explain available capabilities and example requests.",
+      "aliases": [
+        "what can you do"
+      ],
+      "cues": [
+        "help",
+        "examples",
+        "requests",
+        "features"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.identity",
+      "route": "conversation",
+      "domain": "conversation",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Identity",
+      "description": "Explain what Remind Me is.",
+      "aliases": [
+        "who are you"
+      ],
+      "cues": [
+        "name",
+        "assistant",
+        "introduce",
+        "yourself"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.architecture",
+      "route": "conversation",
+      "domain": "conversation",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Architecture",
+      "description": "Explain the original models, fallback, validation, and privacy.",
+      "aliases": [
+        "how do you work",
+        "what models"
+      ],
+      "cues": [
+        "model",
+        "local",
+        "private",
+        "built"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.local-time",
+      "route": "conversation",
+      "domain": "conversation",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Local time",
+      "description": "Answer the current local date and time from device settings.",
+      "aliases": [],
+      "cues": [
+        "time",
+        "date",
+        "day",
+        "clock"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.wellbeing",
+      "route": "conversation",
+      "domain": "conversation",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Wellbeing",
+      "description": "Handle a short wellbeing turn naturally.",
+      "aliases": [],
+      "cues": [
+        "doing",
+        "there",
+        "encourage",
+        "hello",
+        "morning"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.thanks",
+      "route": "conversation",
+      "domain": "conversation",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Thanks",
+      "description": "Acknowledge thanks without repeating help text.",
+      "aliases": [],
+      "cues": [
+        "thank",
+        "appreciate",
+        "helpful"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.goodbye",
+      "route": "conversation",
+      "domain": "conversation",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Goodbye",
+      "description": "Close a conversational turn briefly.",
+      "aliases": [],
+      "cues": [
+        "goodbye",
+        "later",
+        "night",
+        "signing"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.memory.set-name",
+      "route": "memory",
+      "domain": "memory",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Remember name",
+      "description": "Store an approved preferred name locally.",
+      "aliases": [],
+      "cues": [
+        "name",
+        "call",
+        "remember"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.memory.remember",
+      "route": "memory",
+      "domain": "memory",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Remember preference",
+      "description": "Store one explicit user-approved memory locally.",
+      "aliases": [],
+      "cues": [
+        "remember",
+        "preference",
+        "keep",
+        "note"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.memory.recall",
+      "route": "memory",
+      "domain": "memory",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Recall memory",
+      "description": "List approved local memories.",
+      "aliases": [],
+      "cues": [
+        "remember",
+        "memory",
+        "saved",
+        "know"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.memory.forget",
+      "route": "memory",
+      "domain": "memory",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Forget memory",
+      "description": "Remove one matching local memory.",
+      "aliases": [],
+      "cues": [
+        "forget",
+        "remove",
+        "erase",
+        "memory"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "assistant.memory.forget-all",
+      "route": "memory",
+      "domain": "memory",
+      "status": "assistant-ready",
+      "handler": "assistant-service",
+      "title": "Forget all memories",
+      "description": "Remove all approved local memories.",
+      "aliases": [],
+      "cues": [
+        "forget",
+        "clear",
+        "erase",
+        "memory"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "app.navigation.open",
+      "route": "app",
+      "domain": "app",
+      "status": "app-ready",
+      "handler": "renderer",
+      "title": "Open view",
+      "description": "Navigate to an existing app view.",
+      "aliases": [
+        "show calendar",
+        "open settings"
+      ],
+      "cues": [
+        "open",
+        "show",
+        "go",
+        "view"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "app.appearance.update",
+      "route": "app",
+      "domain": "app",
+      "status": "app-ready",
+      "handler": "renderer",
+      "title": "Update appearance",
+      "description": "Change existing local theme and density preferences.",
+      "aliases": [
+        "change color",
+        "liquid theme"
+      ],
+      "cues": [
+        "theme",
+        "color",
+        "appearance",
+        "density"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "app.window.set-mode",
+      "route": "app",
+      "domain": "app",
+      "status": "app-ready",
+      "handler": "main-process",
+      "title": "Set window mode",
+      "description": "Switch among full, widget, and glance window modes.",
+      "aliases": [
+        "mini view",
+        "widget",
+        "glance"
+      ],
+      "cues": [
+        "window",
+        "widget",
+        "glance",
+        "mode"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "app.window.set-pinned",
+      "route": "app",
+      "domain": "app",
+      "status": "app-ready",
+      "handler": "main-process",
+      "title": "Pin window",
+      "description": "Toggle the existing always-on-top window behavior.",
+      "aliases": [
+        "keep on top",
+        "unpin"
+      ],
+      "cues": [
+        "pin",
+        "top",
+        "desktop",
+        "window"
+      ],
+      "confirmation": "never",
+      "supportsMultiAction": true,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "app.startup.configure",
+      "route": "app",
+      "domain": "app",
+      "status": "app-ready",
+      "handler": "main-process",
+      "title": "Configure startup",
+      "description": "Configure launch-at-login and the startup window mode.",
+      "aliases": [
+        "start with computer",
+        "launch at login"
+      ],
+      "cues": [
+        "startup",
+        "login",
+        "launch",
+        "computer"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "app.model.install",
+      "route": "app",
+      "domain": "model",
+      "status": "app-ready",
+      "handler": "main-process",
+      "title": "Install language pack",
+      "description": "Open the existing verified optional-model installation flow.",
+      "aliases": [
+        "install fallback"
+      ],
+      "cues": [
+        "install",
+        "language",
+        "model",
+        "fallback"
+      ],
+      "confirmation": "always",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": false
+    },
+    {
+      "id": "app.model.enable",
+      "route": "app",
+      "domain": "model",
+      "status": "app-ready",
+      "handler": "main-process",
+      "title": "Enable language pack",
+      "description": "Enable or disable an installed optional local model.",
+      "aliases": [
+        "enable fallback",
+        "disable fallback"
+      ],
+      "cues": [
+        "enable",
+        "disable",
+        "model",
+        "fallback"
+      ],
+      "confirmation": "preview",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": true
+    },
+    {
+      "id": "app.model.remove",
+      "route": "app",
+      "domain": "model",
+      "status": "app-ready",
+      "handler": "main-process",
+      "title": "Remove language pack",
+      "description": "Remove the optional model only through its explicit settings flow.",
+      "aliases": [
+        "uninstall fallback"
+      ],
+      "cues": [
+        "remove",
+        "uninstall",
+        "delete",
+        "model"
+      ],
+      "confirmation": "always",
+      "supportsMultiAction": false,
+      "requiresOptionalModel": true
+    }
+  ]
+}

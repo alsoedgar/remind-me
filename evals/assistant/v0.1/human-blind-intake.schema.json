@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Remind Me independent human-blind evaluation scenario",
+  "description": "Store collected rows in human-blind.local.jsonl. Never place that file in a training, prompt-generation, or teacher-distillation path.",
+  "type": "object",
+  "required": [
+    "id",
+    "category",
+    "source",
+    "inDomain",
+    "trainingExcluded",
+    "tags",
+    "world",
+    "turns"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "category": {
+      "enum": [
+        "single-action",
+        "multi-action",
+        "mutation",
+        "bulk",
+        "query",
+        "multi-turn",
+        "conversation",
+        "memory",
+        "ambiguity",
+        "safety",
+        "open-dialogue"
+      ]
+    },
+    "source": { "const": "user-reported" },
+    "inDomain": { "type": "boolean" },
+    "trainingExcluded": { "const": true },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "world": { "type": "object" },
+    "turns": { "type": "array", "minItems": 1 }
+  },
+  "additionalProperties": false
+}

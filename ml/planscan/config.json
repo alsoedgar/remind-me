@@ -1,0 +1,30 @@
+{
+  "seed": 731947,
+  "dataset": {
+    "trainPages": 12000,
+    "devPages": 2000,
+    "testPages": 2000,
+    "trackedHeldoutPages": 96,
+    "minimumPlansPerPage": 2,
+    "maximumPlansPerPage": 4
+  },
+  "model": {
+    "featureBuckets": 131072,
+    "epochs": 2,
+    "learningRate": 0.42,
+    "parameterInitialization": "zero",
+    "quantization": "per-output-channel symmetric INT8"
+  },
+  "thresholds": {
+    "entity": 0.15,
+    "relation": 0.31,
+    "group": 0.52,
+    "scanReview": 0.78
+  },
+  "provenance": {
+    "teacherUsed": false,
+    "pretrainedWeightsUsed": false,
+    "personalDataUsed": false,
+    "networkRequired": false
+  }
+}

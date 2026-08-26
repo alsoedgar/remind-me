@@ -1,0 +1,713 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "0.1.0",
+  "generator": "scripts/build-assistant-corpus.ts prepare",
+  "seed": 260826,
+  "paraphrasesPerJob": 1,
+  "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+  "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+  "teacherRole": "delexicalized surface paraphrase only",
+  "labelAuthority": "project-authored capability registry and seed programs",
+  "registrySha256": "7da27bed9f18b097f40db8f09a6f9c8b0bcdfb0b9866dcdbc947a620bcd6163f",
+  "jobs": [
+    {
+      "id": "assistant:calendar.event.create:1",
+      "capabilityId": "calendar.event.create",
+      "meaning": "Create event",
+      "seedTemplate": "put <TITLE> on my calendar for <DATE> at <TIME>",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME"
+      ],
+      "cues": [
+        "add",
+        "book",
+        "calendar",
+        "schedule",
+        "set"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.event.create:1"
+    },
+    {
+      "id": "assistant:calendar.event.duplicate:2",
+      "capabilityId": "calendar.event.duplicate",
+      "meaning": "Duplicate event",
+      "seedTemplate": "make another <TARGET> on <DATE>",
+      "placeholders": [
+        "TARGET",
+        "DATE"
+      ],
+      "cues": [
+        "copy",
+        "duplicate",
+        "another",
+        "same"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.event.duplicate:2"
+    },
+    {
+      "id": "assistant:calendar.event.update:3",
+      "capabilityId": "calendar.event.update",
+      "meaning": "Update event",
+      "seedTemplate": "update <TARGET> so it repeats <RECURRENCE>",
+      "placeholders": [
+        "TARGET",
+        "RECURRENCE"
+      ],
+      "cues": [
+        "change",
+        "rename",
+        "update",
+        "edit"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.event.update:3"
+    },
+    {
+      "id": "assistant:calendar.event.move:1",
+      "capabilityId": "calendar.event.move",
+      "meaning": "Move event",
+      "seedTemplate": "move <TARGET> to <DATE> at <TIME>",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "cues": [
+        "move",
+        "shift",
+        "reschedule",
+        "push"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.event.move:1"
+    },
+    {
+      "id": "assistant:calendar.event.delete:2",
+      "capabilityId": "calendar.event.delete",
+      "meaning": "Delete event",
+      "seedTemplate": "remove <TARGET> from <DATE>",
+      "placeholders": [
+        "TARGET",
+        "DATE"
+      ],
+      "cues": [
+        "cancel",
+        "delete",
+        "remove",
+        "drop"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.event.delete:2"
+    },
+    {
+      "id": "assistant:calendar.reminder.create:3",
+      "capabilityId": "calendar.reminder.create",
+      "meaning": "Create reminder",
+      "seedTemplate": "set a reminder for <TITLE> before <TARGET>",
+      "placeholders": [
+        "TITLE",
+        "TARGET"
+      ],
+      "cues": [
+        "remind",
+        "reminder",
+        "nudge",
+        "alert"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.reminder.create:3"
+    },
+    {
+      "id": "assistant:calendar.reminder.update:1",
+      "capabilityId": "calendar.reminder.update",
+      "meaning": "Update reminder",
+      "seedTemplate": "change reminder <TARGET> to <NEW_TITLE>",
+      "placeholders": [
+        "TARGET",
+        "NEW_TITLE"
+      ],
+      "cues": [
+        "change",
+        "edit",
+        "rename",
+        "update"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.reminder.update:1"
+    },
+    {
+      "id": "assistant:calendar.reminder.complete:2",
+      "capabilityId": "calendar.reminder.complete",
+      "meaning": "Complete reminder",
+      "seedTemplate": "check off <TARGET> as done",
+      "placeholders": [
+        "TARGET"
+      ],
+      "cues": [
+        "complete",
+        "done",
+        "finish",
+        "check"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.reminder.complete:2"
+    },
+    {
+      "id": "assistant:calendar.reminder.delete:3",
+      "capabilityId": "calendar.reminder.delete",
+      "meaning": "Delete reminder",
+      "seedTemplate": "remove reminder <TARGET> from <DATE>",
+      "placeholders": [
+        "TARGET",
+        "DATE"
+      ],
+      "cues": [
+        "delete",
+        "dismiss",
+        "remove",
+        "clear"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.reminder.delete:3"
+    },
+    {
+      "id": "assistant:calendar.query.list:1",
+      "capabilityId": "calendar.query.list",
+      "meaning": "List schedule",
+      "seedTemplate": "list my plans for <DATE>",
+      "placeholders": [
+        "DATE"
+      ],
+      "cues": [
+        "agenda",
+        "calendar",
+        "plans",
+        "scheduled"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.list:1"
+    },
+    {
+      "id": "assistant:calendar.query.search:2",
+      "capabilityId": "calendar.query.search",
+      "meaning": "Search schedule",
+      "seedTemplate": "where is <TARGET> happening",
+      "placeholders": [
+        "TARGET"
+      ],
+      "cues": [
+        "find",
+        "locate",
+        "search",
+        "where",
+        "when"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.query.search:2"
+    },
+    {
+      "id": "assistant:calendar.query.availability:3",
+      "capabilityId": "calendar.query.availability",
+      "meaning": "Check availability",
+      "seedTemplate": "do I have a gap between <TIME> and <END_TIME>",
+      "placeholders": [
+        "TIME",
+        "END_TIME"
+      ],
+      "cues": [
+        "available",
+        "free",
+        "open",
+        "gap"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.availability:3"
+    },
+    {
+      "id": "assistant:calendar.query.conflicts:1",
+      "capabilityId": "calendar.query.conflicts",
+      "meaning": "Check conflicts",
+      "seedTemplate": "check for conflicts on <DATE>",
+      "placeholders": [
+        "DATE"
+      ],
+      "cues": [
+        "conflict",
+        "overlap",
+        "double",
+        "clash"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.conflicts:1"
+    },
+    {
+      "id": "assistant:calendar.query.next:2",
+      "capabilityId": "calendar.query.next",
+      "meaning": "Next item",
+      "seedTemplate": "which appointment is coming up soonest",
+      "placeholders": [],
+      "cues": [
+        "next",
+        "upcoming",
+        "soonest"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.query.next:2"
+    },
+    {
+      "id": "assistant:calendar.query.details:3",
+      "capabilityId": "calendar.query.details",
+      "meaning": "Item details",
+      "seedTemplate": "tell me more information about <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "cues": [
+        "details",
+        "location",
+        "information",
+        "tell"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.query.details:3"
+    },
+    {
+      "id": "assistant:calendar.query.summary:1",
+      "capabilityId": "calendar.query.summary",
+      "meaning": "Schedule summary",
+      "seedTemplate": "summarize how <DATE> looks",
+      "placeholders": [
+        "DATE"
+      ],
+      "cues": [
+        "summarize",
+        "overview",
+        "shape",
+        "busy"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.query.summary:1"
+    },
+    {
+      "id": "assistant:calendar.schedule.copy-day:2",
+      "capabilityId": "calendar.schedule.copy-day",
+      "meaning": "Copy day schedule",
+      "seedTemplate": "mirror my <SOURCE_DATE> schedule on <DESTINATION_DAYS>",
+      "placeholders": [
+        "SOURCE_DATE",
+        "DESTINATION_DAYS"
+      ],
+      "cues": [
+        "copy",
+        "mirror",
+        "repeat",
+        "reuse"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.schedule.copy-day:2"
+    },
+    {
+      "id": "assistant:calendar.schedule.clear:3",
+      "capabilityId": "calendar.schedule.clear",
+      "meaning": "Clear schedule",
+      "seedTemplate": "wipe both events and reminders during <RANGE>",
+      "placeholders": [
+        "RANGE"
+      ],
+      "cues": [
+        "clear",
+        "delete",
+        "remove",
+        "wipe"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.schedule.clear:3"
+    },
+    {
+      "id": "assistant:calendar.import.document:1",
+      "capabilityId": "calendar.import.document",
+      "meaning": "Import document",
+      "seedTemplate": "read the attached <FILE_KIND> and propose its dates",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "cues": [
+        "import",
+        "read",
+        "scan",
+        "attach"
+      ],
+      "split": "train",
+      "familyId": "single:calendar.import.document:1"
+    },
+    {
+      "id": "assistant:calendar.import.file:2",
+      "capabilityId": "calendar.import.file",
+      "meaning": "Import calendar file",
+      "seedTemplate": "restore calendar items from this <FILE_KIND>",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "cues": [
+        "import",
+        "restore",
+        "load",
+        "open"
+      ],
+      "split": "development",
+      "familyId": "single:calendar.import.file:2"
+    },
+    {
+      "id": "assistant:calendar.export.file:3",
+      "capabilityId": "calendar.export.file",
+      "meaning": "Export calendar",
+      "seedTemplate": "save all my plans to a <FILE_KIND> file",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "cues": [
+        "export",
+        "backup",
+        "save",
+        "download"
+      ],
+      "split": "challenge",
+      "familyId": "single:calendar.export.file:3"
+    },
+    {
+      "id": "assistant:assistant.chat.respond:1",
+      "capabilityId": "assistant.chat.respond",
+      "meaning": "Broad local conversation",
+      "seedTemplate": "explain <TOPIC> in simple terms",
+      "placeholders": [
+        "TOPIC"
+      ],
+      "cues": [
+        "explain",
+        "idea",
+        "think",
+        "help",
+        "tell"
+      ],
+      "split": "train",
+      "familyId": "single:assistant.chat.respond:1"
+    },
+    {
+      "id": "assistant:assistant.help:2",
+      "capabilityId": "assistant.help",
+      "meaning": "Help",
+      "seedTemplate": "give me a quick tour of your calendar features",
+      "placeholders": [],
+      "cues": [
+        "help",
+        "examples",
+        "requests",
+        "features"
+      ],
+      "split": "development",
+      "familyId": "single:assistant.help:2"
+    },
+    {
+      "id": "assistant:assistant.identity:3",
+      "capabilityId": "assistant.identity",
+      "meaning": "Identity",
+      "seedTemplate": "tell me who I am chatting with",
+      "placeholders": [],
+      "cues": [
+        "name",
+        "assistant",
+        "introduce",
+        "yourself"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.identity:3"
+    },
+    {
+      "id": "assistant:assistant.architecture:1",
+      "capabilityId": "assistant.architecture",
+      "meaning": "Architecture",
+      "seedTemplate": "which local models power this app",
+      "placeholders": [],
+      "cues": [
+        "model",
+        "local",
+        "private",
+        "built"
+      ],
+      "split": "train",
+      "familyId": "single:assistant.architecture:1"
+    },
+    {
+      "id": "assistant:assistant.local-time:2",
+      "capabilityId": "assistant.local-time",
+      "meaning": "Local time",
+      "seedTemplate": "tell me today’s local date",
+      "placeholders": [],
+      "cues": [
+        "time",
+        "date",
+        "day",
+        "clock"
+      ],
+      "split": "development",
+      "familyId": "single:assistant.local-time:2"
+    },
+    {
+      "id": "assistant:assistant.wellbeing:3",
+      "capabilityId": "assistant.wellbeing",
+      "meaning": "Wellbeing",
+      "seedTemplate": "give me a short word of encouragement",
+      "placeholders": [],
+      "cues": [
+        "doing",
+        "there",
+        "encourage",
+        "hello",
+        "morning"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.wellbeing:3"
+    },
+    {
+      "id": "assistant:assistant.thanks:1",
+      "capabilityId": "assistant.thanks",
+      "meaning": "Thanks",
+      "seedTemplate": "thank you for sorting that out",
+      "placeholders": [],
+      "cues": [
+        "thank",
+        "appreciate",
+        "helpful"
+      ],
+      "split": "train",
+      "familyId": "single:assistant.thanks:1"
+    },
+    {
+      "id": "assistant:assistant.goodbye:2",
+      "capabilityId": "assistant.goodbye",
+      "meaning": "Goodbye",
+      "seedTemplate": "I will talk to you again later",
+      "placeholders": [],
+      "cues": [
+        "goodbye",
+        "later",
+        "night",
+        "signing"
+      ],
+      "split": "development",
+      "familyId": "single:assistant.goodbye:2"
+    },
+    {
+      "id": "assistant:assistant.memory.set-name:3",
+      "capabilityId": "assistant.memory.set-name",
+      "meaning": "Remember name",
+      "seedTemplate": "set my preferred name to <NAME>",
+      "placeholders": [
+        "NAME"
+      ],
+      "cues": [
+        "name",
+        "call",
+        "remember"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.set-name:3"
+    },
+    {
+      "id": "assistant:assistant.memory.remember:1",
+      "capabilityId": "assistant.memory.remember",
+      "meaning": "Remember preference",
+      "seedTemplate": "remember that <MEMORY>",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "cues": [
+        "remember",
+        "preference",
+        "keep",
+        "note"
+      ],
+      "split": "train",
+      "familyId": "single:assistant.memory.remember:1"
+    },
+    {
+      "id": "assistant:assistant.memory.recall:2",
+      "capabilityId": "assistant.memory.recall",
+      "meaning": "Recall memory",
+      "seedTemplate": "show my locally saved preferences",
+      "placeholders": [],
+      "cues": [
+        "remember",
+        "memory",
+        "saved",
+        "know"
+      ],
+      "split": "development",
+      "familyId": "single:assistant.memory.recall:2"
+    },
+    {
+      "id": "assistant:assistant.memory.forget:3",
+      "capabilityId": "assistant.memory.forget",
+      "meaning": "Forget memory",
+      "seedTemplate": "erase what you remember about <MEMORY>",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "cues": [
+        "forget",
+        "remove",
+        "erase",
+        "memory"
+      ],
+      "split": "challenge",
+      "familyId": "single:assistant.memory.forget:3"
+    },
+    {
+      "id": "assistant:assistant.memory.forget-all:1",
+      "capabilityId": "assistant.memory.forget-all",
+      "meaning": "Forget all memories",
+      "seedTemplate": "forget every personal detail you stored",
+      "placeholders": [],
+      "cues": [
+        "forget",
+        "clear",
+        "erase",
+        "memory"
+      ],
+      "split": "train",
+      "familyId": "single:assistant.memory.forget-all:1"
+    },
+    {
+      "id": "assistant:app.navigation.open:2",
+      "capabilityId": "app.navigation.open",
+      "meaning": "Open view",
+      "seedTemplate": "take me to <VIEW>",
+      "placeholders": [
+        "VIEW"
+      ],
+      "cues": [
+        "open",
+        "show",
+        "go",
+        "view"
+      ],
+      "split": "development",
+      "familyId": "single:app.navigation.open:2"
+    },
+    {
+      "id": "assistant:app.appearance.update:3",
+      "capabilityId": "app.appearance.update",
+      "meaning": "Update appearance",
+      "seedTemplate": "make the interface density <DENSITY>",
+      "placeholders": [
+        "DENSITY"
+      ],
+      "cues": [
+        "theme",
+        "color",
+        "appearance",
+        "density"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.appearance.update:3"
+    },
+    {
+      "id": "assistant:app.window.set-mode:1",
+      "capabilityId": "app.window.set-mode",
+      "meaning": "Set window mode",
+      "seedTemplate": "switch the window into <MODE> mode",
+      "placeholders": [
+        "MODE"
+      ],
+      "cues": [
+        "window",
+        "widget",
+        "glance",
+        "mode"
+      ],
+      "split": "train",
+      "familyId": "single:app.window.set-mode:1"
+    },
+    {
+      "id": "assistant:app.window.set-pinned:2",
+      "capabilityId": "app.window.set-pinned",
+      "meaning": "Pin window",
+      "seedTemplate": "keep the calendar on top of the desktop",
+      "placeholders": [],
+      "cues": [
+        "pin",
+        "top",
+        "desktop",
+        "window"
+      ],
+      "split": "development",
+      "familyId": "single:app.window.set-pinned:2"
+    },
+    {
+      "id": "assistant:app.startup.configure:3",
+      "capabilityId": "app.startup.configure",
+      "meaning": "Configure startup",
+      "seedTemplate": "start in <MODE> mode with my computer",
+      "placeholders": [
+        "MODE"
+      ],
+      "cues": [
+        "startup",
+        "login",
+        "launch",
+        "computer"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.startup.configure:3"
+    },
+    {
+      "id": "assistant:app.model.install:1",
+      "capabilityId": "app.model.install",
+      "meaning": "Install language pack",
+      "seedTemplate": "install the optional local language model",
+      "placeholders": [],
+      "cues": [
+        "install",
+        "language",
+        "model",
+        "fallback"
+      ],
+      "split": "train",
+      "familyId": "single:app.model.install:1"
+    },
+    {
+      "id": "assistant:app.model.enable:2",
+      "capabilityId": "app.model.enable",
+      "meaning": "Enable language pack",
+      "seedTemplate": "turn off the optional local model",
+      "placeholders": [],
+      "cues": [
+        "enable",
+        "disable",
+        "model",
+        "fallback"
+      ],
+      "split": "development",
+      "familyId": "single:app.model.enable:2"
+    },
+    {
+      "id": "assistant:app.model.remove:3",
+      "capabilityId": "app.model.remove",
+      "meaning": "Remove language pack",
+      "seedTemplate": "delete the local fallback model files",
+      "placeholders": [],
+      "cues": [
+        "remove",
+        "uninstall",
+        "delete",
+        "model"
+      ],
+      "split": "challenge",
+      "familyId": "single:app.model.remove:3"
+    }
+  ]
+}

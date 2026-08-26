@@ -1,0 +1,984 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": "0.1.0",
+  "teacher": {
+    "modelId": "Qwen3-1.7B-Q4_K_M",
+    "byteLength": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "license": "Apache-2.0"
+  },
+  "generation": {
+    "seed": 2608250,
+    "temperature": 0.7,
+    "topK": 30,
+    "topP": 0.85,
+    "thoughtTokens": 0,
+    "contextSize": 8192,
+    "device": "cpu"
+  },
+  "kind": "assistant-paraphrases",
+  "batches": [
+    {
+      "id": "assistant-1",
+      "jobIds": [
+        "assistant:calendar.event.create:1",
+        "assistant:calendar.event.duplicate:2",
+        "assistant:calendar.event.update:3"
+      ],
+      "promptSha256": "f8203ba864e40453ef60f9589f0e2ca0dda3fd23a962d324b2eb42d8fb93d1d9",
+      "elapsedMs": 62015,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.event.create:1",
+            "paraphrases": [
+              "add <TITLE> to my calendar on <DATE> at <TIME>"
+            ]
+          },
+          {
+            "id": "assistant:calendar.event.duplicate:2",
+            "paraphrases": [
+              "copy <TARGET> to <DATE>"
+            ]
+          },
+          {
+            "id": "assistant:calendar.event.update:3",
+            "paraphrases": [
+              "change <TARGET> to repeat <RECURRENCE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-2",
+      "jobIds": [
+        "assistant:calendar.event.move:1",
+        "assistant:calendar.event.delete:2",
+        "assistant:calendar.reminder.create:3"
+      ],
+      "promptSha256": "6445e6e25d48c68f6be8abcf46e34bb7c24151f59ae09ecede24df3287be08b4",
+      "elapsedMs": 32893,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.event.move:1",
+            "paraphrases": [
+              "move <TARGET> to <DATE> at <TIME>"
+            ]
+          },
+          {
+            "id": "assistant:calendar.event.move:1",
+            "paraphrases": [
+              "move <DATE> to <TIME> at <TARGET>"
+            ]
+          },
+          {
+            "id": "assistant:calendar.event.move:1",
+            "paraphrases": [
+              "move <TARGET> to <DATE> at <TIME>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-3",
+      "jobIds": [
+        "assistant:calendar.reminder.update:1",
+        "assistant:calendar.reminder.complete:2",
+        "assistant:calendar.reminder.delete:3"
+      ],
+      "promptSha256": "a675b4aa80d569c17168085ef4e8ea828a34e9000bdd9d64d6fc580e7dcaf932",
+      "elapsedMs": 32859,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.reminder.update:1",
+            "paraphrases": [
+              "change <TARGET> to <NEW_TITLE> for <DATE>"
+            ]
+          },
+          {
+            "id": "assistant:calendar.reminder.update:1",
+            "paraphrases": [
+              "modify <TARGET> with <NEW_TITLE>"
+            ]
+          },
+          {
+            "id": "assistant:calendar.reminder.update:1",
+            "paraphrases": [
+              "update <TARGET> to <NEW_TITLE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-4",
+      "jobIds": [
+        "assistant:calendar.query.list:1",
+        "assistant:calendar.query.search:2",
+        "assistant:calendar.query.availability:3"
+      ],
+      "promptSha256": "8ad5836919f323fedba34fefd8949d95cf617cad9826ed88693fb40dd5fa12f0",
+      "elapsedMs": 30849,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.query.list:1",
+            "paraphrases": [
+              "show my schedule for <DATE>"
+            ]
+          },
+          {
+            "id": "assistant:calendar.query.search:2",
+            "paraphrases": [
+              "find <TARGET> location"
+            ]
+          },
+          {
+            "id": "assistant:calendar.query.availability:3",
+            "paraphrases": [
+              "is there a gap between <TIME> and <END_TIME>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-5",
+      "jobIds": [
+        "assistant:calendar.query.conflicts:1",
+        "assistant:calendar.query.next:2",
+        "assistant:calendar.query.details:3"
+      ],
+      "promptSha256": "94d7c1964e859ada5b5da5db8a63b18644f2db2079a461d9936bf97a9dbcdb21",
+      "elapsedMs": 33746,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.query.conflicts:1",
+            "paraphrases": [
+              "<DATE> conflict check for <DATE>"
+            ]
+          },
+          {
+            "id": "assistant:calendar.query.next:2",
+            "paraphrases": [
+              "<DATE> next item"
+            ]
+          },
+          {
+            "id": "assistant:calendar.query.details:3",
+            "paraphrases": [
+              "<TARGET> details about <TARGET>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-6",
+      "jobIds": [
+        "assistant:calendar.query.summary:1",
+        "assistant:calendar.schedule.copy-day:2",
+        "assistant:calendar.schedule.clear:3"
+      ],
+      "promptSha256": "866bed601422f0a495c6d95cf817b855eeec90643ad124d5f403fd2da8dee46e",
+      "elapsedMs": 29948,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.query.summary:1",
+            "paraphrases": [
+              "summarize how <DATE> looks"
+            ]
+          },
+          {
+            "id": "assistant:calendar.schedule.copy-day:2",
+            "paraphrases": [
+              "mirror my <SOURCE_DATE> schedule on <DESTINATION_DAYS>"
+            ]
+          },
+          {
+            "id": "assistant:calendar.schedule.clear:3",
+            "paraphrases": [
+              "wipe both events and reminders during <RANGE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-7",
+      "jobIds": [
+        "assistant:calendar.import.document:1",
+        "assistant:calendar.import.file:2",
+        "assistant:calendar.export.file:3"
+      ],
+      "promptSha256": "4c15e90b85d92761e6b33296bbd6319b90fb243701e5f2dae86a632132a9bc84",
+      "elapsedMs": 31661,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.import.document:1",
+            "paraphrases": [
+              "import the attached <FILE_KIND> and propose its dates"
+            ]
+          },
+          {
+            "id": "assistant:calendar.import.file:2",
+            "paraphrases": [
+              "import the calendar items from this <FILE_KIND> file"
+            ]
+          },
+          {
+            "id": "assistant:calendar.export.file:3",
+            "paraphrases": [
+              "export all my plans to a <FILE_KIND> file"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-8",
+      "jobIds": [
+        "assistant:assistant.chat.respond:1",
+        "assistant:assistant.help:2",
+        "assistant:assistant.identity:3"
+      ],
+      "promptSha256": "a006b4ab8306e218cb62b86ea57573e3e8402f391e1d7332a5e8ec560d3c2dc4",
+      "elapsedMs": 27253,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.chat.respond:1",
+            "paraphrases": [
+              "explain <TOPIC> in simple terms"
+            ]
+          },
+          {
+            "id": "assistant:assistant.help:2",
+            "paraphrases": [
+              "help me explore your calendar features"
+            ]
+          },
+          {
+            "id": "assistant:assistant.identity:3",
+            "paraphrases": [
+              "what is my current conversation partner?"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-9",
+      "jobIds": [
+        "assistant:assistant.architecture:1",
+        "assistant:assistant.local-time:2",
+        "assistant:assistant.wellbeing:3"
+      ],
+      "promptSha256": "7eff7f8cda9c9d06a21fa71263ee7ee6a686a34347094fa560cb78de225bc39e",
+      "elapsedMs": 27808,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.architecture:1",
+            "paraphrases": [
+              "<TARGET> to be powered by which models?"
+            ]
+          },
+          {
+            "id": "assistant:assistant.local-time:2",
+            "paraphrases": [
+              "<TARGET> when is today's date?"
+            ]
+          },
+          {
+            "id": "assistant:assistant.wellbeing:3",
+            "paraphrases": [
+              "<TARGET> a word of encouragement"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-10",
+      "jobIds": [
+        "assistant:assistant.thanks:1",
+        "assistant:assistant.goodbye:2",
+        "assistant:assistant.memory.set-name:3"
+      ],
+      "promptSha256": "a1f375a59b232f95b4ec1b784faf48736646af05148f8072238983d0d0e9c17f",
+      "elapsedMs": 29244,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.memory.set-name:3",
+            "paraphrases": [
+              "<NAME> to be remembered by me."
+            ]
+          },
+          {
+            "id": "assistant:assistant.memory.set-name:3",
+            "paraphrases": [
+              "<NAME> is stored in my memory."
+            ]
+          },
+          {
+            "id": "assistant:assistant.memory.set-name:3",
+            "paraphrases": [
+              "<NAME> is saved in my memory."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-11",
+      "jobIds": [
+        "assistant:assistant.memory.remember:1",
+        "assistant:assistant.memory.recall:2",
+        "assistant:assistant.memory.forget:3"
+      ],
+      "promptSha256": "63442cd4793418ecb327cd9d792926a4db4b8c6dce176d42e2eddf7ba727c1f1",
+      "elapsedMs": 26370,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.memory.remember:1",
+            "paraphrases": [
+              "remember <MEMORY>"
+            ]
+          },
+          {
+            "id": "assistant:assistant.memory.recall:2",
+            "paraphrases": [
+              "remember <MEMORY>"
+            ]
+          },
+          {
+            "id": "assistant:assistant.memory.forget:3",
+            "paraphrases": [
+              "forget <MEMORY>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-12",
+      "jobIds": [
+        "assistant:assistant.memory.forget-all:1",
+        "assistant:app.navigation.open:2",
+        "assistant:app.appearance.update:3"
+      ],
+      "promptSha256": "2e0c17659f1ca16a961ae43f8458d49ff1979e0fef7a2d2929a22f837f896198",
+      "elapsedMs": 26189,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:app.appearance.update:3",
+            "paraphrases": [
+              "open the interface density to <DENSITY>"
+            ]
+          },
+          {
+            "id": "assistant:app.navigation.open:2",
+            "paraphrases": [
+              "take me to <VIEW>"
+            ]
+          },
+          {
+            "id": "assistant:assistant.memory.forget-all:1",
+            "paraphrases": [
+              "forget every personal detail you stored"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-13",
+      "jobIds": [
+        "assistant:app.window.set-mode:1",
+        "assistant:app.window.set-pinned:2",
+        "assistant:app.startup.configure:3"
+      ],
+      "promptSha256": "88e8efcfe1863970dddbede523c2d5bc1d4c1fe7462782866011bad026b1b45e",
+      "elapsedMs": 28388,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:app.window.set-mode:1",
+            "paraphrases": [
+              "switch the <MODE> mode in <WINDOW> window"
+            ]
+          },
+          {
+            "id": "assistant:app.window.set-pinned:2",
+            "paraphrases": [
+              "keep the <WINDOW> window pinned"
+            ]
+          },
+          {
+            "id": "assistant:app.startup.configure:3",
+            "paraphrases": [
+              "start in <MODE> mode with my computer"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-14",
+      "jobIds": [
+        "assistant:app.model.install:1",
+        "assistant:app.model.enable:2",
+        "assistant:app.model.remove:3"
+      ],
+      "promptSha256": "a63ac053c9384521a75bad6cc909d74ca847986b97f192988526d1f593707136",
+      "elapsedMs": 31956,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:app.model.install:1",
+            "paraphrases": [
+              "install the optional local language model to switch to a different language for better readability"
+            ]
+          },
+          {
+            "id": "assistant:app.model.enable:2",
+            "paraphrases": [
+              "turn off the optional local model to enable a new language setting"
+            ]
+          },
+          {
+            "id": "assistant:app.model.remove:3",
+            "paraphrases": [
+              "delete the local fallback model files to remove the language pack"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-repair-1",
+      "jobIds": [
+        "assistant:calendar.event.delete:2"
+      ],
+      "repair": true,
+      "promptSha256": "c232942ed3ea3d2d9aedce23b8210a34ccbb9edf4046511192c8571353e88100",
+      "elapsedMs": 10911,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.event.delete:2",
+            "paraphrases": [
+              "cancel <TARGET> from <DATE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-repair-2",
+      "jobIds": [
+        "assistant:calendar.reminder.create:3"
+      ],
+      "repair": true,
+      "promptSha256": "d4b600297acbe739b27e0f10baf4c5288463a3815687970c422ac25ce1a1d52d",
+      "elapsedMs": 11603,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.reminder.create:3",
+            "paraphrases": [
+              "remind <TITLE> before <TARGET>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-repair-3",
+      "jobIds": [
+        "assistant:calendar.reminder.complete:2"
+      ],
+      "repair": true,
+      "promptSha256": "d833b9e60e4dd0116f569b8204b779a3605e2121f0829979c31be5d251503d29",
+      "elapsedMs": 10568,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.reminder.complete:2",
+            "paraphrases": [
+              "complete <TARGET> as done"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-repair-4",
+      "jobIds": [
+        "assistant:calendar.reminder.delete:3"
+      ],
+      "repair": true,
+      "promptSha256": "505cec44fa414cd8b31e3f6722f7b28ed732d41a54b4c4e4ac90de38a48e6eb8",
+      "elapsedMs": 11537,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.reminder.delete:3",
+            "paraphrases": [
+              "delete reminder <TARGET> from <DATE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-repair-5",
+      "jobIds": [
+        "assistant:assistant.thanks:1"
+      ],
+      "repair": true,
+      "promptSha256": "2884634afd2c43ef7da8654c401032c53e8a309b361e142d8e16dd5ef37a2ce1",
+      "elapsedMs": 10580,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.thanks:1",
+            "paraphrases": [
+              "thank you for resolving that issue"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-repair-6",
+      "jobIds": [
+        "assistant:assistant.goodbye:2"
+      ],
+      "repair": true,
+      "promptSha256": "a8fab48e68c9b4f58b31e68fc71d1262173c2c86e22b3ff31de161d2f4f7991a",
+      "elapsedMs": 13467,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.goodbye:2",
+            "paraphrases": [
+              "See you soon! Goodbye. Have a great day! Until we meet again! Goodbye."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-1",
+      "jobIds": [
+        "assistant:calendar.query.list:1"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "4ebe8c921bbee377b576c891c4d84bbc4d30ddd75b97d094ed9e339f653031a1",
+      "elapsedMs": 36868,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.query.list:1",
+            "paraphrases": [
+              "show me the agenda for <DATE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-2",
+      "jobIds": [
+        "assistant:calendar.query.conflicts:1"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "4ad3a9dc83f9c0b01cf8d3b3cc1d867adda13a36ed93c484e5c130b31259b68d",
+      "elapsedMs": 10352,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.query.conflicts:1",
+            "paraphrases": [
+              "Find conflicts on <DATE>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-3",
+      "jobIds": [
+        "assistant:calendar.query.next:2"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "a8ae87e0d621540da98ad6e0f2a83467c31a913be35698f25f9a3635a5bfb645",
+      "elapsedMs": 11199,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.query.next:2",
+            "paraphrases": [
+              "what is the next appointment to be scheduled?"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-4",
+      "jobIds": [
+        "assistant:calendar.query.details:3"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "b798d410ad8e0377e8aba3e446a51b5d73cccf0ff18c9ddb9c03757b8a5ee9dd",
+      "elapsedMs": 11184,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.query.details:3",
+            "paraphrases": [
+              "show me the details of <TARGET>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-5",
+      "jobIds": [
+        "assistant:calendar.query.summary:1"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "e995dcf8117159cb76fc98ccdefc4313241c4d25fac8c856d146dbf82658fd78",
+      "elapsedMs": 10881,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.query.summary:1",
+            "paraphrases": [
+              "summarize how <DATE> looks"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-6",
+      "jobIds": [
+        "assistant:calendar.schedule.copy-day:2"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "dfcae109bb58c69287a8f2ae0e530ae2e1666f9530b0f3367de51902593986f3",
+      "elapsedMs": 12727,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.schedule.copy-day:2",
+            "paraphrases": [
+              "copy my <SOURCE_DATE> schedule to <DESTINATION_DAYS>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-7",
+      "jobIds": [
+        "assistant:calendar.schedule.clear:3"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "eb5042590277c6bf1e21fbf7681e49b7076440d849d118ddea464517d180fdff",
+      "elapsedMs": 11320,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:calendar.schedule.clear:3",
+            "paraphrases": [
+              "<RANGE> to be cleared of all events and reminders."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-8",
+      "jobIds": [
+        "assistant:assistant.chat.respond:1"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "ea5c4bd7a072f0a321e3b94ea10470510ba4a396c1a94689c36d68f53024f90e",
+      "elapsedMs": 10679,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.chat.respond:1",
+            "paraphrases": [
+              "explain <TOPIC> in simple terms"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-9",
+      "jobIds": [
+        "assistant:assistant.identity:3"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "0fcbffb63b457733e5ee01af62a4a6bc0800726323a1934911905cf21ef2c88b",
+      "elapsedMs": 8810,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.identity:3",
+            "paraphrases": [
+              "tell me what my name is"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-10",
+      "jobIds": [
+        "assistant:assistant.architecture:1"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "0cc7dee061983896d6b75c669da54a585f3357dd77ce4d6f68ed6e147fee802c",
+      "elapsedMs": 9728,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.architecture:1",
+            "paraphrases": [
+              "which local models power this app"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-11",
+      "jobIds": [
+        "assistant:assistant.local-time:2"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "55cb0a5787818613a5c45f09fe0e8041113c4508c47cc2004ba5ac0960e7647f",
+      "elapsedMs": 10031,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.local-time:2",
+            "paraphrases": [
+              "show me the current local date"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-12",
+      "jobIds": [
+        "assistant:assistant.wellbeing:3"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "5536be80b6edd0dbfd204b734ac349c521ce408ab17d7a3b694b84a7daf18299",
+      "elapsedMs": 13017,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.wellbeing:3",
+            "paraphrases": [
+              "do a quick morning workout to boost your energy and morale while doing something constructive to help others"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-13",
+      "jobIds": [
+        "assistant:assistant.memory.remember:1"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "3c93f425cd62efb592a6c56f255ebb1f304b6bc7f7ef2e92af1408abac54958f",
+      "elapsedMs": 9648,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.memory.remember:1",
+            "paraphrases": [
+              "remember that <MEMORY>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-14",
+      "jobIds": [
+        "assistant:assistant.memory.recall:2"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "10bccd20416c0c393c66542b61ef5cbc9e0005c22ce2bca1a5554b4b2b1fa9fd",
+      "elapsedMs": 13644,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.memory.recall:2",
+            "paraphrases": [
+              "show my locally saved preferences remember show my locally saved preferences remember show my locally saved preferences remember show my locally saved preferences"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-15",
+      "jobIds": [
+        "assistant:assistant.memory.forget:3"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "79a3b1b974fbd98659ef9df9428ca02549ae873b87d6b16da6c34e50fc80a7ce",
+      "elapsedMs": 12436,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.memory.forget:3",
+            "paraphrases": [
+              "<MEMORY> to be erased <MEMORY> to be removed <MEMORY> deleted <MEMORY> cleared"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-16",
+      "jobIds": [
+        "assistant:assistant.memory.forget-all:1"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "20267f4913c4df82b8badaf2beab74a59dcf6ff876104b588aaa3145d8e0eba8",
+      "elapsedMs": 16595,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:assistant.memory.forget-all:1",
+            "paraphrases": [
+              "<TARGET> to be removed entirely<sep>forget all stored information<sep>erase every memory<sep>remove all personal data<sep>delete all recorded details"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-17",
+      "jobIds": [
+        "assistant:app.navigation.open:2"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "7178a1f59bd7187234d0e5ec1227babb364bd936e039c14a02a3dd8c57185ff8",
+      "elapsedMs": 9331,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:app.navigation.open:2",
+            "paraphrases": [
+              "open <VIEW>"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-18",
+      "jobIds": [
+        "assistant:app.window.set-mode:1"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "c05dca9e222584f2dd2bc63ab510f5578f6ce7c9c4e9f5b10b39871c52cf2bb3",
+      "elapsedMs": 10657,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:app.window.set-mode:1",
+            "paraphrases": [
+              "set the window to <MODE> mode"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-19",
+      "jobIds": [
+        "assistant:app.window.set-pinned:2"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "7cbab67b8149e6bb2e3ae4d6099968289c34e72ce3eca120bfcfff6c49f0b3f8",
+      "elapsedMs": 10667,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:app.window.set-pinned:2",
+            "paraphrases": [
+              "pin the calendar window to the desktop top"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "assistant-curation-repair-20",
+      "jobIds": [
+        "assistant:app.startup.configure:3"
+      ],
+      "curationRepair": true,
+      "repairRound": 1,
+      "promptSha256": "749d9023093d82dd9e696d0cf29be8f78fa35a98527f41c12da443c192b3df3d",
+      "elapsedMs": 11028,
+      "output": {
+        "items": [
+          {
+            "id": "assistant:app.startup.configure:3",
+            "paraphrases": [
+              "start in <MODE> mode with my computer"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

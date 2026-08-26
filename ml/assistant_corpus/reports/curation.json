@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "rawCandidates": 68,
+  "acceptedTemplates": 162,
+  "acceptedTeacherTemplates": 36,
+  "teacherCapabilityCoverage": 34,
+  "directCapabilityCoverage": 42,
+  "sourceCounts": {
+    "project-seed": 126,
+    "qwen-paraphrase": 36
+  },
+  "splitCounts": {
+    "train": 51,
+    "development": 55,
+    "challenge": 56
+  },
+  "rejected": {
+    "duplicate": 14,
+    "not-user-voice": 3,
+    "placeholder-signature": 12,
+    "semantic-cue": 3
+  },
+  "evaluationContaminationAccepted": 0,
+  "outcomeOnlyCapabilitiesExcluded": [
+    "calendar.import.propose",
+    "assistant.clarify",
+    "assistant.reject",
+    "assistant.unsupported"
+  ]
+}

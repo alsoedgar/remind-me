@@ -1,0 +1,3920 @@
+{
+  "schemaVersion": 1,
+  "generator": "ml/teacher_assisted/pipeline.py prepare",
+  "policy": "four project-authored, placeholder-valid candidates; Qwen selects only an index",
+  "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+  "cases": [
+    {
+      "id": "speak-pref:proposal:minimal",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 0,
+      "candidates": [
+        {
+          "text": "<SUMMARY> You can adjust any detail first.",
+          "targets": {
+            "lead": "lead:proposal:0",
+            "body": "body:proposal:SUMMARY:0",
+            "close": "close:proposal:3"
+          }
+        },
+        {
+          "text": "I turned that into <SUMMARY> You can adjust any detail first.",
+          "targets": {
+            "lead": "lead:proposal:0",
+            "body": "body:proposal:SUMMARY:12",
+            "close": "close:proposal:3"
+          }
+        },
+        {
+          "text": "I’m with you. I turned that into <SUMMARY> You can adjust any detail first.",
+          "targets": {
+            "lead": "lead:proposal:4",
+            "body": "body:proposal:SUMMARY:12",
+            "close": "close:proposal:3"
+          }
+        },
+        {
+          "text": "I’m with you. <SUMMARY> You can adjust any detail first.",
+          "targets": {
+            "lead": "lead:proposal:4",
+            "body": "body:proposal:SUMMARY:0",
+            "close": "close:proposal:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:proposal:warm",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 1,
+      "candidates": [
+        {
+          "text": "I made a local draft. The draft is <SUMMARY>",
+          "targets": {
+            "lead": "lead:proposal:3",
+            "body": "body:proposal:SUMMARY:1",
+            "close": "close:proposal:0"
+          }
+        },
+        {
+          "text": "Here’s what I heard. Before anything is saved, here’s the draft: <SUMMARY>",
+          "targets": {
+            "lead": "lead:proposal:2",
+            "body": "body:proposal:SUMMARY:8",
+            "close": "close:proposal:0"
+          }
+        },
+        {
+          "text": "Here’s what I heard. The draft is <SUMMARY>",
+          "targets": {
+            "lead": "lead:proposal:2",
+            "body": "body:proposal:SUMMARY:1",
+            "close": "close:proposal:0"
+          }
+        },
+        {
+          "text": "I’ve got the shape of it. The draft is <SUMMARY>",
+          "targets": {
+            "lead": "lead:proposal:1",
+            "body": "body:proposal:SUMMARY:1",
+            "close": "close:proposal:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:proposal:formal",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 2,
+      "candidates": [
+        {
+          "text": "I have <SUMMARY> ready for review. You can adjust any detail first.",
+          "targets": {
+            "lead": "lead:proposal:0",
+            "body": "body:proposal:SUMMARY:2",
+            "close": "close:proposal:3"
+          }
+        },
+        {
+          "text": "I made a local draft. I have <SUMMARY> ready for review. Nothing changes until you approve it.",
+          "targets": {
+            "lead": "lead:proposal:3",
+            "body": "body:proposal:SUMMARY:2",
+            "close": "close:proposal:2"
+          }
+        },
+        {
+          "text": "I made a local draft. I think you mean <SUMMARY> You can adjust any detail first.",
+          "targets": {
+            "lead": "lead:proposal:3",
+            "body": "body:proposal:SUMMARY:11",
+            "close": "close:proposal:3"
+          }
+        },
+        {
+          "text": "I made a local draft. I have <SUMMARY> ready for review. You can adjust any detail first.",
+          "targets": {
+            "lead": "lead:proposal:3",
+            "body": "body:proposal:SUMMARY:2",
+            "close": "close:proposal:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:proposal:playful",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 3,
+      "candidates": [
+        {
+          "text": "I’ve got the shape of it. Your proposed change is <SUMMARY>",
+          "targets": {
+            "lead": "lead:proposal:1",
+            "body": "body:proposal:SUMMARY:3",
+            "close": "close:proposal:0"
+          }
+        },
+        {
+          "text": "I’ve got the shape of it. The draft is <SUMMARY>",
+          "targets": {
+            "lead": "lead:proposal:1",
+            "body": "body:proposal:SUMMARY:1",
+            "close": "close:proposal:0"
+          }
+        },
+        {
+          "text": "I’ve got the shape of it. The draft is <SUMMARY> Take a look before I save it.",
+          "targets": {
+            "lead": "lead:proposal:1",
+            "body": "body:proposal:SUMMARY:1",
+            "close": "close:proposal:1"
+          }
+        },
+        {
+          "text": "Here’s what I heard. The draft is <SUMMARY>",
+          "targets": {
+            "lead": "lead:proposal:2",
+            "body": "body:proposal:SUMMARY:1",
+            "close": "close:proposal:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:proposal:proactive",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 4,
+      "candidates": [
+        {
+          "text": "Here’s what I heard. I’ve outlined <SUMMARY> If it feels right, approve it when you’re ready.",
+          "targets": {
+            "lead": "lead:proposal:2",
+            "body": "body:proposal:SUMMARY:6",
+            "close": "close:proposal:4"
+          }
+        },
+        {
+          "text": "I made a local draft. I’ve outlined <SUMMARY> If it feels right, approve it when you’re ready.",
+          "targets": {
+            "lead": "lead:proposal:3",
+            "body": "body:proposal:SUMMARY:6",
+            "close": "close:proposal:4"
+          }
+        },
+        {
+          "text": "Here’s what I heard. I translated that into this local draft: <SUMMARY> If it feels right, approve it when you’re ready.",
+          "targets": {
+            "lead": "lead:proposal:2",
+            "body": "body:proposal:SUMMARY:9",
+            "close": "close:proposal:4"
+          }
+        },
+        {
+          "text": "Here’s what I heard. I’ve outlined <SUMMARY> Take a look before I save it.",
+          "targets": {
+            "lead": "lead:proposal:2",
+            "body": "body:proposal:SUMMARY:6",
+            "close": "close:proposal:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:proposal:neutral",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 5,
+      "candidates": [
+        {
+          "text": "I made a local draft. I translated that into this local draft: <SUMMARY> If it feels right, approve it when you’re ready.",
+          "targets": {
+            "lead": "lead:proposal:3",
+            "body": "body:proposal:SUMMARY:9",
+            "close": "close:proposal:4"
+          }
+        },
+        {
+          "text": "I made a local draft. I understood the request as <SUMMARY> If it feels right, approve it when you’re ready.",
+          "targets": {
+            "lead": "lead:proposal:3",
+            "body": "body:proposal:SUMMARY:4",
+            "close": "close:proposal:4"
+          }
+        },
+        {
+          "text": "I made a local draft. I understood the request as <SUMMARY> You can adjust any detail first.",
+          "targets": {
+            "lead": "lead:proposal:3",
+            "body": "body:proposal:SUMMARY:4",
+            "close": "close:proposal:3"
+          }
+        },
+        {
+          "text": "I understood the request as <SUMMARY> If it feels right, approve it when you’re ready.",
+          "targets": {
+            "lead": "lead:proposal:0",
+            "body": "body:proposal:SUMMARY:4",
+            "close": "close:proposal:4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:creation-confirmed:minimal",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 1,
+      "candidates": [
+        {
+          "text": "All set. <RECEIPT> You can undo it if needed.",
+          "targets": {
+            "lead": "lead:creation-confirmed:2",
+            "body": "body:creation-confirmed:RECEIPT:0",
+            "close": "close:creation-confirmed:1"
+          }
+        },
+        {
+          "text": "Done. <RECEIPT> You can undo it if needed.",
+          "targets": {
+            "lead": "lead:creation-confirmed:1",
+            "body": "body:creation-confirmed:RECEIPT:0",
+            "close": "close:creation-confirmed:1"
+          }
+        },
+        {
+          "text": "All set. You’re all set. <RECEIPT> You can undo it if needed.",
+          "targets": {
+            "lead": "lead:creation-confirmed:2",
+            "body": "body:creation-confirmed:RECEIPT:12",
+            "close": "close:creation-confirmed:1"
+          }
+        },
+        {
+          "text": "Done. You’re all set. <RECEIPT> You can undo it if needed.",
+          "targets": {
+            "lead": "lead:creation-confirmed:1",
+            "body": "body:creation-confirmed:RECEIPT:12",
+            "close": "close:creation-confirmed:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:creation-confirmed:warm",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 2,
+      "candidates": [
+        {
+          "text": "The local receipt says: <RECEIPT> I kept an undo receipt nearby.",
+          "targets": {
+            "lead": "lead:creation-confirmed:0",
+            "body": "body:creation-confirmed:RECEIPT:1",
+            "close": "close:creation-confirmed:3"
+          }
+        },
+        {
+          "text": "The local receipt says: <RECEIPT> You can undo it if needed.",
+          "targets": {
+            "lead": "lead:creation-confirmed:0",
+            "body": "body:creation-confirmed:RECEIPT:1",
+            "close": "close:creation-confirmed:1"
+          }
+        },
+        {
+          "text": "The calendar has been updated with the new item. <RECEIPT> I kept an undo receipt nearby.",
+          "targets": {
+            "lead": "lead:creation-confirmed:0",
+            "body": "body:creation-confirmed:RECEIPT:8",
+            "close": "close:creation-confirmed:3"
+          }
+        },
+        {
+          "text": "The local receipt says: <RECEIPT> It stays private to this device.",
+          "targets": {
+            "lead": "lead:creation-confirmed:0",
+            "body": "body:creation-confirmed:RECEIPT:1",
+            "close": "close:creation-confirmed:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:creation-confirmed:formal",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 3,
+      "candidates": [
+        {
+          "text": "All set. It’s safely on the schedule now. <RECEIPT>",
+          "targets": {
+            "lead": "lead:creation-confirmed:2",
+            "body": "body:creation-confirmed:RECEIPT:7",
+            "close": "close:creation-confirmed:0"
+          }
+        },
+        {
+          "text": "All set. Your new plan is saved. <RECEIPT>",
+          "targets": {
+            "lead": "lead:creation-confirmed:2",
+            "body": "body:creation-confirmed:RECEIPT:2",
+            "close": "close:creation-confirmed:0"
+          }
+        },
+        {
+          "text": "All set. The saved result is: <RECEIPT>",
+          "targets": {
+            "lead": "lead:creation-confirmed:2",
+            "body": "body:creation-confirmed:RECEIPT:11",
+            "close": "close:creation-confirmed:0"
+          }
+        },
+        {
+          "text": "All set. The creation is complete. <RECEIPT>",
+          "targets": {
+            "lead": "lead:creation-confirmed:2",
+            "body": "body:creation-confirmed:RECEIPT:5",
+            "close": "close:creation-confirmed:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:creation-confirmed:playful",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 4,
+      "candidates": [
+        {
+          "text": "The local receipt says: <RECEIPT> It stays private to this device.",
+          "targets": {
+            "lead": "lead:creation-confirmed:0",
+            "body": "body:creation-confirmed:RECEIPT:1",
+            "close": "close:creation-confirmed:2"
+          }
+        },
+        {
+          "text": "I added it to this device. <RECEIPT> It stays private to this device.",
+          "targets": {
+            "lead": "lead:creation-confirmed:0",
+            "body": "body:creation-confirmed:RECEIPT:3",
+            "close": "close:creation-confirmed:2"
+          }
+        },
+        {
+          "text": "The local receipt says: <RECEIPT> I kept an undo receipt nearby.",
+          "targets": {
+            "lead": "lead:creation-confirmed:0",
+            "body": "body:creation-confirmed:RECEIPT:1",
+            "close": "close:creation-confirmed:3"
+          }
+        },
+        {
+          "text": "I tucked that into the calendar. <RECEIPT> It stays private to this device.",
+          "targets": {
+            "lead": "lead:creation-confirmed:0",
+            "body": "body:creation-confirmed:RECEIPT:6",
+            "close": "close:creation-confirmed:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:creation-confirmed:proactive",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 5,
+      "candidates": [
+        {
+          "text": "Nice, that’s taken care of. I tucked that into the calendar. <RECEIPT> It stays private to this device.",
+          "targets": {
+            "lead": "lead:creation-confirmed:4",
+            "body": "body:creation-confirmed:RECEIPT:6",
+            "close": "close:creation-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s in place. I finished the local save. <RECEIPT> It stays private to this device.",
+          "targets": {
+            "lead": "lead:creation-confirmed:3",
+            "body": "body:creation-confirmed:RECEIPT:9",
+            "close": "close:creation-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s in place. I tucked that into the calendar. <RECEIPT> It stays private to this device.",
+          "targets": {
+            "lead": "lead:creation-confirmed:3",
+            "body": "body:creation-confirmed:RECEIPT:6",
+            "close": "close:creation-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s in place. That plan has a place now. <RECEIPT> It stays private to this device.",
+          "targets": {
+            "lead": "lead:creation-confirmed:3",
+            "body": "body:creation-confirmed:RECEIPT:10",
+            "close": "close:creation-confirmed:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:creation-confirmed:neutral",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 6,
+      "candidates": [
+        {
+          "text": "Done. That’s now on your calendar. <RECEIPT> I kept an undo receipt nearby.",
+          "targets": {
+            "lead": "lead:creation-confirmed:1",
+            "body": "body:creation-confirmed:RECEIPT:4",
+            "close": "close:creation-confirmed:3"
+          }
+        },
+        {
+          "text": "Done. <RECEIPT> You can undo it if needed.",
+          "targets": {
+            "lead": "lead:creation-confirmed:1",
+            "body": "body:creation-confirmed:RECEIPT:0",
+            "close": "close:creation-confirmed:1"
+          }
+        },
+        {
+          "text": "Done. That’s now on your calendar. <RECEIPT> You can undo it if needed.",
+          "targets": {
+            "lead": "lead:creation-confirmed:1",
+            "body": "body:creation-confirmed:RECEIPT:4",
+            "close": "close:creation-confirmed:1"
+          }
+        },
+        {
+          "text": "Done. I finished the local save. <RECEIPT> You can undo it if needed.",
+          "targets": {
+            "lead": "lead:creation-confirmed:1",
+            "body": "body:creation-confirmed:RECEIPT:9",
+            "close": "close:creation-confirmed:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:update-confirmed:minimal",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 2,
+      "candidates": [
+        {
+          "text": "The change is in. It now matches what you asked for. <RECEIPT> Everything else stayed as it was.",
+          "targets": {
+            "lead": "lead:update-confirmed:3",
+            "body": "body:update-confirmed:RECEIPT:12",
+            "close": "close:update-confirmed:2"
+          }
+        },
+        {
+          "text": "The change is in. It now matches what you asked for. <RECEIPT> The rest of the plan is right where you left it.",
+          "targets": {
+            "lead": "lead:update-confirmed:3",
+            "body": "body:update-confirmed:RECEIPT:12",
+            "close": "close:update-confirmed:4"
+          }
+        },
+        {
+          "text": "The change is in. <RECEIPT> Everything else stayed as it was.",
+          "targets": {
+            "lead": "lead:update-confirmed:3",
+            "body": "body:update-confirmed:RECEIPT:0",
+            "close": "close:update-confirmed:2"
+          }
+        },
+        {
+          "text": "Got it—the adjustment is done. It now matches what you asked for. <RECEIPT> Everything else stayed as it was.",
+          "targets": {
+            "lead": "lead:update-confirmed:4",
+            "body": "body:update-confirmed:RECEIPT:12",
+            "close": "close:update-confirmed:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:update-confirmed:warm",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 3,
+      "candidates": [
+        {
+          "text": "That’s adjusted. The local receipt says: <RECEIPT>",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:1",
+            "close": "close:update-confirmed:0"
+          }
+        },
+        {
+          "text": "That’s adjusted. I applied the reviewed update locally. <RECEIPT> The earlier state is still recoverable.",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:8",
+            "close": "close:update-confirmed:3"
+          }
+        },
+        {
+          "text": "That’s adjusted. The local receipt says: <RECEIPT> The earlier state is still recoverable.",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:1",
+            "close": "close:update-confirmed:3"
+          }
+        },
+        {
+          "text": "That’s adjusted. I applied the reviewed update locally. <RECEIPT>",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:8",
+            "close": "close:update-confirmed:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:update-confirmed:formal",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 4,
+      "candidates": [
+        {
+          "text": "Got it—the adjustment is done. The updated result is: <RECEIPT> The rest of the plan is right where you left it.",
+          "targets": {
+            "lead": "lead:update-confirmed:4",
+            "body": "body:update-confirmed:RECEIPT:11",
+            "close": "close:update-confirmed:4"
+          }
+        },
+        {
+          "text": "I made the requested adjustment. <RECEIPT> The rest of the plan is right where you left it.",
+          "targets": {
+            "lead": "lead:update-confirmed:0",
+            "body": "body:update-confirmed:RECEIPT:2",
+            "close": "close:update-confirmed:4"
+          }
+        },
+        {
+          "text": "Got it—the adjustment is done. I made the requested adjustment. <RECEIPT> Everything else stayed as it was.",
+          "targets": {
+            "lead": "lead:update-confirmed:4",
+            "body": "body:update-confirmed:RECEIPT:2",
+            "close": "close:update-confirmed:2"
+          }
+        },
+        {
+          "text": "Got it—the adjustment is done. I made the requested adjustment. <RECEIPT> The rest of the plan is right where you left it.",
+          "targets": {
+            "lead": "lead:update-confirmed:4",
+            "body": "body:update-confirmed:RECEIPT:2",
+            "close": "close:update-confirmed:4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:update-confirmed:playful",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 5,
+      "candidates": [
+        {
+          "text": "That’s adjusted. The local receipt says: <RECEIPT>",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:1",
+            "close": "close:update-confirmed:0"
+          }
+        },
+        {
+          "text": "That’s adjusted. I reshaped that plan for you. <RECEIPT>",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:6",
+            "close": "close:update-confirmed:0"
+          }
+        },
+        {
+          "text": "That’s adjusted. Your calendar now reflects the change. <RECEIPT>",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:3",
+            "close": "close:update-confirmed:0"
+          }
+        },
+        {
+          "text": "That’s adjusted. That detail is settled. <RECEIPT>",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:10",
+            "close": "close:update-confirmed:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:update-confirmed:proactive",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 6,
+      "candidates": [
+        {
+          "text": "That’s adjusted. The calendar has the new version now. <RECEIPT> The earlier state is still recoverable.",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:9",
+            "close": "close:update-confirmed:3"
+          }
+        },
+        {
+          "text": "That’s adjusted. I reshaped that plan for you. <RECEIPT> The earlier state is still recoverable.",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:6",
+            "close": "close:update-confirmed:3"
+          }
+        },
+        {
+          "text": "That’s adjusted. I reshaped that plan for you. <RECEIPT>",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:6",
+            "close": "close:update-confirmed:0"
+          }
+        },
+        {
+          "text": "That’s adjusted. That detail is settled. <RECEIPT> The earlier state is still recoverable.",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:10",
+            "close": "close:update-confirmed:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:update-confirmed:neutral",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 7,
+      "candidates": [
+        {
+          "text": "That’s adjusted. That item has been updated. <RECEIPT> The earlier state is still recoverable.",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:4",
+            "close": "close:update-confirmed:3"
+          }
+        },
+        {
+          "text": "The change is in. That item has been updated. <RECEIPT> The earlier state is still recoverable.",
+          "targets": {
+            "lead": "lead:update-confirmed:3",
+            "body": "body:update-confirmed:RECEIPT:4",
+            "close": "close:update-confirmed:3"
+          }
+        },
+        {
+          "text": "That’s adjusted. That item has been updated. <RECEIPT> Everything else stayed as it was.",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:4",
+            "close": "close:update-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s adjusted. The calendar has the new version now. <RECEIPT> The earlier state is still recoverable.",
+          "targets": {
+            "lead": "lead:update-confirmed:2",
+            "body": "body:update-confirmed:RECEIPT:9",
+            "close": "close:update-confirmed:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:minimal",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 3,
+      "candidates": [
+        {
+          "text": "The deletion is complete. That plan has been set aside. <RECEIPT> If you change your mind, the undo is nearby.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:3",
+            "body": "body:deletion-confirmed:RECEIPT:7",
+            "close": "close:deletion-confirmed:4"
+          }
+        },
+        {
+          "text": "The deletion is complete. That space is open again. <RECEIPT> If you change your mind, the undo is nearby.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:3",
+            "body": "body:deletion-confirmed:RECEIPT:12",
+            "close": "close:deletion-confirmed:4"
+          }
+        },
+        {
+          "text": "The deletion is complete. <RECEIPT> If you change your mind, the undo is nearby.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:3",
+            "body": "body:deletion-confirmed:RECEIPT:0",
+            "close": "close:deletion-confirmed:4"
+          }
+        },
+        {
+          "text": "The deletion is complete. Your calendar reflects the deletion. <RECEIPT> If you change your mind, the undo is nearby.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:3",
+            "body": "body:deletion-confirmed:RECEIPT:4",
+            "close": "close:deletion-confirmed:4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:warm",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 4,
+      "candidates": [
+        {
+          "text": "Removed. The local receipt says: <RECEIPT> You can undo it if that was too quick.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:1",
+            "body": "body:deletion-confirmed:RECEIPT:1",
+            "close": "close:deletion-confirmed:1"
+          }
+        },
+        {
+          "text": "Removed. The local receipt says: <RECEIPT> The rest of your calendar is untouched.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:1",
+            "body": "body:deletion-confirmed:RECEIPT:1",
+            "close": "close:deletion-confirmed:2"
+          }
+        },
+        {
+          "text": "Got it—that’s been removed. The local receipt says: <RECEIPT> You can undo it if that was too quick.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:4",
+            "body": "body:deletion-confirmed:RECEIPT:1",
+            "close": "close:deletion-confirmed:1"
+          }
+        },
+        {
+          "text": "Got it—that’s been removed. The local receipt says: <RECEIPT> The rest of your calendar is untouched.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:4",
+            "body": "body:deletion-confirmed:RECEIPT:1",
+            "close": "close:deletion-confirmed:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:formal",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 5,
+      "candidates": [
+        {
+          "text": "That’s cleared away. The removal result is: <RECEIPT>",
+          "targets": {
+            "lead": "lead:deletion-confirmed:2",
+            "body": "body:deletion-confirmed:RECEIPT:11",
+            "close": "close:deletion-confirmed:0"
+          }
+        },
+        {
+          "text": "That’s cleared away. The removal result is: <RECEIPT> The rest of your calendar is untouched.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:2",
+            "body": "body:deletion-confirmed:RECEIPT:11",
+            "close": "close:deletion-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s cleared away. I removed the reviewed item. <RECEIPT> The rest of your calendar is untouched.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:2",
+            "body": "body:deletion-confirmed:RECEIPT:2",
+            "close": "close:deletion-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s cleared away. I removed the reviewed item. <RECEIPT>",
+          "targets": {
+            "lead": "lead:deletion-confirmed:2",
+            "body": "body:deletion-confirmed:RECEIPT:2",
+            "close": "close:deletion-confirmed:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:playful",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 6,
+      "candidates": [
+        {
+          "text": "The local receipt says: <RECEIPT> You can undo it if that was too quick.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:0",
+            "body": "body:deletion-confirmed:RECEIPT:1",
+            "close": "close:deletion-confirmed:1"
+          }
+        },
+        {
+          "text": "Removed. The local receipt says: <RECEIPT> You can undo it if that was too quick.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:1",
+            "body": "body:deletion-confirmed:RECEIPT:1",
+            "close": "close:deletion-confirmed:1"
+          }
+        },
+        {
+          "text": "Got it—that’s been removed. The local receipt says: <RECEIPT> You can undo it if that was too quick.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:4",
+            "body": "body:deletion-confirmed:RECEIPT:1",
+            "close": "close:deletion-confirmed:1"
+          }
+        },
+        {
+          "text": "Got it—that’s been removed. That item is no longer active. <RECEIPT> You can undo it if that was too quick.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:4",
+            "body": "body:deletion-confirmed:RECEIPT:3",
+            "close": "close:deletion-confirmed:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:proactive",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 7,
+      "candidates": [
+        {
+          "text": "Removed. I cleared that bit of calendar space. <RECEIPT> You can undo it if that was too quick.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:1",
+            "body": "body:deletion-confirmed:RECEIPT:6",
+            "close": "close:deletion-confirmed:1"
+          }
+        },
+        {
+          "text": "Removed. The item has been removed from this device. <RECEIPT> You can undo it if that was too quick.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:1",
+            "body": "body:deletion-confirmed:RECEIPT:9",
+            "close": "close:deletion-confirmed:1"
+          }
+        },
+        {
+          "text": "That’s cleared away. I cleared that bit of calendar space. <RECEIPT> You can undo it if that was too quick.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:2",
+            "body": "body:deletion-confirmed:RECEIPT:6",
+            "close": "close:deletion-confirmed:1"
+          }
+        },
+        {
+          "text": "Removed. I cleared that bit of calendar space. <RECEIPT> An undo receipt is still available.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:1",
+            "body": "body:deletion-confirmed:RECEIPT:6",
+            "close": "close:deletion-confirmed:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:neutral",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 0,
+      "candidates": [
+        {
+          "text": "That’s cleared away. The item has been removed from this device. <RECEIPT>",
+          "targets": {
+            "lead": "lead:deletion-confirmed:2",
+            "body": "body:deletion-confirmed:RECEIPT:9",
+            "close": "close:deletion-confirmed:0"
+          }
+        },
+        {
+          "text": "That’s cleared away. Your calendar reflects the deletion. <RECEIPT> The rest of your calendar is untouched.",
+          "targets": {
+            "lead": "lead:deletion-confirmed:2",
+            "body": "body:deletion-confirmed:RECEIPT:4",
+            "close": "close:deletion-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s cleared away. <RECEIPT>",
+          "targets": {
+            "lead": "lead:deletion-confirmed:2",
+            "body": "body:deletion-confirmed:RECEIPT:0",
+            "close": "close:deletion-confirmed:0"
+          }
+        },
+        {
+          "text": "That’s cleared away. Your calendar reflects the deletion. <RECEIPT>",
+          "targets": {
+            "lead": "lead:deletion-confirmed:2",
+            "body": "body:deletion-confirmed:RECEIPT:4",
+            "close": "close:deletion-confirmed:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:completion-confirmed:minimal",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 4,
+      "candidates": [
+        {
+          "text": "<RECEIPT> You can undo that if needed.",
+          "targets": {
+            "lead": "lead:completion-confirmed:0",
+            "body": "body:completion-confirmed:RECEIPT:0",
+            "close": "close:completion-confirmed:1"
+          }
+        },
+        {
+          "text": "Completed. <RECEIPT> You can undo that if needed.",
+          "targets": {
+            "lead": "lead:completion-confirmed:1",
+            "body": "body:completion-confirmed:RECEIPT:0",
+            "close": "close:completion-confirmed:1"
+          }
+        },
+        {
+          "text": "Completed. You can count that as finished. <RECEIPT> You can undo that if needed.",
+          "targets": {
+            "lead": "lead:completion-confirmed:1",
+            "body": "body:completion-confirmed:RECEIPT:12",
+            "close": "close:completion-confirmed:1"
+          }
+        },
+        {
+          "text": "You can count that as finished. <RECEIPT> You can undo that if needed.",
+          "targets": {
+            "lead": "lead:completion-confirmed:0",
+            "body": "body:completion-confirmed:RECEIPT:12",
+            "close": "close:completion-confirmed:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:completion-confirmed:warm",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 5,
+      "candidates": [
+        {
+          "text": "That’s checked off. The local receipt says: <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:2",
+            "body": "body:completion-confirmed:RECEIPT:1",
+            "close": "close:completion-confirmed:2"
+          }
+        },
+        {
+          "text": "The local receipt says: <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:0",
+            "body": "body:completion-confirmed:RECEIPT:1",
+            "close": "close:completion-confirmed:2"
+          }
+        },
+        {
+          "text": "I checked that promise off for you. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:0",
+            "body": "body:completion-confirmed:RECEIPT:6",
+            "close": "close:completion-confirmed:2"
+          }
+        },
+        {
+          "text": "I applied the confirmed completion locally. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:0",
+            "body": "body:completion-confirmed:RECEIPT:8",
+            "close": "close:completion-confirmed:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:completion-confirmed:formal",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 6,
+      "candidates": [
+        {
+          "text": "Completed. I marked the reminder complete. <RECEIPT> You can undo that if needed.",
+          "targets": {
+            "lead": "lead:completion-confirmed:1",
+            "body": "body:completion-confirmed:RECEIPT:2",
+            "close": "close:completion-confirmed:1"
+          }
+        },
+        {
+          "text": "Completed. I marked the reminder complete. <RECEIPT> The undo receipt is close at hand.",
+          "targets": {
+            "lead": "lead:completion-confirmed:1",
+            "body": "body:completion-confirmed:RECEIPT:2",
+            "close": "close:completion-confirmed:3"
+          }
+        },
+        {
+          "text": "Completed. I marked the reminder complete. <RECEIPT>",
+          "targets": {
+            "lead": "lead:completion-confirmed:1",
+            "body": "body:completion-confirmed:RECEIPT:2",
+            "close": "close:completion-confirmed:0"
+          }
+        },
+        {
+          "text": "Completed. The completion result is: <RECEIPT> The undo receipt is close at hand.",
+          "targets": {
+            "lead": "lead:completion-confirmed:1",
+            "body": "body:completion-confirmed:RECEIPT:11",
+            "close": "close:completion-confirmed:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:completion-confirmed:playful",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 7,
+      "candidates": [
+        {
+          "text": "That’s checked off. I checked that promise off for you. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:2",
+            "body": "body:completion-confirmed:RECEIPT:6",
+            "close": "close:completion-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s checked off. The local receipt says: <RECEIPT> On to whatever matters next.",
+          "targets": {
+            "lead": "lead:completion-confirmed:2",
+            "body": "body:completion-confirmed:RECEIPT:1",
+            "close": "close:completion-confirmed:4"
+          }
+        },
+        {
+          "text": "That’s checked off. The local receipt says: <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:2",
+            "body": "body:completion-confirmed:RECEIPT:1",
+            "close": "close:completion-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s checked off. That reminder is finished now. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:2",
+            "body": "body:completion-confirmed:RECEIPT:3",
+            "close": "close:completion-confirmed:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:completion-confirmed:proactive",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 0,
+      "candidates": [
+        {
+          "text": "That’s checked off. That’s neatly wrapped up. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:2",
+            "body": "body:completion-confirmed:RECEIPT:10",
+            "close": "close:completion-confirmed:2"
+          }
+        },
+        {
+          "text": "One less thing to carry. I checked that promise off for you. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:3",
+            "body": "body:completion-confirmed:RECEIPT:6",
+            "close": "close:completion-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s checked off. I checked that promise off for you. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:2",
+            "body": "body:completion-confirmed:RECEIPT:6",
+            "close": "close:completion-confirmed:2"
+          }
+        },
+        {
+          "text": "That’s checked off. The item is marked done on this device. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:2",
+            "body": "body:completion-confirmed:RECEIPT:9",
+            "close": "close:completion-confirmed:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:completion-confirmed:neutral",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 1,
+      "candidates": [
+        {
+          "text": "Your reminder list reflects the completion. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:0",
+            "body": "body:completion-confirmed:RECEIPT:4",
+            "close": "close:completion-confirmed:2"
+          }
+        },
+        {
+          "text": "Your reminder list reflects the completion. <RECEIPT> The undo receipt is close at hand.",
+          "targets": {
+            "lead": "lead:completion-confirmed:0",
+            "body": "body:completion-confirmed:RECEIPT:4",
+            "close": "close:completion-confirmed:3"
+          }
+        },
+        {
+          "text": "Your reminder list reflects the completion. <RECEIPT> You can undo that if needed.",
+          "targets": {
+            "lead": "lead:completion-confirmed:0",
+            "body": "body:completion-confirmed:RECEIPT:4",
+            "close": "close:completion-confirmed:1"
+          }
+        },
+        {
+          "text": "The item is marked done on this device. <RECEIPT> Everything else remains unchanged.",
+          "targets": {
+            "lead": "lead:completion-confirmed:0",
+            "body": "body:completion-confirmed:RECEIPT:9",
+            "close": "close:completion-confirmed:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:availability-answer:minimal",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 5,
+      "candidates": [
+        {
+          "text": "Here’s what your calendar says. For <SLOT>, <DETAIL>. If you want, you can try another window.",
+          "targets": {
+            "lead": "lead:availability-answer:2",
+            "body": "body:availability-answer:SLOT+DETAIL:0",
+            "close": "close:availability-answer:3"
+          }
+        },
+        {
+          "text": "Here’s what your calendar says. Around <SLOT>, the picture is this: <DETAIL>. If you want, you can try another window.",
+          "targets": {
+            "lead": "lead:availability-answer:2",
+            "body": "body:availability-answer:SLOT+DETAIL:12",
+            "close": "close:availability-answer:3"
+          }
+        },
+        {
+          "text": "I checked the exact stretch you mentioned. For <SLOT>, <DETAIL>. If you want, you can try another window.",
+          "targets": {
+            "lead": "lead:availability-answer:4",
+            "body": "body:availability-answer:SLOT+DETAIL:0",
+            "close": "close:availability-answer:3"
+          }
+        },
+        {
+          "text": "I checked the exact stretch you mentioned. Around <SLOT>, the picture is this: <DETAIL>. If you want, you can try another window.",
+          "targets": {
+            "lead": "lead:availability-answer:4",
+            "body": "body:availability-answer:SLOT+DETAIL:12",
+            "close": "close:availability-answer:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:availability-answer:warm",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 6,
+      "candidates": [
+        {
+          "text": "I checked that window. <SLOT>: <DETAIL>.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:1",
+            "close": "close:availability-answer:0"
+          }
+        },
+        {
+          "text": "I checked that window. <SLOT>: <DETAIL>. That’s the current local picture.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:1",
+            "close": "close:availability-answer:1"
+          }
+        },
+        {
+          "text": "I checked that window. The local schedule for <SLOT> indicates that <DETAIL>.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:8",
+            "close": "close:availability-answer:0"
+          }
+        },
+        {
+          "text": "I checked that window. The local schedule for <SLOT> indicates that <DETAIL>. That’s the current local picture.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:8",
+            "close": "close:availability-answer:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:availability-answer:formal",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 7,
+      "candidates": [
+        {
+          "text": "I took a careful look. The verified answer for <SLOT> is: <DETAIL>. I can check a nearby time too.",
+          "targets": {
+            "lead": "lead:availability-answer:3",
+            "body": "body:availability-answer:SLOT+DETAIL:11",
+            "close": "close:availability-answer:4"
+          }
+        },
+        {
+          "text": "I took a careful look. For that stretch—<SLOT>—<DETAIL>. I can check a nearby time too.",
+          "targets": {
+            "lead": "lead:availability-answer:3",
+            "body": "body:availability-answer:SLOT+DETAIL:7",
+            "close": "close:availability-answer:4"
+          }
+        },
+        {
+          "text": "I took a careful look. Looking at <SLOT>, <DETAIL>. I can check a nearby time too.",
+          "targets": {
+            "lead": "lead:availability-answer:3",
+            "body": "body:availability-answer:SLOT+DETAIL:2",
+            "close": "close:availability-answer:4"
+          }
+        },
+        {
+          "text": "Here’s what your calendar says. Looking at <SLOT>, <DETAIL>. I can check a nearby time too.",
+          "targets": {
+            "lead": "lead:availability-answer:2",
+            "body": "body:availability-answer:SLOT+DETAIL:2",
+            "close": "close:availability-answer:4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:availability-answer:playful",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 0,
+      "candidates": [
+        {
+          "text": "I checked that window. The result for <SLOT> is that <DETAIL>.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:3",
+            "close": "close:availability-answer:0"
+          }
+        },
+        {
+          "text": "I checked that window. I checked <SLOT>, and <DETAIL>.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:6",
+            "close": "close:availability-answer:0"
+          }
+        },
+        {
+          "text": "I checked that window. <SLOT>: <DETAIL>.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:1",
+            "close": "close:availability-answer:0"
+          }
+        },
+        {
+          "text": "I checked that window. <SLOT>: <DETAIL>. That’s the current local picture.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:1",
+            "close": "close:availability-answer:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:availability-answer:proactive",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 1,
+      "candidates": [
+        {
+          "text": "I checked that window. My calendar check at <SLOT> found that <DETAIL>.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:9",
+            "close": "close:availability-answer:0"
+          }
+        },
+        {
+          "text": "I checked that window. Here’s the shape of <SLOT>: <DETAIL>.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:10",
+            "close": "close:availability-answer:0"
+          }
+        },
+        {
+          "text": "I checked that window. I checked <SLOT>, and <DETAIL>.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:6",
+            "close": "close:availability-answer:0"
+          }
+        },
+        {
+          "text": "I checked that window. I checked <SLOT>, and <DETAIL>. No outside service was needed to check.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:6",
+            "close": "close:availability-answer:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:availability-answer:neutral",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 2,
+      "candidates": [
+        {
+          "text": "I checked that window. Your calendar at <SLOT> shows that <DETAIL>. That’s the current local picture.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:4",
+            "close": "close:availability-answer:1"
+          }
+        },
+        {
+          "text": "I checked the exact stretch you mentioned. Your calendar at <SLOT> shows that <DETAIL>. That’s the current local picture.",
+          "targets": {
+            "lead": "lead:availability-answer:4",
+            "body": "body:availability-answer:SLOT+DETAIL:4",
+            "close": "close:availability-answer:1"
+          }
+        },
+        {
+          "text": "I checked that window. My calendar check at <SLOT> found that <DETAIL>. That’s the current local picture.",
+          "targets": {
+            "lead": "lead:availability-answer:1",
+            "body": "body:availability-answer:SLOT+DETAIL:9",
+            "close": "close:availability-answer:1"
+          }
+        },
+        {
+          "text": "Here’s what your calendar says. Your calendar at <SLOT> shows that <DETAIL>. That’s the current local picture.",
+          "targets": {
+            "lead": "lead:availability-answer:2",
+            "body": "body:availability-answer:SLOT+DETAIL:4",
+            "close": "close:availability-answer:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:schedule-summary:minimal",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 6,
+      "candidates": [
+        {
+          "text": "Here’s the local rundown. The useful overview is <SUMMARY>. I kept the summary to the relevant items.",
+          "targets": {
+            "lead": "lead:schedule-summary:2",
+            "body": "body:schedule-summary:SUMMARY:12",
+            "close": "close:schedule-summary:2"
+          }
+        },
+        {
+          "text": "Here’s the local rundown. <SUMMARY>.",
+          "targets": {
+            "lead": "lead:schedule-summary:2",
+            "body": "body:schedule-summary:SUMMARY:0",
+            "close": "close:schedule-summary:0"
+          }
+        },
+        {
+          "text": "Here’s the local rundown. <SUMMARY>. I kept the summary to the relevant items.",
+          "targets": {
+            "lead": "lead:schedule-summary:2",
+            "body": "body:schedule-summary:SUMMARY:0",
+            "close": "close:schedule-summary:2"
+          }
+        },
+        {
+          "text": "Here’s the local rundown. The useful overview is <SUMMARY>.",
+          "targets": {
+            "lead": "lead:schedule-summary:2",
+            "body": "body:schedule-summary:SUMMARY:12",
+            "close": "close:schedule-summary:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:schedule-summary:warm",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 7,
+      "candidates": [
+        {
+          "text": "I took a look at your plans. Your calendar shows <SUMMARY>. Ask about any item and I’ll zoom in.",
+          "targets": {
+            "lead": "lead:schedule-summary:3",
+            "body": "body:schedule-summary:SUMMARY:1",
+            "close": "close:schedule-summary:4"
+          }
+        },
+        {
+          "text": "Your calendar shows <SUMMARY>. That’s everything in the requested window.",
+          "targets": {
+            "lead": "lead:schedule-summary:0",
+            "body": "body:schedule-summary:SUMMARY:1",
+            "close": "close:schedule-summary:1"
+          }
+        },
+        {
+          "text": "I checked the schedule. Your calendar shows <SUMMARY>. Ask about any item and I’ll zoom in.",
+          "targets": {
+            "lead": "lead:schedule-summary:1",
+            "body": "body:schedule-summary:SUMMARY:1",
+            "close": "close:schedule-summary:4"
+          }
+        },
+        {
+          "text": "Your calendar shows <SUMMARY>. Ask about any item and I’ll zoom in.",
+          "targets": {
+            "lead": "lead:schedule-summary:0",
+            "body": "body:schedule-summary:SUMMARY:1",
+            "close": "close:schedule-summary:4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:schedule-summary:formal",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 0,
+      "candidates": [
+        {
+          "text": "I checked the schedule. I found <SUMMARY>. I kept the summary to the relevant items.",
+          "targets": {
+            "lead": "lead:schedule-summary:1",
+            "body": "body:schedule-summary:SUMMARY:2",
+            "close": "close:schedule-summary:2"
+          }
+        },
+        {
+          "text": "I checked the schedule. I found <SUMMARY>.",
+          "targets": {
+            "lead": "lead:schedule-summary:1",
+            "body": "body:schedule-summary:SUMMARY:2",
+            "close": "close:schedule-summary:0"
+          }
+        },
+        {
+          "text": "I checked the schedule. The calendar result is: <SUMMARY>. I kept the summary to the relevant items.",
+          "targets": {
+            "lead": "lead:schedule-summary:1",
+            "body": "body:schedule-summary:SUMMARY:11",
+            "close": "close:schedule-summary:2"
+          }
+        },
+        {
+          "text": "Let’s get you oriented. I found <SUMMARY>. I kept the summary to the relevant items.",
+          "targets": {
+            "lead": "lead:schedule-summary:4",
+            "body": "body:schedule-summary:SUMMARY:2",
+            "close": "close:schedule-summary:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:schedule-summary:playful",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 1,
+      "candidates": [
+        {
+          "text": "Your calendar shows <SUMMARY>. Ask about any item and I’ll zoom in.",
+          "targets": {
+            "lead": "lead:schedule-summary:0",
+            "body": "body:schedule-summary:SUMMARY:1",
+            "close": "close:schedule-summary:4"
+          }
+        },
+        {
+          "text": "I took a look at your plans. Your calendar shows <SUMMARY>. Ask about any item and I’ll zoom in.",
+          "targets": {
+            "lead": "lead:schedule-summary:3",
+            "body": "body:schedule-summary:SUMMARY:1",
+            "close": "close:schedule-summary:4"
+          }
+        },
+        {
+          "text": "I took a look at your plans. The day’s shape is <SUMMARY>. Ask about any item and I’ll zoom in.",
+          "targets": {
+            "lead": "lead:schedule-summary:3",
+            "body": "body:schedule-summary:SUMMARY:6",
+            "close": "close:schedule-summary:4"
+          }
+        },
+        {
+          "text": "I took a look at your plans. The schedule comes to <SUMMARY>. Ask about any item and I’ll zoom in.",
+          "targets": {
+            "lead": "lead:schedule-summary:3",
+            "body": "body:schedule-summary:SUMMARY:3",
+            "close": "close:schedule-summary:4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:schedule-summary:proactive",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 2,
+      "candidates": [
+        {
+          "text": "Let’s get you oriented. Your plans settle into <SUMMARY>. That’s everything in the requested window.",
+          "targets": {
+            "lead": "lead:schedule-summary:4",
+            "body": "body:schedule-summary:SUMMARY:10",
+            "close": "close:schedule-summary:1"
+          }
+        },
+        {
+          "text": "Let’s get you oriented. My local check found <SUMMARY>. That’s everything in the requested window.",
+          "targets": {
+            "lead": "lead:schedule-summary:4",
+            "body": "body:schedule-summary:SUMMARY:9",
+            "close": "close:schedule-summary:1"
+          }
+        },
+        {
+          "text": "Let’s get you oriented. The day’s shape is <SUMMARY>. That’s everything in the requested window.",
+          "targets": {
+            "lead": "lead:schedule-summary:4",
+            "body": "body:schedule-summary:SUMMARY:6",
+            "close": "close:schedule-summary:1"
+          }
+        },
+        {
+          "text": "The day’s shape is <SUMMARY>. That’s everything in the requested window.",
+          "targets": {
+            "lead": "lead:schedule-summary:0",
+            "body": "body:schedule-summary:SUMMARY:6",
+            "close": "close:schedule-summary:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:schedule-summary:neutral",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 3,
+      "candidates": [
+        {
+          "text": "I checked the schedule. The local calendar currently has <SUMMARY>.",
+          "targets": {
+            "lead": "lead:schedule-summary:1",
+            "body": "body:schedule-summary:SUMMARY:4",
+            "close": "close:schedule-summary:0"
+          }
+        },
+        {
+          "text": "I checked the schedule. My local check found <SUMMARY>. That’s everything in the requested window.",
+          "targets": {
+            "lead": "lead:schedule-summary:1",
+            "body": "body:schedule-summary:SUMMARY:9",
+            "close": "close:schedule-summary:1"
+          }
+        },
+        {
+          "text": "I checked the schedule. The local calendar currently has <SUMMARY>. That’s everything in the requested window.",
+          "targets": {
+            "lead": "lead:schedule-summary:1",
+            "body": "body:schedule-summary:SUMMARY:4",
+            "close": "close:schedule-summary:1"
+          }
+        },
+        {
+          "text": "I checked the schedule. The local calendar currently has <SUMMARY>. I kept the summary to the relevant items.",
+          "targets": {
+            "lead": "lead:schedule-summary:1",
+            "body": "body:schedule-summary:SUMMARY:4",
+            "close": "close:schedule-summary:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:clarification:minimal",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 7,
+      "candidates": [
+        {
+          "text": "I paused because <DETAIL> A short correction is enough.",
+          "targets": {
+            "lead": "lead:clarification:0",
+            "body": "body:clarification:DETAIL:11",
+            "close": "close:clarification:2"
+          }
+        },
+        {
+          "text": "The missing piece is <DETAIL> A short correction is enough.",
+          "targets": {
+            "lead": "lead:clarification:0",
+            "body": "body:clarification:DETAIL:9",
+            "close": "close:clarification:2"
+          }
+        },
+        {
+          "text": "I need one more detail: <DETAIL> A short correction is enough.",
+          "targets": {
+            "lead": "lead:clarification:0",
+            "body": "body:clarification:DETAIL:7",
+            "close": "close:clarification:2"
+          }
+        },
+        {
+          "text": "Could you clarify this for me: <DETAIL> A short correction is enough.",
+          "targets": {
+            "lead": "lead:clarification:0",
+            "body": "body:clarification:DETAIL:8",
+            "close": "close:clarification:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:clarification:warm",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 0,
+      "candidates": [
+        {
+          "text": "I’m holding off for now. Could you clarify this for me: <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:8",
+            "close": "close:clarification:0"
+          }
+        },
+        {
+          "text": "One quick check before I continue. Could you clarify this for me: <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:2",
+            "body": "body:clarification:DETAIL:8",
+            "close": "close:clarification:0"
+          }
+        },
+        {
+          "text": "I’m holding off for now. The missing piece is <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:9",
+            "close": "close:clarification:0"
+          }
+        },
+        {
+          "text": "I’m holding off for now. <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:6",
+            "close": "close:clarification:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:clarification:formal",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 1,
+      "candidates": [
+        {
+          "text": "I paused because <DETAIL> I’ll wait for your answer.",
+          "targets": {
+            "lead": "lead:clarification:0",
+            "body": "body:clarification:DETAIL:11",
+            "close": "close:clarification:3"
+          }
+        },
+        {
+          "text": "I’m close; I just need one detail. I need one more detail: <DETAIL> I’ll wait for your answer.",
+          "targets": {
+            "lead": "lead:clarification:4",
+            "body": "body:clarification:DETAIL:7",
+            "close": "close:clarification:3"
+          }
+        },
+        {
+          "text": "I need one more detail: <DETAIL> I’ll wait for your answer.",
+          "targets": {
+            "lead": "lead:clarification:0",
+            "body": "body:clarification:DETAIL:7",
+            "close": "close:clarification:3"
+          }
+        },
+        {
+          "text": "I’m close; I just need one detail. I paused because <DETAIL> I’ll wait for your answer.",
+          "targets": {
+            "lead": "lead:clarification:4",
+            "body": "body:clarification:DETAIL:11",
+            "close": "close:clarification:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:clarification:playful",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 2,
+      "candidates": [
+        {
+          "text": "I’m holding off for now. <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:6",
+            "close": "close:clarification:0"
+          }
+        },
+        {
+          "text": "I’m holding off for now. Before I continue, <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:10",
+            "close": "close:clarification:0"
+          }
+        },
+        {
+          "text": "I’m holding off for now. <DETAIL> Nothing has been saved.",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:6",
+            "close": "close:clarification:1"
+          }
+        },
+        {
+          "text": "I’m holding off for now. Could you clarify this for me: <DETAIL> Nothing has been saved.",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:8",
+            "close": "close:clarification:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:clarification:proactive",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 3,
+      "candidates": [
+        {
+          "text": "I’m holding off for now. <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:6",
+            "close": "close:clarification:0"
+          }
+        },
+        {
+          "text": "I’m holding off for now. <DETAIL> Nothing has been saved.",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:6",
+            "close": "close:clarification:1"
+          }
+        },
+        {
+          "text": "One quick check before I continue. <DETAIL> Nothing has been saved.",
+          "targets": {
+            "lead": "lead:clarification:2",
+            "body": "body:clarification:DETAIL:6",
+            "close": "close:clarification:1"
+          }
+        },
+        {
+          "text": "I’m holding off for now. The missing piece is <DETAIL> Nothing has been saved.",
+          "targets": {
+            "lead": "lead:clarification:1",
+            "body": "body:clarification:DETAIL:9",
+            "close": "close:clarification:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:clarification:neutral",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 4,
+      "candidates": [
+        {
+          "text": "The missing piece is <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:0",
+            "body": "body:clarification:DETAIL:9",
+            "close": "close:clarification:0"
+          }
+        },
+        {
+          "text": "I’m close; I just need one detail. The missing piece is <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:4",
+            "body": "body:clarification:DETAIL:9",
+            "close": "close:clarification:0"
+          }
+        },
+        {
+          "text": "Could you clarify this for me: <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:0",
+            "body": "body:clarification:DETAIL:8",
+            "close": "close:clarification:0"
+          }
+        },
+        {
+          "text": "I need one more detail: <DETAIL>",
+          "targets": {
+            "lead": "lead:clarification:0",
+            "body": "body:clarification:DETAIL:7",
+            "close": "close:clarification:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:conflict-warning:minimal",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 0,
+      "candidates": [
+        {
+          "text": "I spotted a timing squeeze. <SUMMARY>. I can help you work through the options.",
+          "targets": {
+            "lead": "lead:conflict-warning:4",
+            "body": "body:conflict-warning:SUMMARY:0",
+            "close": "close:conflict-warning:4"
+          }
+        },
+        {
+          "text": "There’s a scheduling knot here. The part worth a second look is <SUMMARY>. I can help you work through the options.",
+          "targets": {
+            "lead": "lead:conflict-warning:3",
+            "body": "body:conflict-warning:SUMMARY:12",
+            "close": "close:conflict-warning:4"
+          }
+        },
+        {
+          "text": "There’s a scheduling knot here. <SUMMARY>. I can help you work through the options.",
+          "targets": {
+            "lead": "lead:conflict-warning:3",
+            "body": "body:conflict-warning:SUMMARY:0",
+            "close": "close:conflict-warning:4"
+          }
+        },
+        {
+          "text": "I spotted a timing squeeze. The part worth a second look is <SUMMARY>. I can help you work through the options.",
+          "targets": {
+            "lead": "lead:conflict-warning:4",
+            "body": "body:conflict-warning:SUMMARY:12",
+            "close": "close:conflict-warning:4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:conflict-warning:warm",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 1,
+      "candidates": [
+        {
+          "text": "The verified conflict summary is <SUMMARY>. Both plans remain untouched for now.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:8",
+            "close": "close:conflict-warning:3"
+          }
+        },
+        {
+          "text": "The conflict result is <SUMMARY>.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:1",
+            "close": "close:conflict-warning:0"
+          }
+        },
+        {
+          "text": "The conflict result is <SUMMARY>. Both plans remain untouched for now.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:1",
+            "close": "close:conflict-warning:3"
+          }
+        },
+        {
+          "text": "I found this overlap: <SUMMARY>. Both plans remain untouched for now.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:6",
+            "close": "close:conflict-warning:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:conflict-warning:formal",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 2,
+      "candidates": [
+        {
+          "text": "A conflict check turned something up. The calendar warning is: <SUMMARY>. I haven’t changed either plan.",
+          "targets": {
+            "lead": "lead:conflict-warning:2",
+            "body": "body:conflict-warning:SUMMARY:11",
+            "close": "close:conflict-warning:1"
+          }
+        },
+        {
+          "text": "I found some calendar friction. Your local calendar shows <SUMMARY>. I haven’t changed either plan.",
+          "targets": {
+            "lead": "lead:conflict-warning:1",
+            "body": "body:conflict-warning:SUMMARY:2",
+            "close": "close:conflict-warning:1"
+          }
+        },
+        {
+          "text": "A conflict check turned something up. Your local calendar shows <SUMMARY>. I haven’t changed either plan.",
+          "targets": {
+            "lead": "lead:conflict-warning:2",
+            "body": "body:conflict-warning:SUMMARY:2",
+            "close": "close:conflict-warning:1"
+          }
+        },
+        {
+          "text": "A conflict check turned something up. Here’s where the plans rub together: <SUMMARY>. I haven’t changed either plan.",
+          "targets": {
+            "lead": "lead:conflict-warning:2",
+            "body": "body:conflict-warning:SUMMARY:7",
+            "close": "close:conflict-warning:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:conflict-warning:playful",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 3,
+      "candidates": [
+        {
+          "text": "The conflict result is <SUMMARY>. Both plans remain untouched for now.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:1",
+            "close": "close:conflict-warning:3"
+          }
+        },
+        {
+          "text": "I found this overlap: <SUMMARY>. Both plans remain untouched for now.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:6",
+            "close": "close:conflict-warning:3"
+          }
+        },
+        {
+          "text": "The crowded part is <SUMMARY>. Both plans remain untouched for now.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:10",
+            "close": "close:conflict-warning:3"
+          }
+        },
+        {
+          "text": "What overlaps is <SUMMARY>. Both plans remain untouched for now.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:3",
+            "close": "close:conflict-warning:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:conflict-warning:proactive",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 4,
+      "candidates": [
+        {
+          "text": "I found this overlap: <SUMMARY>. You can decide which item should move.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:6",
+            "close": "close:conflict-warning:2"
+          }
+        },
+        {
+          "text": "My local overlap check found <SUMMARY>.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:9",
+            "close": "close:conflict-warning:0"
+          }
+        },
+        {
+          "text": "The crowded part is <SUMMARY>.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:10",
+            "close": "close:conflict-warning:0"
+          }
+        },
+        {
+          "text": "I found this overlap: <SUMMARY>.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:6",
+            "close": "close:conflict-warning:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:conflict-warning:neutral",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 5,
+      "candidates": [
+        {
+          "text": "I spotted a timing squeeze. The schedule check found <SUMMARY>.",
+          "targets": {
+            "lead": "lead:conflict-warning:4",
+            "body": "body:conflict-warning:SUMMARY:4",
+            "close": "close:conflict-warning:0"
+          }
+        },
+        {
+          "text": "I found some calendar friction. The schedule check found <SUMMARY>.",
+          "targets": {
+            "lead": "lead:conflict-warning:1",
+            "body": "body:conflict-warning:SUMMARY:4",
+            "close": "close:conflict-warning:0"
+          }
+        },
+        {
+          "text": "There’s a scheduling knot here. The schedule check found <SUMMARY>.",
+          "targets": {
+            "lead": "lead:conflict-warning:3",
+            "body": "body:conflict-warning:SUMMARY:4",
+            "close": "close:conflict-warning:0"
+          }
+        },
+        {
+          "text": "The schedule check found <SUMMARY>.",
+          "targets": {
+            "lead": "lead:conflict-warning:0",
+            "body": "body:conflict-warning:SUMMARY:4",
+            "close": "close:conflict-warning:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:unsupported:minimal",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 1,
+      "candidates": [
+        {
+          "text": "I can’t safely take that on yet. The calendar-only answer is <DETAIL> No calendar data was changed.",
+          "targets": {
+            "lead": "lead:unsupported:1",
+            "body": "body:unsupported:DETAIL:7",
+            "close": "close:unsupported:1"
+          }
+        },
+        {
+          "text": "I can’t safely take that on yet. That request is outside the supported path: <DETAIL> No calendar data was changed.",
+          "targets": {
+            "lead": "lead:unsupported:1",
+            "body": "body:unsupported:DETAIL:4",
+            "close": "close:unsupported:1"
+          }
+        },
+        {
+          "text": "I can’t safely take that on yet. <DETAIL> No calendar data was changed.",
+          "targets": {
+            "lead": "lead:unsupported:1",
+            "body": "body:unsupported:DETAIL:0",
+            "close": "close:unsupported:1"
+          }
+        },
+        {
+          "text": "I can’t safely take that on yet. Here’s the honest limitation: <DETAIL> No calendar data was changed.",
+          "targets": {
+            "lead": "lead:unsupported:1",
+            "body": "body:unsupported:DETAIL:12",
+            "close": "close:unsupported:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:unsupported:warm",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 2,
+      "candidates": [
+        {
+          "text": "I don’t have a safe local action for that yet. My supported scope ends here: <DETAIL>",
+          "targets": {
+            "lead": "lead:unsupported:4",
+            "body": "body:unsupported:DETAIL:8",
+            "close": "close:unsupported:0"
+          }
+        },
+        {
+          "text": "I don’t have a safe local action for that yet. The safe boundary here is: <DETAIL> I can still help if there’s a calendar angle.",
+          "targets": {
+            "lead": "lead:unsupported:4",
+            "body": "body:unsupported:DETAIL:1",
+            "close": "close:unsupported:4"
+          }
+        },
+        {
+          "text": "I don’t have a safe local action for that yet. My supported scope ends here: <DETAIL> I can still help if there’s a calendar angle.",
+          "targets": {
+            "lead": "lead:unsupported:4",
+            "body": "body:unsupported:DETAIL:8",
+            "close": "close:unsupported:4"
+          }
+        },
+        {
+          "text": "I don’t have a safe local action for that yet. The safe boundary here is: <DETAIL>",
+          "targets": {
+            "lead": "lead:unsupported:4",
+            "body": "body:unsupported:DETAIL:1",
+            "close": "close:unsupported:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:unsupported:formal",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 3,
+      "candidates": [
+        {
+          "text": "The reason I stopped is: <DETAIL> Try phrasing it as a calendar or reminder request.",
+          "targets": {
+            "lead": "lead:unsupported:0",
+            "body": "body:unsupported:DETAIL:11",
+            "close": "close:unsupported:2"
+          }
+        },
+        {
+          "text": "What I can tell you is <DETAIL> Try phrasing it as a calendar or reminder request.",
+          "targets": {
+            "lead": "lead:unsupported:0",
+            "body": "body:unsupported:DETAIL:2",
+            "close": "close:unsupported:2"
+          }
+        },
+        {
+          "text": "I don’t have a safe local action for that yet. What I can tell you is <DETAIL> Try phrasing it as a calendar or reminder request.",
+          "targets": {
+            "lead": "lead:unsupported:4",
+            "body": "body:unsupported:DETAIL:2",
+            "close": "close:unsupported:2"
+          }
+        },
+        {
+          "text": "I’m keeping this one bounded. What I can tell you is <DETAIL> Try phrasing it as a calendar or reminder request.",
+          "targets": {
+            "lead": "lead:unsupported:3",
+            "body": "body:unsupported:DETAIL:2",
+            "close": "close:unsupported:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:unsupported:playful",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 4,
+      "candidates": [
+        {
+          "text": "I don’t have a safe local action for that yet. The safe boundary here is: <DETAIL>",
+          "targets": {
+            "lead": "lead:unsupported:4",
+            "body": "body:unsupported:DETAIL:1",
+            "close": "close:unsupported:0"
+          }
+        },
+        {
+          "text": "That sits outside my local calendar tools. The local assistant stopped because <DETAIL>",
+          "targets": {
+            "lead": "lead:unsupported:2",
+            "body": "body:unsupported:DETAIL:3",
+            "close": "close:unsupported:0"
+          }
+        },
+        {
+          "text": "I don’t have a safe local action for that yet. The local assistant stopped because <DETAIL>",
+          "targets": {
+            "lead": "lead:unsupported:4",
+            "body": "body:unsupported:DETAIL:3",
+            "close": "close:unsupported:0"
+          }
+        },
+        {
+          "text": "That sits outside my local calendar tools. The safe boundary here is: <DETAIL>",
+          "targets": {
+            "lead": "lead:unsupported:2",
+            "body": "body:unsupported:DETAIL:1",
+            "close": "close:unsupported:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:unsupported:proactive",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 5,
+      "candidates": [
+        {
+          "text": "I’m keeping this one bounded. For this request, <DETAIL> I can still help if there’s a calendar angle.",
+          "targets": {
+            "lead": "lead:unsupported:3",
+            "body": "body:unsupported:DETAIL:6",
+            "close": "close:unsupported:4"
+          }
+        },
+        {
+          "text": "I’m keeping this one bounded. The grounded response is <DETAIL> I can still help if there’s a calendar angle.",
+          "targets": {
+            "lead": "lead:unsupported:3",
+            "body": "body:unsupported:DETAIL:9",
+            "close": "close:unsupported:4"
+          }
+        },
+        {
+          "text": "I’m keeping this one bounded. I need to stay within this boundary: <DETAIL> I can still help if there’s a calendar angle.",
+          "targets": {
+            "lead": "lead:unsupported:3",
+            "body": "body:unsupported:DETAIL:10",
+            "close": "close:unsupported:4"
+          }
+        },
+        {
+          "text": "I’m keeping this one bounded. My supported scope ends here: <DETAIL> I can still help if there’s a calendar angle.",
+          "targets": {
+            "lead": "lead:unsupported:3",
+            "body": "body:unsupported:DETAIL:8",
+            "close": "close:unsupported:4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:unsupported:neutral",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 6,
+      "candidates": [
+        {
+          "text": "The grounded response is <DETAIL> No calendar data was changed.",
+          "targets": {
+            "lead": "lead:unsupported:0",
+            "body": "body:unsupported:DETAIL:9",
+            "close": "close:unsupported:1"
+          }
+        },
+        {
+          "text": "That request is outside the supported path: <DETAIL> No calendar data was changed.",
+          "targets": {
+            "lead": "lead:unsupported:0",
+            "body": "body:unsupported:DETAIL:4",
+            "close": "close:unsupported:1"
+          }
+        },
+        {
+          "text": "<DETAIL> No calendar data was changed.",
+          "targets": {
+            "lead": "lead:unsupported:0",
+            "body": "body:unsupported:DETAIL:0",
+            "close": "close:unsupported:1"
+          }
+        },
+        {
+          "text": "That request is outside the supported path: <DETAIL> I can still help if there’s a calendar angle.",
+          "targets": {
+            "lead": "lead:unsupported:0",
+            "body": "body:unsupported:DETAIL:4",
+            "close": "close:unsupported:4"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:error:minimal",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 2,
+      "candidates": [
+        {
+          "text": "That didn’t land the way it should have. Here’s what interrupted the attempt: <DETAIL> I kept the failure contained.",
+          "targets": {
+            "lead": "lead:error:4",
+            "body": "body:error:DETAIL:12",
+            "close": "close:error:3"
+          }
+        },
+        {
+          "text": "I couldn’t complete that safely. <DETAIL> I kept the failure contained.",
+          "targets": {
+            "lead": "lead:error:3",
+            "body": "body:error:DETAIL:0",
+            "close": "close:error:3"
+          }
+        },
+        {
+          "text": "I couldn’t complete that safely. Here’s what interrupted the attempt: <DETAIL> I kept the failure contained.",
+          "targets": {
+            "lead": "lead:error:3",
+            "body": "body:error:DETAIL:12",
+            "close": "close:error:3"
+          }
+        },
+        {
+          "text": "That didn’t land the way it should have. <DETAIL> I kept the failure contained.",
+          "targets": {
+            "lead": "lead:error:4",
+            "body": "body:error:DETAIL:0",
+            "close": "close:error:3"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:error:warm",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 3,
+      "candidates": [
+        {
+          "text": "The local error is: <DETAIL> You can revise the request and try again.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:1",
+            "close": "close:error:2"
+          }
+        },
+        {
+          "text": "I had to stop there. The local error is: <DETAIL> You can revise the request and try again.",
+          "targets": {
+            "lead": "lead:error:1",
+            "body": "body:error:DETAIL:1",
+            "close": "close:error:2"
+          }
+        },
+        {
+          "text": "For this attempt, <DETAIL> You can revise the request and try again.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:6",
+            "close": "close:error:2"
+          }
+        },
+        {
+          "text": "The verified error detail is <DETAIL> You can revise the request and try again.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:8",
+            "close": "close:error:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:error:formal",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 4,
+      "candidates": [
+        {
+          "text": "That didn’t land the way it should have. What went wrong is <DETAIL> Your existing plans are still safe.",
+          "targets": {
+            "lead": "lead:error:4",
+            "body": "body:error:DETAIL:2",
+            "close": "close:error:4"
+          }
+        },
+        {
+          "text": "That didn’t land the way it should have. What went wrong is <DETAIL>",
+          "targets": {
+            "lead": "lead:error:4",
+            "body": "body:error:DETAIL:2",
+            "close": "close:error:0"
+          }
+        },
+        {
+          "text": "I couldn’t complete that safely. What went wrong is <DETAIL> Your existing plans are still safe.",
+          "targets": {
+            "lead": "lead:error:3",
+            "body": "body:error:DETAIL:2",
+            "close": "close:error:4"
+          }
+        },
+        {
+          "text": "I couldn’t complete that safely. What went wrong is <DETAIL>",
+          "targets": {
+            "lead": "lead:error:3",
+            "body": "body:error:DETAIL:2",
+            "close": "close:error:0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:error:playful",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 5,
+      "candidates": [
+        {
+          "text": "For this attempt, <DETAIL> You can revise the request and try again.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:6",
+            "close": "close:error:2"
+          }
+        },
+        {
+          "text": "The verified error detail is <DETAIL> You can revise the request and try again.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:8",
+            "close": "close:error:2"
+          }
+        },
+        {
+          "text": "The local error is: <DETAIL> You can revise the request and try again.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:1",
+            "close": "close:error:2"
+          }
+        },
+        {
+          "text": "The operation stopped because <DETAIL> You can revise the request and try again.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:3",
+            "close": "close:error:2"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:error:proactive",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 6,
+      "candidates": [
+        {
+          "text": "For this attempt, <DETAIL> Nothing else was changed.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:6",
+            "close": "close:error:1"
+          }
+        },
+        {
+          "text": "I couldn’t pass the safety boundary because <DETAIL> Nothing else was changed.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:10",
+            "close": "close:error:1"
+          }
+        },
+        {
+          "text": "I had to stop there. For this attempt, <DETAIL> Nothing else was changed.",
+          "targets": {
+            "lead": "lead:error:1",
+            "body": "body:error:DETAIL:6",
+            "close": "close:error:1"
+          }
+        },
+        {
+          "text": "My local check returned <DETAIL> Nothing else was changed.",
+          "targets": {
+            "lead": "lead:error:0",
+            "body": "body:error:DETAIL:9",
+            "close": "close:error:1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "speak-pref:error:neutral",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 7,
+      "candidates": [
+        {
+          "text": "I couldn’t complete that safely. I left the calendar unchanged because <DETAIL>",
+          "targets": {
+            "lead": "lead:error:3",
+            "body": "body:error:DETAIL:4",
+            "close": "close:error:0"
+          }
+        },
+        {
+          "text": "I couldn’t complete that safely. I left the calendar unchanged because <DETAIL> I kept the failure contained.",
+          "targets": {
+            "lead": "lead:error:3",
+            "body": "body:error:DETAIL:4",
+            "close": "close:error:3"
+          }
+        },
+        {
+          "text": "I couldn’t complete that safely. My local check returned <DETAIL> Your existing plans are still safe.",
+          "targets": {
+            "lead": "lead:error:3",
+            "body": "body:error:DETAIL:9",
+            "close": "close:error:4"
+          }
+        },
+        {
+          "text": "I couldn’t complete that safely. I left the calendar unchanged because <DETAIL> Your existing plans are still safe.",
+          "targets": {
+            "lead": "lead:error:3",
+            "body": "body:error:DETAIL:4",
+            "close": "close:error:4"
+          }
+        }
+      ]
+    }
+  ]
+}

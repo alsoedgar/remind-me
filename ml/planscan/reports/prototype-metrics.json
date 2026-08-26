@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "deterministic-pipeline",
+  "dev": {
+    "pages": 2000,
+    "blockRoleAccuracy": 1.0,
+    "entityMicroF1": 0.999962033486465,
+    "relationMicroF1": 0.8688672619644828,
+    "groupLinkMicroF1": 0.918827660723933,
+    "documentTypeAccuracy": 0.865,
+    "executionEquivalence": {
+      "bornDigital": 0.999000999000999,
+      "scanned": 1.0,
+      "overall": 0.9995
+    },
+    "evidenceCoverage": 1.0
+  },
+  "testFloat32": {
+    "pages": 2000,
+    "blockRoleAccuracy": 1.0,
+    "entityMicroF1": 1.0,
+    "relationMicroF1": 0.8930703200500256,
+    "groupLinkMicroF1": 0.94429789853161,
+    "documentTypeAccuracy": 0.8525,
+    "executionEquivalence": {
+      "bornDigital": 1.0,
+      "scanned": 1.0,
+      "overall": 1.0
+    },
+    "evidenceCoverage": 1.0
+  },
+  "testInt8": {
+    "pages": 2000,
+    "blockRoleAccuracy": 1.0,
+    "entityMicroF1": 1.0,
+    "relationMicroF1": 0.892320009149654,
+    "groupLinkMicroF1": 0.9426476739833998,
+    "documentTypeAccuracy": 0.849,
+    "executionEquivalence": {
+      "bornDigital": 1.0,
+      "scanned": 1.0,
+      "overall": 1.0
+    },
+    "evidenceCoverage": 1.0
+  },
+  "textOnlyInferenceAblation": {
+    "pages": 2000,
+    "blockRoleAccuracy": 0.9894342494219569,
+    "entityMicroF1": 0.9996530989824237,
+    "relationMicroF1": 0.3982829413960433,
+    "groupLinkMicroF1": 0.6505598114319388,
+    "documentTypeAccuracy": 0.9265,
+    "executionEquivalence": {
+      "bornDigital": 1.0,
+      "scanned": 0.991,
+      "overall": 0.9955
+    },
+    "evidenceCoverage": 1.0
+  },
+  "maximumQuantizationDelta": 0.0035000000000000586,
+  "splitDisjoint": {
+    "templateFamilies": true,
+    "fonts": true,
+    "scanStyles": true,
+    "organizations": true
+  },
+  "limitations": [
+    "Metrics are from generated held-out layouts, not an independent human document set.",
+    "OCR recognition quality remains bounded by the bundled Tesseract model.",
+    "Handwriting and unusually visual pages are outside this checkpoint."
+  ],
+  "export": {
+    "configurationPath": "models/planscan/planscan-v0.1-int8.json",
+    "weightsPath": "models/planscan/planscan-v0.1-int8.bin.gz",
+    "compressedBytes": 22667,
+    "uncompressedBytes": 5242880,
+    "parameterCount": 5242880,
+    "sha256Uncompressed": "1b934e6b34d8c091dee96bdc53f1cf940110406ccf5b238653fa6f99406255ac"
+  }
+}

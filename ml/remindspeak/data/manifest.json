@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "seed": 9062026,
+  "generator": "ml/remindspeak/pipeline.py",
+  "generatorPolicy": "response-plan-first, protected placeholders, split-seeded styles",
+  "license": "MIT",
+  "provenance": {
+    "programGeneratedExamples": 40000,
+    "projectAuthoredSurfaceAtoms": 432,
+    "projectAuthoredStyleProfiles": 20,
+    "independentlyHumanAuthoredBlindExamples": 0,
+    "teacherGeneratedExamples": 1661,
+    "teacherPreferenceAnnotations": 66,
+    "teacherAuthoredSurfaceAtoms": 0,
+    "personalCalendarExamples": 0
+  },
+  "teacherAssisted": {
+    "acceptedCorpusPath": "ml/teacher_assisted/accepted/remindspeak.json",
+    "acceptedCorpusSha256": "ae042099e47d5955dff4d6937807e7568c790bbe69ccb968755d572baa84138d",
+    "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+    "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "teacherRole": "preference indices over project-authored protected candidates"
+  },
+  "files": {
+    "train": {
+      "path": "ml/remindspeak/.generated/dataset/train.jsonl",
+      "examples": 31650,
+      "uniqueReferences": 1037,
+      "sha256": "8e0770f7b9c212d7a295af980ee726fb55cc81e13faf536a7681755a3015d2d3"
+    },
+    "dev": {
+      "path": "ml/remindspeak/.generated/dataset/dev.jsonl",
+      "examples": 5000,
+      "uniqueReferences": 682,
+      "sha256": "fffe6e1704e521540add7da1a6a894bb1c687f5cd720a0c6e12ca5d4a3570d1e"
+    },
+    "test": {
+      "path": "ml/remindspeak/.generated/dataset/test.jsonl",
+      "examples": 5000,
+      "uniqueReferences": 679,
+      "sha256": "887f61d915ca5fd8b65e9ef43a35da8e29bc37739e75b5312992c65e952c66ac"
+    },
+    "teacherChallenge": {
+      "path": "ml/remindspeak/.generated/dataset/teacher-challenge.jsonl",
+      "examples": 11,
+      "uniqueReferences": 11,
+      "sha256": "dfd776f6832b4fe454033f4c106cff9d10ac84d5d106591081b246c3a547a9c2"
+    }
+  },
+  "heldoutFixture": {
+    "path": "fixtures/remindspeak/heldout.v0.1.jsonl",
+    "examples": 250,
+    "sha256": "d4ec3f53edd9f47fafcbececb3a58d9761ab223915ac2c6d2c052b505682c8e5"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+  "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+  "minimumCoreTemplatesPerOperation": 3,
+  "coreChallengeTemplatesPerOperation": 1,
+  "coreInstantiationsPerChallengeTemplate": 12,
+  "speakPreferenceCasesPerAct": 6,
+  "speakPreferenceTrainingRepeats": 30,
+  "styleProfiles": {
+    "minimal": {
+      "warmth": 0.38,
+      "brevity": 0.96,
+      "formality": 0.48,
+      "humor": 0.0,
+      "emoji": 0.0,
+      "contractions": true,
+      "proactivity": 0.12
+    },
+    "warm": {
+      "warmth": 0.92,
+      "brevity": 0.58,
+      "formality": 0.18,
+      "humor": 0.06,
+      "emoji": 0.0,
+      "contractions": true,
+      "proactivity": 0.48
+    },
+    "formal": {
+      "warmth": 0.54,
+      "brevity": 0.64,
+      "formality": 0.92,
+      "humor": 0.0,
+      "emoji": 0.0,
+      "contractions": false,
+      "proactivity": 0.32
+    },
+    "playful": {
+      "warmth": 0.9,
+      "brevity": 0.56,
+      "formality": 0.1,
+      "humor": 0.28,
+      "emoji": 0.0,
+      "contractions": true,
+      "proactivity": 0.5
+    },
+    "proactive": {
+      "warmth": 0.78,
+      "brevity": 0.46,
+      "formality": 0.32,
+      "humor": 0.03,
+      "emoji": 0.0,
+      "contractions": true,
+      "proactivity": 0.9
+    },
+    "neutral": {
+      "warmth": 0.58,
+      "brevity": 0.72,
+      "formality": 0.56,
+      "humor": 0.0,
+      "emoji": 0.0,
+      "contractions": true,
+      "proactivity": 0.3
+    }
+  }
+}

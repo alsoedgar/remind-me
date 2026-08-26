@@ -1,0 +1,751 @@
+{
+  "schemaVersion": 1,
+  "generator": "scripts/prepare-remindcore-next.ts",
+  "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+  "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+  "teacherRole": "training-only delexicalized surface paraphrase repair",
+  "registrySha256": "7da27bed9f18b097f40db8f09a6f9c8b0bcdfb0b9866dcdbc947a620bcd6163f",
+  "paraphrasesPerJob": 2,
+  "repairRound": 1,
+  "jobs": [
+    {
+      "id": "remindcore-next:calendar.event.create:repair",
+      "capabilityId": "calendar.event.create",
+      "meaning": "Create event",
+      "seedTemplate": "put <TITLE> on my calendar for <DATE> at <TIME>",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME"
+      ],
+      "cues": [
+        "book",
+        "calendar",
+        "schedule",
+        "set",
+        "add"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.event.duplicate:repair",
+      "capabilityId": "calendar.event.duplicate",
+      "meaning": "Duplicate event",
+      "seedTemplate": "copy <TARGET> to <DATE> at <TIME>",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "cues": [
+        "duplicate",
+        "another",
+        "same",
+        "copy"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.event.update:repair",
+      "capabilityId": "calendar.event.update",
+      "meaning": "Update event",
+      "seedTemplate": "rename <TARGET> to <NEW_TITLE>",
+      "placeholders": [
+        "TARGET",
+        "NEW_TITLE"
+      ],
+      "cues": [
+        "rename",
+        "update",
+        "edit",
+        "change"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.event.move:repair",
+      "capabilityId": "calendar.event.move",
+      "meaning": "Move event",
+      "seedTemplate": "move <TARGET> to <DATE> at <TIME>",
+      "placeholders": [
+        "TARGET",
+        "DATE",
+        "TIME"
+      ],
+      "cues": [
+        "shift",
+        "reschedule",
+        "push",
+        "move"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.event.delete:repair",
+      "capabilityId": "calendar.event.delete",
+      "meaning": "Delete event",
+      "seedTemplate": "cancel the event called <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "cues": [
+        "delete",
+        "remove",
+        "drop",
+        "cancel"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.reminder.create:repair",
+      "capabilityId": "calendar.reminder.create",
+      "meaning": "Create reminder",
+      "seedTemplate": "remind me to <TITLE> on <DATE> at <TIME>",
+      "placeholders": [
+        "TITLE",
+        "DATE",
+        "TIME"
+      ],
+      "cues": [
+        "reminder",
+        "nudge",
+        "alert",
+        "remind"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.reminder.update:repair",
+      "capabilityId": "calendar.reminder.update",
+      "meaning": "Update reminder",
+      "seedTemplate": "change reminder <TARGET> to <NEW_TITLE>",
+      "placeholders": [
+        "TARGET",
+        "NEW_TITLE"
+      ],
+      "cues": [
+        "edit",
+        "rename",
+        "update",
+        "change"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.reminder.complete:repair",
+      "capabilityId": "calendar.reminder.complete",
+      "meaning": "Complete reminder",
+      "seedTemplate": "mark reminder <TARGET> complete",
+      "placeholders": [
+        "TARGET"
+      ],
+      "cues": [
+        "done",
+        "finish",
+        "check",
+        "complete"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.reminder.delete:repair",
+      "capabilityId": "calendar.reminder.delete",
+      "meaning": "Delete reminder",
+      "seedTemplate": "delete my <TARGET> reminder",
+      "placeholders": [
+        "TARGET"
+      ],
+      "cues": [
+        "dismiss",
+        "remove",
+        "clear",
+        "delete"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.query.list:repair",
+      "capabilityId": "calendar.query.list",
+      "meaning": "List schedule",
+      "seedTemplate": "list my plans for <DATE>",
+      "placeholders": [
+        "DATE"
+      ],
+      "cues": [
+        "calendar",
+        "plans",
+        "scheduled",
+        "agenda"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.query.search:repair",
+      "capabilityId": "calendar.query.search",
+      "meaning": "Search schedule",
+      "seedTemplate": "find <TARGET> in my calendar",
+      "placeholders": [
+        "TARGET"
+      ],
+      "cues": [
+        "locate",
+        "search",
+        "where",
+        "when",
+        "find"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.query.availability:repair",
+      "capabilityId": "calendar.query.availability",
+      "meaning": "Check availability",
+      "seedTemplate": "am I available on <DATE> at <TIME>",
+      "placeholders": [
+        "DATE",
+        "TIME"
+      ],
+      "cues": [
+        "free",
+        "open",
+        "gap",
+        "available"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.query.conflicts:repair",
+      "capabilityId": "calendar.query.conflicts",
+      "meaning": "Check conflicts",
+      "seedTemplate": "check for conflicts on <DATE>",
+      "placeholders": [
+        "DATE"
+      ],
+      "cues": [
+        "overlap",
+        "double",
+        "clash",
+        "conflict"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.query.next:repair",
+      "capabilityId": "calendar.query.next",
+      "meaning": "Next item",
+      "seedTemplate": "tell me the next thing on my agenda",
+      "placeholders": [],
+      "cues": [
+        "upcoming",
+        "soonest",
+        "next"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.query.details:repair",
+      "capabilityId": "calendar.query.details",
+      "meaning": "Item details",
+      "seedTemplate": "show the details for <TARGET>",
+      "placeholders": [
+        "TARGET"
+      ],
+      "cues": [
+        "location",
+        "information",
+        "tell",
+        "details"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.query.summary:repair",
+      "capabilityId": "calendar.query.summary",
+      "meaning": "Schedule summary",
+      "seedTemplate": "summarize how <DATE> looks",
+      "placeholders": [
+        "DATE"
+      ],
+      "cues": [
+        "overview",
+        "shape",
+        "busy",
+        "summarize"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.schedule.copy-day:repair",
+      "capabilityId": "calendar.schedule.copy-day",
+      "meaning": "Copy day schedule",
+      "seedTemplate": "copy everything from <SOURCE_DATE> onto <DESTINATION_DAYS>",
+      "placeholders": [
+        "SOURCE_DATE",
+        "DESTINATION_DAYS"
+      ],
+      "cues": [
+        "mirror",
+        "repeat",
+        "reuse",
+        "copy"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.schedule.clear:repair",
+      "capabilityId": "calendar.schedule.clear",
+      "meaning": "Clear schedule",
+      "seedTemplate": "clear all events within <RANGE>",
+      "placeholders": [
+        "RANGE"
+      ],
+      "cues": [
+        "delete",
+        "remove",
+        "wipe",
+        "clear"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.import.document:repair",
+      "capabilityId": "calendar.import.document",
+      "meaning": "Import document",
+      "seedTemplate": "read the attached <FILE_KIND> and propose its dates",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "cues": [
+        "read",
+        "scan",
+        "attach",
+        "import"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.import.file:repair",
+      "capabilityId": "calendar.import.file",
+      "meaning": "Import calendar file",
+      "seedTemplate": "import my <FILE_KIND> calendar file",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "cues": [
+        "restore",
+        "load",
+        "open",
+        "import"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:calendar.export.file:repair",
+      "capabilityId": "calendar.export.file",
+      "meaning": "Export calendar",
+      "seedTemplate": "export my calendar as <FILE_KIND>",
+      "placeholders": [
+        "FILE_KIND"
+      ],
+      "cues": [
+        "backup",
+        "save",
+        "download",
+        "export"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.chat.respond:repair",
+      "capabilityId": "assistant.chat.respond",
+      "meaning": "Broad local conversation",
+      "seedTemplate": "explain <TOPIC> in simple terms",
+      "placeholders": [
+        "TOPIC"
+      ],
+      "cues": [
+        "idea",
+        "think",
+        "help",
+        "tell",
+        "explain"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.help:repair",
+      "capabilityId": "assistant.help",
+      "meaning": "Help",
+      "seedTemplate": "show me examples of requests you understand",
+      "placeholders": [],
+      "cues": [
+        "examples",
+        "requests",
+        "features",
+        "help"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.identity:repair",
+      "capabilityId": "assistant.identity",
+      "meaning": "Identity",
+      "seedTemplate": "introduce yourself to me",
+      "placeholders": [],
+      "cues": [
+        "assistant",
+        "introduce",
+        "yourself",
+        "name"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.architecture:repair",
+      "capabilityId": "assistant.architecture",
+      "meaning": "Architecture",
+      "seedTemplate": "which local models power this app",
+      "placeholders": [],
+      "cues": [
+        "local",
+        "private",
+        "built",
+        "model"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.local-time:repair",
+      "capabilityId": "assistant.local-time",
+      "meaning": "Local time",
+      "seedTemplate": "read the current time from my device",
+      "placeholders": [],
+      "cues": [
+        "date",
+        "day",
+        "clock",
+        "time"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.wellbeing:repair",
+      "capabilityId": "assistant.wellbeing",
+      "meaning": "Wellbeing",
+      "seedTemplate": "hello there, how are you doing",
+      "placeholders": [],
+      "cues": [
+        "there",
+        "encourage",
+        "hello",
+        "morning",
+        "doing"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.thanks:repair",
+      "capabilityId": "assistant.thanks",
+      "meaning": "Thanks",
+      "seedTemplate": "thank you for sorting that out",
+      "placeholders": [],
+      "cues": [
+        "appreciate",
+        "helpful",
+        "thank"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.goodbye:repair",
+      "capabilityId": "assistant.goodbye",
+      "meaning": "Goodbye",
+      "seedTemplate": "goodbye for now",
+      "placeholders": [],
+      "cues": [
+        "later",
+        "night",
+        "signing",
+        "goodbye"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.memory.set-name:repair",
+      "capabilityId": "assistant.memory.set-name",
+      "meaning": "Remember name",
+      "seedTemplate": "remember that my name is <NAME>",
+      "placeholders": [
+        "NAME"
+      ],
+      "cues": [
+        "call",
+        "remember",
+        "name"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.memory.remember:repair",
+      "capabilityId": "assistant.memory.remember",
+      "meaning": "Remember preference",
+      "seedTemplate": "remember that <MEMORY>",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "cues": [
+        "preference",
+        "keep",
+        "note",
+        "remember"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.memory.recall:repair",
+      "capabilityId": "assistant.memory.recall",
+      "meaning": "Recall memory",
+      "seedTemplate": "what have you remembered about me",
+      "placeholders": [],
+      "cues": [
+        "memory",
+        "saved",
+        "know",
+        "remember"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.memory.forget:repair",
+      "capabilityId": "assistant.memory.forget",
+      "meaning": "Forget memory",
+      "seedTemplate": "forget the preference about <MEMORY>",
+      "placeholders": [
+        "MEMORY"
+      ],
+      "cues": [
+        "remove",
+        "erase",
+        "memory",
+        "forget"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:assistant.memory.forget-all:repair",
+      "capabilityId": "assistant.memory.forget-all",
+      "meaning": "Forget all memories",
+      "seedTemplate": "forget every personal detail you stored",
+      "placeholders": [],
+      "cues": [
+        "clear",
+        "erase",
+        "memory",
+        "forget"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:app.navigation.open:repair",
+      "capabilityId": "app.navigation.open",
+      "meaning": "Open view",
+      "seedTemplate": "open the <VIEW> view",
+      "placeholders": [
+        "VIEW"
+      ],
+      "cues": [
+        "show",
+        "go",
+        "view",
+        "open"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:app.appearance.update:repair",
+      "capabilityId": "app.appearance.update",
+      "meaning": "Update appearance",
+      "seedTemplate": "change the accent color to <COLOR>",
+      "placeholders": [
+        "COLOR"
+      ],
+      "cues": [
+        "color",
+        "appearance",
+        "density",
+        "theme"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:app.window.set-mode:repair",
+      "capabilityId": "app.window.set-mode",
+      "meaning": "Set window mode",
+      "seedTemplate": "switch the window into <MODE> mode",
+      "placeholders": [
+        "MODE"
+      ],
+      "cues": [
+        "widget",
+        "glance",
+        "mode",
+        "window"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:app.window.set-pinned:repair",
+      "capabilityId": "app.window.set-pinned",
+      "meaning": "Pin window",
+      "seedTemplate": "pin this window above my other apps",
+      "placeholders": [],
+      "cues": [
+        "top",
+        "desktop",
+        "window",
+        "pin"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:app.startup.configure:repair",
+      "capabilityId": "app.startup.configure",
+      "meaning": "Configure startup",
+      "seedTemplate": "launch the app when I sign in",
+      "placeholders": [],
+      "cues": [
+        "login",
+        "launch",
+        "computer",
+        "startup"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:app.model.install:repair",
+      "capabilityId": "app.model.install",
+      "meaning": "Install language pack",
+      "seedTemplate": "install the optional local language model",
+      "placeholders": [],
+      "cues": [
+        "language",
+        "model",
+        "fallback",
+        "install"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:app.model.enable:repair",
+      "capabilityId": "app.model.enable",
+      "meaning": "Enable language pack",
+      "seedTemplate": "enable the installed language fallback",
+      "placeholders": [],
+      "cues": [
+        "disable",
+        "model",
+        "fallback",
+        "enable"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    },
+    {
+      "id": "remindcore-next:app.model.remove:repair",
+      "capabilityId": "app.model.remove",
+      "meaning": "Remove language pack",
+      "seedTemplate": "remove the optional language pack",
+      "placeholders": [],
+      "cues": [
+        "uninstall",
+        "delete",
+        "model",
+        "remove"
+      ],
+      "sourceSplit": "train",
+      "labelAuthority": "project-registry",
+      "repairRound": 1
+    }
+  ]
+}

@@ -1,0 +1,2215 @@
+{
+  "schemaVersion": 1,
+  "provenance": {
+    "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+    "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "teacherLicense": "Apache-2.0",
+    "casesPath": "ml/teacher_assisted/raw/remindspeak-preference-cases.json",
+    "casesSha256": "24638e8826e5c775d5b5bed7592a8ad01670fcc2301237bf32b7f6a3b13f80d6",
+    "rawPath": "ml/teacher_assisted/raw/remindspeak-preferences.json",
+    "rawSha256": "b60f28f66dad953dea2a5f7caf18c6153ef02fc87fe458183811e8503fbf14e5",
+    "teacherRole": "preference index over project-authored protected candidates",
+    "teacherAuthoredSurfaceAtomsImported": 0,
+    "pretrainedWeightsImportedIntoStudent": false,
+    "personalDataUsed": false
+  },
+  "trainingRepeats": 30,
+  "preferences": [
+    {
+      "id": "speak-pref:proposal:minimal",
+      "split": "train",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 0,
+      "targets": {
+        "lead": "lead:proposal:0",
+        "body": "body:proposal:SUMMARY:0",
+        "close": "close:proposal:3"
+      },
+      "reference": "<SUMMARY> You can adjust any detail first.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:proposal:warm",
+      "split": "train",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 1,
+      "targets": {
+        "lead": "lead:proposal:2",
+        "body": "body:proposal:SUMMARY:8",
+        "close": "close:proposal:0"
+      },
+      "reference": "Here’s what I heard. Before anything is saved, here’s the draft: <SUMMARY>",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:proposal:formal",
+      "split": "train",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 2,
+      "targets": {
+        "lead": "lead:proposal:0",
+        "body": "body:proposal:SUMMARY:2",
+        "close": "close:proposal:3"
+      },
+      "reference": "I have <SUMMARY> ready for review. You can adjust any detail first.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:proposal:playful",
+      "split": "train",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 3,
+      "targets": {
+        "lead": "lead:proposal:2",
+        "body": "body:proposal:SUMMARY:1",
+        "close": "close:proposal:0"
+      },
+      "reference": "Here’s what I heard. The draft is <SUMMARY>",
+      "teacherChoice": 3
+    },
+    {
+      "id": "speak-pref:proposal:proactive",
+      "split": "train",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 4,
+      "targets": {
+        "lead": "lead:proposal:2",
+        "body": "body:proposal:SUMMARY:6",
+        "close": "close:proposal:4"
+      },
+      "reference": "Here’s what I heard. I’ve outlined <SUMMARY> If it feels right, approve it when you’re ready.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:proposal:neutral",
+      "split": "challenge",
+      "speechAct": "proposal",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 5,
+      "targets": {
+        "lead": "lead:proposal:3",
+        "body": "body:proposal:SUMMARY:4",
+        "close": "close:proposal:3"
+      },
+      "reference": "I made a local draft. I understood the request as <SUMMARY> You can adjust any detail first.",
+      "teacherChoice": 2
+    },
+    {
+      "id": "speak-pref:creation-confirmed:minimal",
+      "split": "train",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 1,
+      "targets": {
+        "lead": "lead:creation-confirmed:2",
+        "body": "body:creation-confirmed:RECEIPT:0",
+        "close": "close:creation-confirmed:1"
+      },
+      "reference": "All set. <RECEIPT> You can undo it if needed.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:creation-confirmed:warm",
+      "split": "train",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 2,
+      "targets": {
+        "lead": "lead:creation-confirmed:0",
+        "body": "body:creation-confirmed:RECEIPT:1",
+        "close": "close:creation-confirmed:1"
+      },
+      "reference": "The local receipt says: <RECEIPT> You can undo it if needed.",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:creation-confirmed:formal",
+      "split": "train",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 3,
+      "targets": {
+        "lead": "lead:creation-confirmed:2",
+        "body": "body:creation-confirmed:RECEIPT:11",
+        "close": "close:creation-confirmed:0"
+      },
+      "reference": "All set. The saved result is: <RECEIPT>",
+      "teacherChoice": 2
+    },
+    {
+      "id": "speak-pref:creation-confirmed:playful",
+      "split": "train",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 4,
+      "targets": {
+        "lead": "lead:creation-confirmed:0",
+        "body": "body:creation-confirmed:RECEIPT:6",
+        "close": "close:creation-confirmed:2"
+      },
+      "reference": "I tucked that into the calendar. <RECEIPT> It stays private to this device.",
+      "teacherChoice": 3
+    },
+    {
+      "id": "speak-pref:creation-confirmed:proactive",
+      "split": "train",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 5,
+      "targets": {
+        "lead": "lead:creation-confirmed:4",
+        "body": "body:creation-confirmed:RECEIPT:6",
+        "close": "close:creation-confirmed:2"
+      },
+      "reference": "Nice, that’s taken care of. I tucked that into the calendar. <RECEIPT> It stays private to this device.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:creation-confirmed:neutral",
+      "split": "challenge",
+      "speechAct": "creation-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 6,
+      "targets": {
+        "lead": "lead:creation-confirmed:1",
+        "body": "body:creation-confirmed:RECEIPT:4",
+        "close": "close:creation-confirmed:3"
+      },
+      "reference": "Done. That’s now on your calendar. <RECEIPT> I kept an undo receipt nearby.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:update-confirmed:minimal",
+      "split": "train",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 2,
+      "targets": {
+        "lead": "lead:update-confirmed:3",
+        "body": "body:update-confirmed:RECEIPT:12",
+        "close": "close:update-confirmed:2"
+      },
+      "reference": "The change is in. It now matches what you asked for. <RECEIPT> Everything else stayed as it was.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:update-confirmed:warm",
+      "split": "train",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 3,
+      "targets": {
+        "lead": "lead:update-confirmed:2",
+        "body": "body:update-confirmed:RECEIPT:1",
+        "close": "close:update-confirmed:0"
+      },
+      "reference": "That’s adjusted. The local receipt says: <RECEIPT>",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:update-confirmed:formal",
+      "split": "train",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 4,
+      "targets": {
+        "lead": "lead:update-confirmed:4",
+        "body": "body:update-confirmed:RECEIPT:11",
+        "close": "close:update-confirmed:4"
+      },
+      "reference": "Got it—the adjustment is done. The updated result is: <RECEIPT> The rest of the plan is right where you left it.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:update-confirmed:playful",
+      "split": "train",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 5,
+      "targets": {
+        "lead": "lead:update-confirmed:2",
+        "body": "body:update-confirmed:RECEIPT:1",
+        "close": "close:update-confirmed:0"
+      },
+      "reference": "That’s adjusted. The local receipt says: <RECEIPT>",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:update-confirmed:proactive",
+      "split": "train",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 6,
+      "targets": {
+        "lead": "lead:update-confirmed:2",
+        "body": "body:update-confirmed:RECEIPT:9",
+        "close": "close:update-confirmed:3"
+      },
+      "reference": "That’s adjusted. The calendar has the new version now. <RECEIPT> The earlier state is still recoverable.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:update-confirmed:neutral",
+      "split": "challenge",
+      "speechAct": "update-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 7,
+      "targets": {
+        "lead": "lead:update-confirmed:2",
+        "body": "body:update-confirmed:RECEIPT:4",
+        "close": "close:update-confirmed:3"
+      },
+      "reference": "That’s adjusted. That item has been updated. <RECEIPT> The earlier state is still recoverable.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:minimal",
+      "split": "train",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 3,
+      "targets": {
+        "lead": "lead:deletion-confirmed:3",
+        "body": "body:deletion-confirmed:RECEIPT:7",
+        "close": "close:deletion-confirmed:4"
+      },
+      "reference": "The deletion is complete. That plan has been set aside. <RECEIPT> If you change your mind, the undo is nearby.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:warm",
+      "split": "train",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 4,
+      "targets": {
+        "lead": "lead:deletion-confirmed:1",
+        "body": "body:deletion-confirmed:RECEIPT:1",
+        "close": "close:deletion-confirmed:2"
+      },
+      "reference": "Removed. The local receipt says: <RECEIPT> The rest of your calendar is untouched.",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:formal",
+      "split": "train",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 5,
+      "targets": {
+        "lead": "lead:deletion-confirmed:2",
+        "body": "body:deletion-confirmed:RECEIPT:11",
+        "close": "close:deletion-confirmed:0"
+      },
+      "reference": "That’s cleared away. The removal result is: <RECEIPT>",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:playful",
+      "split": "train",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 6,
+      "targets": {
+        "lead": "lead:deletion-confirmed:4",
+        "body": "body:deletion-confirmed:RECEIPT:1",
+        "close": "close:deletion-confirmed:1"
+      },
+      "reference": "Got it—that’s been removed. The local receipt says: <RECEIPT> You can undo it if that was too quick.",
+      "teacherChoice": 2
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:proactive",
+      "split": "train",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 7,
+      "targets": {
+        "lead": "lead:deletion-confirmed:1",
+        "body": "body:deletion-confirmed:RECEIPT:6",
+        "close": "close:deletion-confirmed:1"
+      },
+      "reference": "Removed. I cleared that bit of calendar space. <RECEIPT> You can undo it if that was too quick.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:deletion-confirmed:neutral",
+      "split": "challenge",
+      "speechAct": "deletion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 0,
+      "targets": {
+        "lead": "lead:deletion-confirmed:2",
+        "body": "body:deletion-confirmed:RECEIPT:4",
+        "close": "close:deletion-confirmed:2"
+      },
+      "reference": "That’s cleared away. Your calendar reflects the deletion. <RECEIPT> The rest of your calendar is untouched.",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:completion-confirmed:minimal",
+      "split": "train",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 4,
+      "targets": {
+        "lead": "lead:completion-confirmed:0",
+        "body": "body:completion-confirmed:RECEIPT:0",
+        "close": "close:completion-confirmed:1"
+      },
+      "reference": "<RECEIPT> You can undo that if needed.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:completion-confirmed:warm",
+      "split": "train",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 5,
+      "targets": {
+        "lead": "lead:completion-confirmed:2",
+        "body": "body:completion-confirmed:RECEIPT:1",
+        "close": "close:completion-confirmed:2"
+      },
+      "reference": "That’s checked off. The local receipt says: <RECEIPT> Everything else remains unchanged.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:completion-confirmed:formal",
+      "split": "train",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 6,
+      "targets": {
+        "lead": "lead:completion-confirmed:1",
+        "body": "body:completion-confirmed:RECEIPT:2",
+        "close": "close:completion-confirmed:1"
+      },
+      "reference": "Completed. I marked the reminder complete. <RECEIPT> You can undo that if needed.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:completion-confirmed:playful",
+      "split": "train",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 7,
+      "targets": {
+        "lead": "lead:completion-confirmed:2",
+        "body": "body:completion-confirmed:RECEIPT:6",
+        "close": "close:completion-confirmed:2"
+      },
+      "reference": "That’s checked off. I checked that promise off for you. <RECEIPT> Everything else remains unchanged.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:completion-confirmed:proactive",
+      "split": "train",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 0,
+      "targets": {
+        "lead": "lead:completion-confirmed:2",
+        "body": "body:completion-confirmed:RECEIPT:10",
+        "close": "close:completion-confirmed:2"
+      },
+      "reference": "That’s checked off. That’s neatly wrapped up. <RECEIPT> Everything else remains unchanged.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:completion-confirmed:neutral",
+      "split": "challenge",
+      "speechAct": "completion-confirmed",
+      "factKeys": [
+        "RECEIPT"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 1,
+      "targets": {
+        "lead": "lead:completion-confirmed:0",
+        "body": "body:completion-confirmed:RECEIPT:4",
+        "close": "close:completion-confirmed:2"
+      },
+      "reference": "Your reminder list reflects the completion. <RECEIPT> Everything else remains unchanged.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:availability-answer:minimal",
+      "split": "train",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 5,
+      "targets": {
+        "lead": "lead:availability-answer:2",
+        "body": "body:availability-answer:SLOT+DETAIL:0",
+        "close": "close:availability-answer:3"
+      },
+      "reference": "Here’s what your calendar says. For <SLOT>, <DETAIL>. If you want, you can try another window.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:availability-answer:warm",
+      "split": "train",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 6,
+      "targets": {
+        "lead": "lead:availability-answer:1",
+        "body": "body:availability-answer:SLOT+DETAIL:1",
+        "close": "close:availability-answer:0"
+      },
+      "reference": "I checked that window. <SLOT>: <DETAIL>.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:availability-answer:formal",
+      "split": "train",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 7,
+      "targets": {
+        "lead": "lead:availability-answer:3",
+        "body": "body:availability-answer:SLOT+DETAIL:11",
+        "close": "close:availability-answer:4"
+      },
+      "reference": "I took a careful look. The verified answer for <SLOT> is: <DETAIL>. I can check a nearby time too.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:availability-answer:playful",
+      "split": "train",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 0,
+      "targets": {
+        "lead": "lead:availability-answer:1",
+        "body": "body:availability-answer:SLOT+DETAIL:3",
+        "close": "close:availability-answer:0"
+      },
+      "reference": "I checked that window. The result for <SLOT> is that <DETAIL>.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:availability-answer:proactive",
+      "split": "train",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 1,
+      "targets": {
+        "lead": "lead:availability-answer:1",
+        "body": "body:availability-answer:SLOT+DETAIL:9",
+        "close": "close:availability-answer:0"
+      },
+      "reference": "I checked that window. My calendar check at <SLOT> found that <DETAIL>.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:availability-answer:neutral",
+      "split": "challenge",
+      "speechAct": "availability-answer",
+      "factKeys": [
+        "SLOT",
+        "DETAIL"
+      ],
+      "factKinds": [
+        "time",
+        "text"
+      ],
+      "factLengths": [
+        18,
+        29
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 2,
+      "targets": {
+        "lead": "lead:availability-answer:1",
+        "body": "body:availability-answer:SLOT+DETAIL:4",
+        "close": "close:availability-answer:1"
+      },
+      "reference": "I checked that window. Your calendar at <SLOT> shows that <DETAIL>. That’s the current local picture.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:schedule-summary:minimal",
+      "split": "train",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 6,
+      "targets": {
+        "lead": "lead:schedule-summary:2",
+        "body": "body:schedule-summary:SUMMARY:0",
+        "close": "close:schedule-summary:0"
+      },
+      "reference": "Here’s the local rundown. <SUMMARY>.",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:schedule-summary:warm",
+      "split": "train",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 7,
+      "targets": {
+        "lead": "lead:schedule-summary:3",
+        "body": "body:schedule-summary:SUMMARY:1",
+        "close": "close:schedule-summary:4"
+      },
+      "reference": "I took a look at your plans. Your calendar shows <SUMMARY>. Ask about any item and I’ll zoom in.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:schedule-summary:formal",
+      "split": "train",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 0,
+      "targets": {
+        "lead": "lead:schedule-summary:1",
+        "body": "body:schedule-summary:SUMMARY:2",
+        "close": "close:schedule-summary:2"
+      },
+      "reference": "I checked the schedule. I found <SUMMARY>. I kept the summary to the relevant items.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:schedule-summary:playful",
+      "split": "train",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 1,
+      "targets": {
+        "lead": "lead:schedule-summary:0",
+        "body": "body:schedule-summary:SUMMARY:1",
+        "close": "close:schedule-summary:4"
+      },
+      "reference": "Your calendar shows <SUMMARY>. Ask about any item and I’ll zoom in.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:schedule-summary:proactive",
+      "split": "train",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 2,
+      "targets": {
+        "lead": "lead:schedule-summary:4",
+        "body": "body:schedule-summary:SUMMARY:10",
+        "close": "close:schedule-summary:1"
+      },
+      "reference": "Let’s get you oriented. Your plans settle into <SUMMARY>. That’s everything in the requested window.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:schedule-summary:neutral",
+      "split": "challenge",
+      "speechAct": "schedule-summary",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 3,
+      "targets": {
+        "lead": "lead:schedule-summary:1",
+        "body": "body:schedule-summary:SUMMARY:4",
+        "close": "close:schedule-summary:0"
+      },
+      "reference": "I checked the schedule. The local calendar currently has <SUMMARY>.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:clarification:minimal",
+      "split": "train",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 7,
+      "targets": {
+        "lead": "lead:clarification:0",
+        "body": "body:clarification:DETAIL:11",
+        "close": "close:clarification:2"
+      },
+      "reference": "I paused because <DETAIL> A short correction is enough.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:clarification:warm",
+      "split": "train",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 0,
+      "targets": {
+        "lead": "lead:clarification:1",
+        "body": "body:clarification:DETAIL:6",
+        "close": "close:clarification:0"
+      },
+      "reference": "I’m holding off for now. <DETAIL>",
+      "teacherChoice": 3
+    },
+    {
+      "id": "speak-pref:clarification:formal",
+      "split": "train",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 1,
+      "targets": {
+        "lead": "lead:clarification:4",
+        "body": "body:clarification:DETAIL:11",
+        "close": "close:clarification:3"
+      },
+      "reference": "I’m close; I just need one detail. I paused because <DETAIL> I’ll wait for your answer.",
+      "teacherChoice": 3
+    },
+    {
+      "id": "speak-pref:clarification:playful",
+      "split": "train",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 2,
+      "targets": {
+        "lead": "lead:clarification:1",
+        "body": "body:clarification:DETAIL:8",
+        "close": "close:clarification:1"
+      },
+      "reference": "I’m holding off for now. Could you clarify this for me: <DETAIL> Nothing has been saved.",
+      "teacherChoice": 3
+    },
+    {
+      "id": "speak-pref:clarification:proactive",
+      "split": "train",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 3,
+      "targets": {
+        "lead": "lead:clarification:1",
+        "body": "body:clarification:DETAIL:9",
+        "close": "close:clarification:1"
+      },
+      "reference": "I’m holding off for now. The missing piece is <DETAIL> Nothing has been saved.",
+      "teacherChoice": 3
+    },
+    {
+      "id": "speak-pref:clarification:neutral",
+      "split": "challenge",
+      "speechAct": "clarification",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 4,
+      "targets": {
+        "lead": "lead:clarification:0",
+        "body": "body:clarification:DETAIL:7",
+        "close": "close:clarification:0"
+      },
+      "reference": "I need one more detail: <DETAIL>",
+      "teacherChoice": 3
+    },
+    {
+      "id": "speak-pref:conflict-warning:minimal",
+      "split": "train",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 0,
+      "targets": {
+        "lead": "lead:conflict-warning:3",
+        "body": "body:conflict-warning:SUMMARY:12",
+        "close": "close:conflict-warning:4"
+      },
+      "reference": "There’s a scheduling knot here. The part worth a second look is <SUMMARY>. I can help you work through the options.",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:conflict-warning:warm",
+      "split": "train",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 1,
+      "targets": {
+        "lead": "lead:conflict-warning:0",
+        "body": "body:conflict-warning:SUMMARY:6",
+        "close": "close:conflict-warning:3"
+      },
+      "reference": "I found this overlap: <SUMMARY>. Both plans remain untouched for now.",
+      "teacherChoice": 3
+    },
+    {
+      "id": "speak-pref:conflict-warning:formal",
+      "split": "train",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 2,
+      "targets": {
+        "lead": "lead:conflict-warning:2",
+        "body": "body:conflict-warning:SUMMARY:2",
+        "close": "close:conflict-warning:1"
+      },
+      "reference": "A conflict check turned something up. Your local calendar shows <SUMMARY>. I haven’t changed either plan.",
+      "teacherChoice": 2
+    },
+    {
+      "id": "speak-pref:conflict-warning:playful",
+      "split": "train",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 3,
+      "targets": {
+        "lead": "lead:conflict-warning:0",
+        "body": "body:conflict-warning:SUMMARY:6",
+        "close": "close:conflict-warning:3"
+      },
+      "reference": "I found this overlap: <SUMMARY>. Both plans remain untouched for now.",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:conflict-warning:proactive",
+      "split": "train",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 4,
+      "targets": {
+        "lead": "lead:conflict-warning:0",
+        "body": "body:conflict-warning:SUMMARY:9",
+        "close": "close:conflict-warning:0"
+      },
+      "reference": "My local overlap check found <SUMMARY>.",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:conflict-warning:neutral",
+      "split": "challenge",
+      "speechAct": "conflict-warning",
+      "factKeys": [
+        "SUMMARY"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 5,
+      "targets": {
+        "lead": "lead:conflict-warning:3",
+        "body": "body:conflict-warning:SUMMARY:4",
+        "close": "close:conflict-warning:0"
+      },
+      "reference": "There’s a scheduling knot here. The schedule check found <SUMMARY>.",
+      "teacherChoice": 2
+    },
+    {
+      "id": "speak-pref:unsupported:minimal",
+      "split": "train",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 1,
+      "targets": {
+        "lead": "lead:unsupported:1",
+        "body": "body:unsupported:DETAIL:4",
+        "close": "close:unsupported:1"
+      },
+      "reference": "I can’t safely take that on yet. That request is outside the supported path: <DETAIL> No calendar data was changed.",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:unsupported:warm",
+      "split": "train",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 2,
+      "targets": {
+        "lead": "lead:unsupported:4",
+        "body": "body:unsupported:DETAIL:8",
+        "close": "close:unsupported:0"
+      },
+      "reference": "I don’t have a safe local action for that yet. My supported scope ends here: <DETAIL>",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:unsupported:formal",
+      "split": "train",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 3,
+      "targets": {
+        "lead": "lead:unsupported:0",
+        "body": "body:unsupported:DETAIL:11",
+        "close": "close:unsupported:2"
+      },
+      "reference": "The reason I stopped is: <DETAIL> Try phrasing it as a calendar or reminder request.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:unsupported:playful",
+      "split": "train",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 4,
+      "targets": {
+        "lead": "lead:unsupported:4",
+        "body": "body:unsupported:DETAIL:1",
+        "close": "close:unsupported:0"
+      },
+      "reference": "I don’t have a safe local action for that yet. The safe boundary here is: <DETAIL>",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:unsupported:proactive",
+      "split": "train",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 5,
+      "targets": {
+        "lead": "lead:unsupported:3",
+        "body": "body:unsupported:DETAIL:6",
+        "close": "close:unsupported:4"
+      },
+      "reference": "I’m keeping this one bounded. For this request, <DETAIL> I can still help if there’s a calendar angle.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:unsupported:neutral",
+      "split": "challenge",
+      "speechAct": "unsupported",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 6,
+      "targets": {
+        "lead": "lead:unsupported:0",
+        "body": "body:unsupported:DETAIL:9",
+        "close": "close:unsupported:1"
+      },
+      "reference": "The grounded response is <DETAIL> No calendar data was changed.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:error:minimal",
+      "split": "train",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "minimal",
+      "style": {
+        "warmth": 0.38,
+        "brevity": 0.96,
+        "formality": 0.48,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.12
+      },
+      "variant": 0,
+      "recentCount": 2,
+      "targets": {
+        "lead": "lead:error:3",
+        "body": "body:error:DETAIL:0",
+        "close": "close:error:3"
+      },
+      "reference": "I couldn’t complete that safely. <DETAIL> I kept the failure contained.",
+      "teacherChoice": 1
+    },
+    {
+      "id": "speak-pref:error:warm",
+      "split": "train",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "warm",
+      "style": {
+        "warmth": 0.92,
+        "brevity": 0.58,
+        "formality": 0.18,
+        "humor": 0.06,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.48
+      },
+      "variant": 1,
+      "recentCount": 3,
+      "targets": {
+        "lead": "lead:error:0",
+        "body": "body:error:DETAIL:1",
+        "close": "close:error:2"
+      },
+      "reference": "The local error is: <DETAIL> You can revise the request and try again.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:error:formal",
+      "split": "train",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "formal",
+      "style": {
+        "warmth": 0.54,
+        "brevity": 0.64,
+        "formality": 0.92,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": false,
+        "proactivity": 0.32
+      },
+      "variant": 2,
+      "recentCount": 4,
+      "targets": {
+        "lead": "lead:error:4",
+        "body": "body:error:DETAIL:2",
+        "close": "close:error:4"
+      },
+      "reference": "That didn’t land the way it should have. What went wrong is <DETAIL> Your existing plans are still safe.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:error:playful",
+      "split": "train",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "playful",
+      "style": {
+        "warmth": 0.9,
+        "brevity": 0.56,
+        "formality": 0.1,
+        "humor": 0.28,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.5
+      },
+      "variant": 3,
+      "recentCount": 5,
+      "targets": {
+        "lead": "lead:error:0",
+        "body": "body:error:DETAIL:6",
+        "close": "close:error:2"
+      },
+      "reference": "For this attempt, <DETAIL> You can revise the request and try again.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:error:proactive",
+      "split": "train",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "proactive",
+      "style": {
+        "warmth": 0.78,
+        "brevity": 0.46,
+        "formality": 0.32,
+        "humor": 0.03,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.9
+      },
+      "variant": 0,
+      "recentCount": 6,
+      "targets": {
+        "lead": "lead:error:0",
+        "body": "body:error:DETAIL:6",
+        "close": "close:error:1"
+      },
+      "reference": "For this attempt, <DETAIL> Nothing else was changed.",
+      "teacherChoice": 0
+    },
+    {
+      "id": "speak-pref:error:neutral",
+      "split": "challenge",
+      "speechAct": "error",
+      "factKeys": [
+        "DETAIL"
+      ],
+      "factKinds": [
+        "text"
+      ],
+      "factLengths": [
+        18
+      ],
+      "styleTag": "neutral",
+      "style": {
+        "warmth": 0.58,
+        "brevity": 0.72,
+        "formality": 0.56,
+        "humor": 0.0,
+        "emoji": 0.0,
+        "contractions": true,
+        "proactivity": 0.3
+      },
+      "variant": 1,
+      "recentCount": 7,
+      "targets": {
+        "lead": "lead:error:3",
+        "body": "body:error:DETAIL:4",
+        "close": "close:error:0"
+      },
+      "reference": "I couldn’t complete that safely. I left the calendar unchanged because <DETAIL>",
+      "teacherChoice": 0
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@remind-me/importers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./document": {
+      "types": "./src/document.ts",
+      "default": "./src/document.ts"
+    }
+  },
+  "dependencies": {
+    "@js-temporal/polyfill": "0.5.1",
+    "@remind-me/assistant-core": "workspace:*",
+    "@remind-me/calendar-engine": "workspace:*",
+    "@remind-me/contracts": "workspace:*",
+    "ical.js": "2.2.1"
+  }
+}

@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "modelId": "remindcore-hashframe-next-en-qwen-assisted",
+  "version": "0.3.0",
+  "promoted": true,
+  "selection": {
+    "buckets": 8192,
+    "featureProfile": "no-character-ngrams",
+    "featureFlags": {
+      "include_char": false,
+      "include_signals": true,
+      "include_context": true
+    },
+    "development": {
+      "examples": 199,
+      "routeAccuracy": 0.9095477386934674,
+      "firstCapabilityAccuracy": 0.7185929648241206,
+      "actionCountAccuracy": 0.9597989949748744,
+      "exactSequenceAccuracy": 0.7035175879396985,
+      "exactPlanAccuracy": 0.7035175879396985,
+      "multiActionExactAccuracy": 1.0,
+      "contextAccuracy": 0.9698492462311558,
+      "contextRecall": 0.5,
+      "selectiveExamples": 0,
+      "selectivePrecision": 0.0,
+      "selectiveCoverage": 0.0,
+      "latencyMs": {
+        "median": 1.3336999109014869,
+        "p95": 2.924480056390166
+      }
+    },
+    "developmentSelectiveViable": true
+  },
+  "capacityAblations": [
+    {
+      "buckets": 4096,
+      "development": {
+        "examples": 199,
+        "routeAccuracy": 0.8994974874371859,
+        "firstCapabilityAccuracy": 0.7085427135678392,
+        "actionCountAccuracy": 0.9698492462311558,
+        "exactSequenceAccuracy": 0.6934673366834171,
+        "exactPlanAccuracy": 0.6934673366834171,
+        "multiActionExactAccuracy": 1.0,
+        "contextAccuracy": 0.9597989949748744,
+        "contextRecall": 0.5,
+        "selectiveExamples": 0,
+        "selectivePrecision": 0.0,
+        "selectiveCoverage": 0.0,
+        "latencyMs": {
+          "median": 1.6839999007061124,
+          "p95": 3.7186300032772106
+        }
+      }
+    },
+    {
+      "buckets": 8192,
+      "development": {
+        "examples": 199,
+        "routeAccuracy": 0.9095477386934674,
+        "firstCapabilityAccuracy": 0.7236180904522613,
+        "actionCountAccuracy": 0.9698492462311558,
+        "exactSequenceAccuracy": 0.7085427135678392,
+        "exactPlanAccuracy": 0.7085427135678392,
+        "multiActionExactAccuracy": 1.0,
+        "contextAccuracy": 0.9597989949748744,
+        "contextRecall": 0.5,
+        "selectiveExamples": 0,
+        "selectivePrecision": 0.0,
+        "selectiveCoverage": 0.0,
+        "latencyMs": {
+          "median": 1.8629999831318855,
+          "p95": 4.619159933645276
+        }
+      }
+    },
+    {
+      "buckets": 16384,
+      "development": {
+        "examples": 199,
+        "routeAccuracy": 0.9246231155778895,
+        "firstCapabilityAccuracy": 0.7286432160804021,
+        "actionCountAccuracy": 0.9698492462311558,
+        "exactSequenceAccuracy": 0.7185929648241206,
+        "exactPlanAccuracy": 0.7185929648241206,
+        "multiActionExactAccuracy": 1.0,
+        "contextAccuracy": 0.9597989949748744,
+        "contextRecall": 0.5,
+        "selectiveExamples": 0,
+        "selectivePrecision": 0.0,
+        "selectiveCoverage": 0.0,
+        "latencyMs": {
+          "median": 1.7396999755874276,
+          "p95": 3.6392299691215153
+        }
+      }
+    }
+  ],
+  "featureAblations": [
+    {
+      "name": "no-character-ngrams",
+      "development": {
+        "examples": 199,
+        "routeAccuracy": 0.9095477386934674,
+        "firstCapabilityAccuracy": 0.7185929648241206,
+        "actionCountAccuracy": 0.9597989949748744,
+        "exactSequenceAccuracy": 0.7035175879396985,
+        "exactPlanAccuracy": 0.7035175879396985,
+        "multiActionExactAccuracy": 1.0,
+        "contextAccuracy": 0.9698492462311558,
+        "contextRecall": 0.5,
+        "selectiveExamples": 0,
+        "selectivePrecision": 0.0,
+        "selectiveCoverage": 0.0,
+        "latencyMs": {
+          "median": 1.3336999109014869,
+          "p95": 2.924480056390166
+        }
+      }
+    },
+    {
+      "name": "no-project-signals",
+      "development": {
+        "examples": 199,
+        "routeAccuracy": 0.9246231155778895,
+        "firstCapabilityAccuracy": 0.7336683417085427,
+        "actionCountAccuracy": 0.9698492462311558,
+        "exactSequenceAccuracy": 0.7236180904522613,
+        "exactPlanAccuracy": 0.7236180904522613,
+        "multiActionExactAccuracy": 1.0,
+        "contextAccuracy": 0.9597989949748744,
+        "contextRecall": 0.3333333333333333,
+        "selectiveExamples": 0,
+        "selectivePrecision": 0.0,
+        "selectiveCoverage": 0.0,
+        "latencyMs": {
+          "median": 1.5978000592440367,
+          "p95": 3.1950899749062946
+        }
+      }
+    },
+    {
+      "name": "no-typed-context",
+      "development": {
+        "examples": 199,
+        "routeAccuracy": 0.9246231155778895,
+        "firstCapabilityAccuracy": 0.7386934673366834,
+        "actionCountAccuracy": 0.9698492462311558,
+        "exactSequenceAccuracy": 0.7236180904522613,
+        "exactPlanAccuracy": 0.7236180904522613,
+        "multiActionExactAccuracy": 1.0,
+        "contextAccuracy": 0.9246231155778895,
+        "contextRecall": 0.08333333333333333,
+        "selectiveExamples": 0,
+        "selectivePrecision": 0.0,
+        "selectiveCoverage": 0.0,
+        "latencyMs": {
+          "median": 1.730400021187961,
+          "p95": 3.9591200300492324
+        }
+      }
+    }
+  ],
+  "development": {
+    "examples": 199,
+    "routeAccuracy": 0.9095477386934674,
+    "firstCapabilityAccuracy": 0.7185929648241206,
+    "actionCountAccuracy": 0.9597989949748744,
+    "exactSequenceAccuracy": 0.7035175879396985,
+    "exactPlanAccuracy": 0.7035175879396985,
+    "multiActionExactAccuracy": 1.0,
+    "contextAccuracy": 0.9698492462311558,
+    "contextRecall": 0.5,
+    "selectiveExamples": 31,
+    "selectivePrecision": 1.0,
+    "selectiveCoverage": 0.15577889447236182,
+    "latencyMs": {
+      "median": 1.25919992569834,
+      "p95": 3.0461800517514344
+    }
+  },
+  "challenge": {
+    "examples": 293,
+    "routeAccuracy": 0.9044368600682594,
+    "firstCapabilityAccuracy": 0.6416382252559727,
+    "actionCountAccuracy": 0.8805460750853242,
+    "exactSequenceAccuracy": 0.5255972696245734,
+    "exactPlanAccuracy": 0.5255972696245734,
+    "multiActionExactAccuracy": 0.6956521739130435,
+    "contextAccuracy": 0.9897610921501706,
+    "contextRecall": 0.625,
+    "selectiveExamples": 32,
+    "selectivePrecision": 1.0,
+    "selectiveCoverage": 0.10921501706484642,
+    "latencyMs": {
+      "median": 1.2115000281482935,
+      "p95": 3.3583800308406353
+    }
+  },
+  "quantizedChallenge": {
+    "examples": 293,
+    "routeAccuracy": 0.9044368600682594,
+    "firstCapabilityAccuracy": 0.6382252559726962,
+    "actionCountAccuracy": 0.8805460750853242,
+    "exactSequenceAccuracy": 0.5221843003412969,
+    "exactPlanAccuracy": 0.5221843003412969,
+    "multiActionExactAccuracy": 0.6956521739130435,
+    "contextAccuracy": 0.9897610921501706,
+    "contextRecall": 0.625,
+    "selectiveExamples": 32,
+    "selectivePrecision": 1.0,
+    "selectiveCoverage": 0.10921501706484642,
+    "latencyMs": {
+      "median": 1.2218999909237027,
+      "p95": 2.9303600313141938
+    }
+  },
+  "shippedBaseline": {
+    "routeAccuracy": 0.5119453924914675,
+    "firstCapabilityAccuracy": 0.24232081911262798,
+    "exactSequenceAccuracy": 0.22525597269624573
+  },
+  "routingThreshold": 0.85,
+  "gates": {
+    "challengeRouteAccuracy": {
+      "actual": 0.9044368600682594,
+      "required": 0.8,
+      "comparison": ">=",
+      "passed": true
+    },
+    "challengeFirstCapabilityAccuracy": {
+      "actual": 0.6416382252559727,
+      "required": 0.6,
+      "comparison": ">=",
+      "passed": true
+    },
+    "challengeExactSequenceAccuracy": {
+      "actual": 0.5255972696245734,
+      "required": 0.5,
+      "comparison": ">=",
+      "passed": true
+    },
+    "challengeMultiActionExactAccuracy": {
+      "actual": 0.6956521739130435,
+      "required": 0.4,
+      "comparison": ">=",
+      "passed": true
+    },
+    "gainOverShippedBaseline": {
+      "actual": 0.3003412969283277,
+      "required": 0.18,
+      "comparison": ">=",
+      "passed": true
+    },
+    "challengeSelectivePrecision": {
+      "actual": 1.0,
+      "required": 0.99,
+      "comparison": ">=",
+      "passed": true
+    },
+    "challengeSelectiveCoverage": {
+      "actual": 0.10921501706484642,
+      "required": 0.04,
+      "comparison": ">=",
+      "passed": true
+    },
+    "quantizedExactAccuracyReduction": {
+      "actual": 0.0034129692832765013,
+      "required": 0.005,
+      "comparison": "<=",
+      "passed": true
+    }
+  },
+  "provenance": {
+    "initialization": "exact zeros",
+    "teacherRole": "curated delexicalized wording only",
+    "teacherWeightsImported": false,
+    "pretrainedWeightsUsed": false,
+    "personalDataUsed": false,
+    "humanBlindExamplesUsed": 0,
+    "challengeOpenedAfterSelection": true,
+    "developerChallengeEvaluationRounds": 7,
+    "teacherCuration": {
+      "jobs": 84,
+      "acceptedTemplates": 73,
+      "acceptedMaterializations": 219,
+      "rejectedTemplates": 95,
+      "capabilityCoverage": 37,
+      "rejectionsByReason": {
+        "duplicate": 41,
+        "length": 25,
+        "marker-drift": 20,
+        "required-cue-missing": 9
+      },
+      "jobsSha256": "fc9a2b4f2456d6cae3ea2b1a75414405c48c13ab39304fe1cb5f206f6b36c61c",
+      "repairJobsSha256": "454f02622f94c562091d4906295ffaad176f9da467cb3faa95b1645c1ffb38b9",
+      "outputSha256": "7f6bd6b596ab8fe3803e92318f0863169f0eeea437c863773afebfe37d411af5"
+    }
+  },
+  "safety": {
+    "advisoryOnly": true,
+    "createsAssistantPlans": false,
+    "resolvesCalendarIR": false,
+    "writesDatabase": false,
+    "existingConfirmationPolicyRetained": true
+  },
+  "artifacts": {
+    "model": {
+      "path": "models/remindcore/remindcore-v0.1-int8.json",
+      "bytes": 6536991,
+      "sha256": "b2d8c79112d695f86a13bfc0735ba3906eb9332582010eb1e49310afe4fe5e62"
+    },
+    "tokenizer": {
+      "path": "models/remindcore/tokenizer.json",
+      "bytes": 781,
+      "sha256": "8070d0e391130975ae1548548e824ba916d570a5d75dbb1fecb9d3e9b82bbcaf"
+    },
+    "thresholds": {
+      "path": "models/remindcore/thresholds.json",
+      "bytes": 2265,
+      "sha256": "a891f5c437be3dda312e9885d3b60fd0f557a9729f6da94e58b8092d9ae8e94e"
+    },
+    "onnx": {
+      "path": "models/remindcore/remindcore-v0.1-int8.onnx",
+      "bytes": 4901827,
+      "sha256": "0785f75fb62fac87b30835a51862874a5a40608253f31c61286c4d54da185182"
+    }
+  }
+}

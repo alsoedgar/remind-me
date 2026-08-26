@@ -1,0 +1,52 @@
+{
+  "name": "@remind-me/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Remind Me desktop application",
+  "author": "Remind Me contributors",
+  "type": "module",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "document-assets:prepare": "pnpm --dir ../.. exec tsx scripts/prepare-document-assets.ts",
+    "dev": "pnpm document-assets:prepare && electron-vite dev",
+    "build": "pnpm document-assets:prepare && electron-vite build",
+    "start": "electron-vite preview",
+    "smoke": "electron . --smoke-test --offline-smoke",
+    "package:dir": "pnpm build && electron-builder --dir",
+    "package:installer": "pnpm build && electron-builder --publish never"
+  },
+  "dependencies": {
+    "@js-temporal/polyfill": "0.5.1",
+    "@remind-me/calendar-engine": "workspace:*",
+    "@remind-me/contracts": "workspace:*",
+    "@remind-me/importers": "workspace:*",
+    "@remind-me/model-runtime": "workspace:*",
+    "@remind-me/storage": "workspace:*",
+    "@remind-me/ui": "workspace:*",
+    "node-llama-cpp": "3.20.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zustand": "5.0.15"
+  },
+  "optionalDependencies": {
+    "@node-llama-cpp/linux-arm64": "3.20.0",
+    "@node-llama-cpp/linux-armv7l": "3.20.0",
+    "@node-llama-cpp/linux-x64": "3.20.0",
+    "@node-llama-cpp/mac-arm64-metal": "3.20.0",
+    "@node-llama-cpp/mac-x64": "3.20.0",
+    "@node-llama-cpp/win-arm64": "3.20.0",
+    "@node-llama-cpp/win-x64": "3.20.0"
+  },
+  "devDependencies": {
+    "@tesseract.js-data/eng": "1.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "electron": "43.4.1",
+    "electron-builder": "26.15.3",
+    "electron-vite": "5.0.0",
+    "pdfjs-dist": "6.2.108",
+    "tesseract.js": "7.0.0",
+    "vite": "7.3.6"
+  }
+}

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title">
+  <title id="title">Remind Me sun over rolling hills</title>
+  <defs>
+    <clipPath id="room">
+      <circle cx="512" cy="512" r="424" />
+    </clipPath>
+  </defs>
+  <circle cx="512" cy="512" r="424" fill="#fdfaf3" stroke="#3c2f2f" stroke-width="48" />
+  <g clip-path="url(#room)">
+    <circle cx="610" cy="342" r="112" fill="#c08a6e" stroke="#3c2f2f" stroke-width="40" />
+    <path
+      d="M-80 740C152 590 360 592 578 742C706 830 866 840 1104 720V1120H-80Z"
+      fill="#ebd9c5"
+      stroke="#3c2f2f"
+      stroke-width="40"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M-70 924C172 746 424 710 690 824C834 886 984 872 1098 806V1120H-70Z"
+      fill="#d6ad94"
+      stroke="#3c2f2f"
+      stroke-width="40"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>

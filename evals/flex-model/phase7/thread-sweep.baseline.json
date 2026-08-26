@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-08-26T10:38:31.924Z",
+  "workload": "48-token-cap concise chat; first sample cold-prefix, next two prefix-reuse",
+  "model": {
+    "id": "qwen3-1.7b-q4",
+    "quantization": "Q4_K_M",
+    "bytes": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"
+  },
+  "machine": {
+    "platform": "win32",
+    "arch": "x64",
+    "logicalThreads": 24,
+    "totalMemoryGiB": 31.12,
+    "freeMemoryGiBAtStart": 7.78,
+    "backend": "cpu"
+  },
+  "modelLoadMs": 4150.84,
+  "results": [
+    {
+      "threads": 4,
+      "contextCreateMs": 1295.83,
+      "samples": [
+        {
+          "elapsedMs": 10558.46,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 1.8,
+          "warm": false
+        },
+        {
+          "elapsedMs": 5722.62,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 3.32,
+          "warm": true
+        },
+        {
+          "elapsedMs": 5696.54,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 3.34,
+          "warm": true
+        }
+      ],
+      "warmMedianMs": 5696.54,
+      "warmP95Ms": 5722.62,
+      "rssMiB": 2331.54
+    },
+    {
+      "threads": 8,
+      "contextCreateMs": 69.17,
+      "samples": [
+        {
+          "elapsedMs": 7328.36,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 2.59,
+          "warm": false
+        },
+        {
+          "elapsedMs": 3990.26,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 4.76,
+          "warm": true
+        },
+        {
+          "elapsedMs": 3856.67,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 4.93,
+          "warm": true
+        }
+      ],
+      "warmMedianMs": 3856.67,
+      "warmP95Ms": 3990.26,
+      "rssMiB": 2339.99
+    },
+    {
+      "threads": 12,
+      "contextCreateMs": 64.84,
+      "samples": [
+        {
+          "elapsedMs": 6113.2,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 3.11,
+          "warm": false
+        },
+        {
+          "elapsedMs": 3459.08,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 5.49,
+          "warm": true
+        },
+        {
+          "elapsedMs": 3310.3,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 5.74,
+          "warm": true
+        }
+      ],
+      "warmMedianMs": 3310.3,
+      "warmP95Ms": 3459.08,
+      "rssMiB": 2341.95
+    },
+    {
+      "threads": 16,
+      "contextCreateMs": 62.16,
+      "samples": [
+        {
+          "elapsedMs": 5848.36,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 3.25,
+          "warm": false
+        },
+        {
+          "elapsedMs": 3173.13,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 5.99,
+          "warm": true
+        },
+        {
+          "elapsedMs": 3279.61,
+          "outputTokens": 19,
+          "effectiveTokensPerSecond": 5.79,
+          "warm": true
+        }
+      ],
+      "warmMedianMs": 3173.13,
+      "warmP95Ms": 3279.61,
+      "rssMiB": 2335.59
+    }
+  ],
+  "fastestThreadPoint": 16,
+  "note": "This synthetic benchmark never reads calendar data, conversations, profile memory, or application state."
+}

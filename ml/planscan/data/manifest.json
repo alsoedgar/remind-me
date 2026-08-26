@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "seed": 731947,
+  "generator": "ml/planscan/pipeline.py",
+  "programFirst": true,
+  "teacherUsed": false,
+  "pretrainedWeightsUsed": false,
+  "personalDataUsed": false,
+  "files": {
+    "train": {
+      "path": "ml/planscan/.generated/dataset/train.jsonl",
+      "pages": 12000,
+      "sha256": "84a4108e1d320c7b854dd4787a48c5c02f8ebae782fdc3f40541a2721df8e8c1",
+      "nativePages": 6000,
+      "scannedPages": 6000
+    },
+    "dev": {
+      "path": "ml/planscan/.generated/dataset/dev.jsonl",
+      "pages": 2000,
+      "sha256": "7c7619b63e09e1edf2d0c5bf64020c2d83a919cd451e0edf13629b39b92a6df8",
+      "nativePages": 1001,
+      "scannedPages": 999
+    },
+    "test": {
+      "path": "ml/planscan/.generated/dataset/test.jsonl",
+      "pages": 2000,
+      "sha256": "6f7324faf1c1fdf22d1e4bb2c74c48d69a5165ba72f81784a4dba43da2995db4",
+      "nativePages": 1000,
+      "scannedPages": 1000
+    }
+  },
+  "heldout": {
+    "path": "fixtures/planscan/heldout.v0.1.jsonl",
+    "pages": 96,
+    "sha256": "2afbfcf28cb453c550018f9215e727de3070bc23d1ba760ff170d8612e4c8410"
+  },
+  "disjointAssets": {
+    "train": {
+      "templateFamilies": [
+        "stacked-card",
+        "compact-agenda",
+        "ruled-table",
+        "split-column",
+        "ticket-strip",
+        "course-list",
+        "flyer-stack",
+        "phone-capture"
+      ],
+      "fonts": ["Alder Sans", "Bramble Serif", "Cove Mono", "Dune Grotesk"],
+      "scanStyles": ["clean", "soft-jpeg", "warm-shadow", "light-skew"],
+      "organizations": [
+        "Cedar Studio",
+        "Willow School",
+        "Northline Arts",
+        "Juniper Travel",
+        "Harbor Collective",
+        "Moss Library"
+      ]
+    },
+    "dev": {
+      "templateFamilies": ["ribbon-timeline", "offset-course-grid", "bordered-invite"],
+      "fonts": ["Elm Humanist", "Field Slab"],
+      "scanStyles": ["cool-scan", "faint-copy"],
+      "organizations": ["Foxglove College", "Beacon Workshop", "Pine Rail"]
+    },
+    "test": {
+      "templateFamilies": [
+        "sunrise-agenda",
+        "rotation-matrix",
+        "itinerary-bands",
+        "notebook-screenshot"
+      ],
+      "fonts": ["Kite Sans", "Lumen Serif", "Orbit Mono"],
+      "scanStyles": ["creased-paper", "phone-glare", "low-contrast"],
+      "organizations": ["Saffron Institute", "Riverglass Club", "Canyon Transit"]
+    }
+  },
+  "documentTypes": [
+    "schedule",
+    "syllabus",
+    "invitation",
+    "flyer",
+    "itinerary",
+    "rotation",
+    "table",
+    "screenshot"
+  ],
+  "manifestSha256": "553436f1faea46cdcbae9da6103d18be2c0e7829422b845f50b35b3b13f1994a"
+}

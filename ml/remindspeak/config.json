@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "seed": 9062026,
+  "modelId": "remindspeak-phrase-lattice-28m-en-phase6",
+  "version": "0.3.0",
+  "featureBuckets": 65536,
+  "epochs": 4,
+  "learningRate": 0.35,
+  "splits": {
+    "train": 30000,
+    "dev": 5000,
+    "test": 5000
+  }
+}

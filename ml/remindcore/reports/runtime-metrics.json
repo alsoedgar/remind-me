@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "model": {
+    "available": true,
+    "id": "remindcore-hashframe-next-en-qwen-assisted",
+    "version": "0.3.0",
+    "architecture": "HashFrame Next joint semantic and AssistantPlan advisory planner",
+    "parameterCount": 4890624,
+    "quantization": "symmetric-int8-per-output-channel",
+    "modelBytes": 6536991,
+    "mode": "confidence-gated-hybrid",
+    "teacherUsed": true,
+    "assistantPlanAvailable": true,
+    "nativeCapabilityCount": 42,
+    "networkRequired": false,
+    "error": null
+  },
+  "metrics": {
+    "fixtureExamples": 600,
+    "operationAccuracy": 0.975,
+    "oodRecall": 1,
+    "ambiguityRecall": 0.8412698412698413,
+    "eligibleAssistedPrecision": 1,
+    "eligibleAssistedCoverage": 0.13,
+    "schemaValidity": 1,
+    "rulesSafeOperationAccuracy": 0.05641025641025641,
+    "hybridSafeOperationAccuracy": 0.3333333333333333,
+    "warmLatencyMs": {
+      "median": 0.5428000000000566,
+      "p95": 1.239400000000046
+    }
+  },
+  "assertions": {
+    "modelNeverWritesDatabase": true,
+    "destructiveAndSeriesRemainConfirmationOnly": true,
+    "teacherUsed": true,
+    "networkRequired": false
+  }
+}

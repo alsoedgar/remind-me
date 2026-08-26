@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "model": {
+    "available": true,
+    "id": "remindcore-hashframe-next-en-qwen-assisted",
+    "version": "0.3.0",
+    "architecture": "HashFrame Next joint semantic and AssistantPlan advisory planner",
+    "parameterCount": 4890624,
+    "quantization": "symmetric-int8-per-output-channel",
+    "modelBytes": 6536991,
+    "mode": "confidence-gated-hybrid",
+    "teacherUsed": true,
+    "assistantPlanAvailable": true,
+    "nativeCapabilityCount": 42,
+    "networkRequired": false,
+    "error": null
+  },
+  "challenge": {
+    "examples": 293,
+    "routeAccuracy": 0.9044368600682594,
+    "firstCapabilityAccuracy": 0.6382252559726962,
+    "actionCountAccuracy": 0.8805460750853242,
+    "exactSequenceAccuracy": 0.5221843003412969,
+    "selectivePrecision": 1,
+    "selectiveCoverage": 0.10921501706484642
+  },
+  "latencyMs": {
+    "median": 0.5311000000000377,
+    "p95": 1.2577999999999747
+  },
+  "assertions": {
+    "typescriptInt8Parity": true,
+    "advisoryOnly": true,
+    "existingCalendarIRAuthorityRetained": true,
+    "humanBlindExamplesUsed": 0
+  }
+}

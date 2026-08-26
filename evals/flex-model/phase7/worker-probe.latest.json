@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-08-26T11:18:29.332Z",
+  "runtimeProfile": {
+    "id": "performance",
+    "label": "Automatic performance",
+    "backend": "cpu",
+    "threads": 16,
+    "contextSize": 4096,
+    "sequences": 2,
+    "batchSize": 512,
+    "maxChatTokens": 96,
+    "idleUnloadMs": 600000,
+    "requestTimeoutMs": 90000
+  },
+  "assertions": {
+    "alternatingWorkloadsPassed": true,
+    "splitBulkOperations": [
+      "event.create",
+      "reminder.create",
+      "event.move",
+      "reminder.delete"
+    ],
+    "groundedSources": true
+  },
+  "metrics": [
+    {
+      "workload": "plan",
+      "elapsedMs": 74403,
+      "inputTokens": 989,
+      "outputTokens": 87,
+      "tokenLimit": 230,
+      "stopReason": "stopGenerationTrigger",
+      "inputTruncated": false,
+      "coldStart": true
+    },
+    {
+      "workload": "plan",
+      "elapsedMs": 19661,
+      "inputTokens": 988,
+      "outputTokens": 102,
+      "tokenLimit": 320,
+      "stopReason": "stopGenerationTrigger",
+      "inputTruncated": false,
+      "coldStart": false
+    },
+    {
+      "workload": "chat",
+      "elapsedMs": 21955,
+      "inputTokens": 321,
+      "outputTokens": 36,
+      "tokenLimit": 80,
+      "stopReason": "eogToken",
+      "inputTruncated": false,
+      "coldStart": false
+    },
+    {
+      "workload": "plan",
+      "elapsedMs": 15758,
+      "inputTokens": 988,
+      "outputTokens": 82,
+      "tokenLimit": 230,
+      "stopReason": "stopGenerationTrigger",
+      "inputTruncated": false,
+      "coldStart": false
+    },
+    {
+      "workload": "plan",
+      "elapsedMs": 13358,
+      "inputTokens": 983,
+      "outputTokens": 68,
+      "tokenLimit": 320,
+      "stopReason": "stopGenerationTrigger",
+      "inputTruncated": false,
+      "coldStart": false
+    },
+    {
+      "workload": "chat",
+      "elapsedMs": 11484,
+      "inputTokens": 353,
+      "outputTokens": 38,
+      "tokenLimit": 56,
+      "stopReason": "eogToken",
+      "inputTruncated": false,
+      "coldStart": false
+    }
+  ],
+  "chatOutputs": [
+    "Hello, what can I help you with? I'm here to assist with your calendar reminders, schedule meetings, and manage your events. Let me know how I can support you!",
+    "The next verified event is a Dentist visit on 2026-08-27 from 10:00 AM to 11:00 AM."
+  ],
+  "privacy": "Synthetic prompts only; no database, conversation log, calendar, or profile state opened."
+}

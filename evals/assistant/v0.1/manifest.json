@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "suiteVersion": "0.1.0",
+  "path": "evals/assistant/v0.1/scenarios.jsonl",
+  "sha256": "0adff837434c8902a720f6e85b9e5d1049e117619521d831ef04748a8c776ca5",
+  "scenarios": 40,
+  "turns": 45,
+  "trainingExcluded": true,
+  "independentHumanBlind": false,
+  "frozen": true
+}

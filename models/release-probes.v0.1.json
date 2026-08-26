@@ -1,0 +1,576 @@
+{
+  "schemaVersion": 1,
+  "contractVersion": "0.1",
+  "generatedFrom": "fixtures/planscan/heldout.v0.1.jsonl",
+  "planner": [
+    {
+      "text": "Remind me to call Mom tomorrow at 6 pm",
+      "expectedOperation": "reminder.create",
+      "expectedEligibleForAssistance": true
+    },
+    {
+      "text": "Show my agenda tomorrow",
+      "expectedOperation": "calendar.list",
+      "expectedEligibleForAssistance": true
+    },
+    {
+      "text": "Block focus time Friday from 2 pm to 4 pm",
+      "expectedOperation": "event.create",
+      "expectedEligibleForAssistance": true
+    }
+  ],
+  "speaker": {
+    "requestId": "release-probe:speaker",
+    "speechAct": "proposal",
+    "facts": [
+      {
+        "key": "SUMMARY",
+        "kind": "text",
+        "placeholder": "<SUMMARY>",
+        "value": "Create “Tea with Mina” next Friday at 4:00 PM"
+      }
+    ],
+    "style": {
+      "warmth": 0.82,
+      "brevity": 0.62,
+      "formality": 0.18,
+      "humor": 0.12,
+      "emoji": 0,
+      "contractions": true,
+      "proactivity": 0.48
+    },
+    "recentReplies": [],
+    "expectedCandidateCount": 5
+  },
+  "document": {
+    "page": {
+      "page": 1,
+      "width": 612,
+      "height": 792,
+      "rotation": 0,
+      "extraction": "native-text",
+      "nativeCharacterCount": 330,
+      "thumbnailDataUrl": "data:image/png;base64,iVBORw0KGgo=",
+      "words": [
+        {
+          "id": "word:1:0",
+          "lineId": "line:1:0",
+          "page": 1,
+          "text": "WEEKLY SCHEDULE",
+          "boundingBox": {
+            "x": 0.07,
+            "y": 0.045,
+            "width": 0.72,
+            "height": 0.045
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:1",
+          "lineId": "line:1:1",
+          "page": 1,
+          "text": "Prepared by Saffron Institute",
+          "boundingBox": {
+            "x": 0.07,
+            "y": 0.1,
+            "width": 0.55,
+            "height": 0.025
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:2",
+          "lineId": "line:1:2",
+          "page": 1,
+          "text": "August 26, 2026",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.17,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:3",
+          "lineId": "line:1:3",
+          "page": 1,
+          "text": "Reminder: Project kickoff",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.213,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:4",
+          "lineId": "line:1:4",
+          "page": 1,
+          "text": "9:00 AM - 10:00 AM",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.256,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:5",
+          "lineId": "line:1:5",
+          "page": 1,
+          "text": "Location: Studio A",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.299,
+            "width": 0.55,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:6",
+          "lineId": "line:1:6",
+          "page": 1,
+          "text": "Bring the latest draft",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.342,
+            "width": 0.68,
+            "height": 0.026
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:7",
+          "lineId": "line:1:7",
+          "page": 1,
+          "text": "Every Tuesday",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.382,
+            "width": 0.45,
+            "height": 0.026
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:8",
+          "lineId": "line:1:8",
+          "page": 1,
+          "text": "August 28, 2026",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.467,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:9",
+          "lineId": "line:1:9",
+          "page": 1,
+          "text": "Morning focus block",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.51,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:10",
+          "lineId": "line:1:10",
+          "page": 1,
+          "text": "2:00 PM - 3:30 PM",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.553,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:11",
+          "lineId": "line:1:11",
+          "page": 1,
+          "text": "Location: North Hall",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.596,
+            "width": 0.55,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:12",
+          "lineId": "line:1:12",
+          "page": 1,
+          "text": "August 30, 2026",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.684,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:13",
+          "lineId": "line:1:13",
+          "page": 1,
+          "text": "Lab orientation",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.727,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:14",
+          "lineId": "line:1:14",
+          "page": 1,
+          "text": "6:00 PM",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.77,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:15",
+          "lineId": "line:1:15",
+          "page": 1,
+          "text": "Location: Community Loft",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.813,
+            "width": 0.55,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:16",
+          "lineId": "line:1:16",
+          "page": 1,
+          "text": "Questions? Keep this page for your records.",
+          "boundingBox": {
+            "x": 0.08,
+            "y": 0.92,
+            "width": 0.7,
+            "height": 0.022
+          },
+          "confidence": 1,
+          "method": "native-text"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "heading:main",
+          "page": 1,
+          "text": "WEEKLY SCHEDULE",
+          "boundingBox": {
+            "x": 0.07,
+            "y": 0.045,
+            "width": 0.72,
+            "height": 0.045
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:0"
+          ]
+        },
+        {
+          "id": "metadata:org",
+          "page": 1,
+          "text": "Prepared by Saffron Institute",
+          "boundingBox": {
+            "x": 0.07,
+            "y": 0.1,
+            "width": 0.55,
+            "height": 0.025
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:1"
+          ]
+        },
+        {
+          "id": "group:0:0",
+          "page": 1,
+          "text": "August 26, 2026",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.17,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:2"
+          ]
+        },
+        {
+          "id": "group:0:1",
+          "page": 1,
+          "text": "Reminder: Project kickoff",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.213,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:3"
+          ]
+        },
+        {
+          "id": "group:0:2",
+          "page": 1,
+          "text": "9:00 AM - 10:00 AM",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.256,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:4"
+          ]
+        },
+        {
+          "id": "group:0:3",
+          "page": 1,
+          "text": "Location: Studio A",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.299,
+            "width": 0.55,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:5"
+          ]
+        },
+        {
+          "id": "group:0:description",
+          "page": 1,
+          "text": "Bring the latest draft",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.342,
+            "width": 0.68,
+            "height": 0.026
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:6"
+          ]
+        },
+        {
+          "id": "group:0:recurrence",
+          "page": 1,
+          "text": "Every Tuesday",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.382,
+            "width": 0.45,
+            "height": 0.026
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:7"
+          ]
+        },
+        {
+          "id": "group:1:0",
+          "page": 1,
+          "text": "August 28, 2026",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.467,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:8"
+          ]
+        },
+        {
+          "id": "group:1:1",
+          "page": 1,
+          "text": "Morning focus block",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.51,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:9"
+          ]
+        },
+        {
+          "id": "group:1:2",
+          "page": 1,
+          "text": "2:00 PM - 3:30 PM",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.553,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:10"
+          ]
+        },
+        {
+          "id": "group:1:3",
+          "page": 1,
+          "text": "Location: North Hall",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.596,
+            "width": 0.55,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:11"
+          ]
+        },
+        {
+          "id": "group:2:0",
+          "page": 1,
+          "text": "August 30, 2026",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.684,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:12"
+          ]
+        },
+        {
+          "id": "group:2:1",
+          "page": 1,
+          "text": "Lab orientation",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.727,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:13"
+          ]
+        },
+        {
+          "id": "group:2:2",
+          "page": 1,
+          "text": "6:00 PM",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.77,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:14"
+          ]
+        },
+        {
+          "id": "group:2:3",
+          "page": 1,
+          "text": "Location: Community Loft",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.813,
+            "width": 0.55,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:15"
+          ]
+        },
+        {
+          "id": "noise:footer",
+          "page": 1,
+          "text": "Questions? Keep this page for your records.",
+          "boundingBox": {
+            "x": 0.08,
+            "y": 0.92,
+            "width": 0.7,
+            "height": 0.022
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:16"
+          ]
+        }
+      ]
+    },
+    "expectedDocumentType": "schedule",
+    "expectedGroupTitles": [
+      "Reminder: Project kickoff",
+      "Morning focus block",
+      "Lab orientation"
+    ]
+  }
+}

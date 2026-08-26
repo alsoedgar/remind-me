@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "teacher": "Qwen3-1.7B-Q4_K_M",
+  "remindCore": {
+    "rawCandidates": 120,
+    "acceptedTemplates": 73,
+    "acceptedOod": 14,
+    "coverage": {
+      "event.create": {
+        "accepted": 6,
+        "train": 5,
+        "challenge": 1
+      },
+      "event.duplicate": {
+        "accepted": 6,
+        "train": 5,
+        "challenge": 1
+      },
+      "event.update": {
+        "accepted": 6,
+        "train": 5,
+        "challenge": 1
+      },
+      "event.move": {
+        "accepted": 6,
+        "train": 5,
+        "challenge": 1
+      },
+      "event.delete": {
+        "accepted": 3,
+        "train": 2,
+        "challenge": 1
+      },
+      "reminder.create": {
+        "accepted": 9,
+        "train": 8,
+        "challenge": 1
+      },
+      "reminder.update": {
+        "accepted": 5,
+        "train": 4,
+        "challenge": 1
+      },
+      "reminder.complete": {
+        "accepted": 5,
+        "train": 4,
+        "challenge": 1
+      },
+      "reminder.delete": {
+        "accepted": 8,
+        "train": 7,
+        "challenge": 1
+      },
+      "calendar.list": {
+        "accepted": 3,
+        "train": 2,
+        "challenge": 1
+      },
+      "calendar.search": {
+        "accepted": 6,
+        "train": 5,
+        "challenge": 1
+      },
+      "calendar.availability": {
+        "accepted": 5,
+        "train": 4,
+        "challenge": 1
+      },
+      "calendar.conflicts": {
+        "accepted": 5,
+        "train": 4,
+        "challenge": 1
+      }
+    },
+    "rejected": {
+      "duplicate": 7,
+      "ood-calendar-action": 7,
+      "ood-not-user-voice": 3,
+      "placeholder-signature": 7,
+      "semantic-cue": 7,
+      "unprotected-specific": 2
+    }
+  },
+  "remindSpeak": {
+    "preferenceCases": 66,
+    "acceptedPreferences": 66,
+    "trainPreferences": 55,
+    "challengePreferences": 11,
+    "teacherAuthoredSurfaceAtomsImported": 0,
+    "rejected": {
+      "duplicate-choice": 7
+    },
+    "coverage": {
+      "availability-answer:challenge": 1,
+      "availability-answer:train": 5,
+      "clarification:challenge": 1,
+      "clarification:train": 5,
+      "completion-confirmed:challenge": 1,
+      "completion-confirmed:train": 5,
+      "conflict-warning:challenge": 1,
+      "conflict-warning:train": 5,
+      "creation-confirmed:challenge": 1,
+      "creation-confirmed:train": 5,
+      "deletion-confirmed:challenge": 1,
+      "deletion-confirmed:train": 5,
+      "error:challenge": 1,
+      "error:train": 5,
+      "proposal:challenge": 1,
+      "proposal:train": 5,
+      "schedule-summary:challenge": 1,
+      "schedule-summary:train": 5,
+      "unsupported:challenge": 1,
+      "unsupported:train": 5,
+      "update-confirmed:challenge": 1,
+      "update-confirmed:train": 5
+    },
+    "rejectedFreeGenerationExperiment": {
+      "path": "ml/teacher_assisted/raw/remindspeak.json",
+      "sha256": "c12d7eb423da24d6ad620b996059ed595c10c286b7a5912e456e47c707a34ddf",
+      "admittedAtoms": 0,
+      "reason": "Qwen free-generation candidates did not clear protected-surface quality gates"
+    }
+  }
+}

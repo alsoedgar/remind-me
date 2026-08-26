@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "corpusVersion": "0.1.0",
+  "seed": 260826,
+  "materializationsPerTemplate": 6,
+  "teacherParaphrasesPerJob": 1,
+  "minimumAcceptedTeacherTemplates": 30,
+  "minimumTeacherCapabilityCoverage": 30,
+  "teacherModelId": "Qwen3-1.7B-Q4_K_M",
+  "teacherByteLength": 1282439264,
+  "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+  "teacherLicense": "Apache-2.0",
+  "frozenEvaluationManifest": "evals/assistant/v0.1/manifest.json",
+  "frozenEvaluationSuite": "evals/assistant/v0.1/scenarios.jsonl",
+  "evaluationSimilarityThreshold": 0.92
+}

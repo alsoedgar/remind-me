@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "studyId": "remindspeak-v0.3-blind-a-b",
+  "status": "awaiting-participants",
+  "studyDesign": "within-subject randomized blinded A/B",
+  "candidate": "RemindSpeak v0.3",
+  "control": "deterministic protected-template baseline",
+  "participantCount": 0,
+  "judgments": 0,
+  "rejectedFiles": [],
+  "results": {
+    "candidateWins": 0,
+    "controlWins": 0,
+    "ties": 0,
+    "candidatePreferenceScore": null,
+    "preferenceWilson95": null,
+    "candidateFactIssues": 0,
+    "candidateFactIssueRate": null
+  },
+  "gates": {
+    "minimumParticipants": {
+      "required": 5,
+      "actual": 0,
+      "passed": false
+    },
+    "minimumJudgments": {
+      "required": 120,
+      "actual": 0,
+      "passed": false
+    },
+    "candidatePreference": {
+      "required": 0.6,
+      "actual": null,
+      "passed": false
+    },
+    "preferenceWilsonLowerBound": {
+      "required": 0.5,
+      "actual": null,
+      "passed": false
+    },
+    "candidateFactIssueRate": {
+      "maximum": 0.01,
+      "actual": null,
+      "passed": false
+    }
+  },
+  "gatePassed": false,
+  "claimBoundary": "The protocol is prepared, but no human preference result is claimed."
+}

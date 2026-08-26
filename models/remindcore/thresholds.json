@@ -1,0 +1,79 @@
+{
+  "operationConfidence": 0.45058,
+  "ambiguityProbability": 0.35,
+  "oodProbability": 0.35,
+  "safeAssistedOperations": [
+    "calendar.availability",
+    "calendar.conflicts",
+    "calendar.list",
+    "calendar.search",
+    "event.create",
+    "reminder.create"
+  ],
+  "destructiveAlwaysConfirmationOnly": true,
+  "seriesAlwaysConfirmationOnly": true,
+  "teacherDistillation": {
+    "method": "teacher-only unseen-hash-bucket residual",
+    "baseExamples": 36000,
+    "teacherExamples": 2640,
+    "teacherExamplesWithNovelFeatures": 2640,
+    "novelBuckets": 937,
+    "baseDevelopmentAccuracy": 0.902,
+    "maximumDevelopmentAccuracyDrop": 0.0005,
+    "selectedStrength": 0.005,
+    "candidates": [
+      {
+        "strength": 0.0,
+        "developmentAccuracy": 0.902,
+        "teacherChallengeAccuracy": 0.6518987341772152,
+        "eligible": true
+      },
+      {
+        "strength": 0.005,
+        "developmentAccuracy": 0.9016666666666666,
+        "teacherChallengeAccuracy": 0.689873417721519,
+        "eligible": true
+      },
+      {
+        "strength": 0.01,
+        "developmentAccuracy": 0.9013333333333333,
+        "teacherChallengeAccuracy": 0.6962025316455697,
+        "eligible": false
+      },
+      {
+        "strength": 0.02,
+        "developmentAccuracy": 0.9005,
+        "teacherChallengeAccuracy": 0.7151898734177216,
+        "eligible": false
+      },
+      {
+        "strength": 0.04,
+        "developmentAccuracy": 0.8993333333333333,
+        "teacherChallengeAccuracy": 0.740506329113924,
+        "eligible": false
+      },
+      {
+        "strength": 0.08,
+        "developmentAccuracy": 0.8848333333333334,
+        "teacherChallengeAccuracy": 0.740506329113924,
+        "eligible": false
+      },
+      {
+        "strength": 0.12,
+        "developmentAccuracy": 0.8806666666666667,
+        "teacherChallengeAccuracy": 0.6962025316455697,
+        "eligible": false
+      }
+    ]
+  },
+  "assistantRouting": {
+    "routingAssistanceConfidence": 0.85,
+    "safeAdvisoryRoutes": [
+      "calendar"
+    ],
+    "minimumDevelopmentPrecision": 1.0,
+    "contextRequiredNeedsTypedContext": true,
+    "neverCreatesPlans": true,
+    "neverWritesDatabase": true
+  }
+}

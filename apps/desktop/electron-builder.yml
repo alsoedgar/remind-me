@@ -1,0 +1,74 @@
+appId: com.remindme.desktop
+productName: Remind Me
+asar: true
+compression: maximum
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  loadBrowserProcessSpecificV8Snapshot: false
+  grantFileProtocolExtraPrivileges: false
+electronLanguages:
+  - en-US
+directories:
+  output: ../../dist
+  buildResources: resources
+files:
+  - out/**
+  - package.json
+  # Keep node-llama-cpp's tiny runtime metadata: its ESM entry reads the pinned
+  # release JSON before inference even when build/download support is disabled.
+  # Only the 32.8 MiB source-control bundle is unnecessary at runtime.
+  - '!node_modules/node-llama-cpp/llama/gitRelease.bundle'
+afterPack: scripts/prune-node-llama-binaries.mjs
+extraResources:
+  - from: resources/icon.png
+    to: app-icon.png
+  - from: resources/icon.ico
+    to: app-icon.ico
+  - from: ../../models
+    to: models
+    filter:
+      - '**/*'
+  - from: resources/workers
+    to: workers
+    filter:
+      - '**/*'
+  - from: ../../packages/model-runtime/node_modules/sherpa-onnx
+    to: asr-runtime/sherpa-onnx
+    filter:
+      - '*.js'
+      - '*.wasm'
+      - package.json
+      - README.md
+win:
+  icon: icon.ico
+  target:
+    - nsis
+mac:
+  icon: icon.icns
+  target:
+    - dmg
+    - zip
+  hardenedRuntime: true
+  entitlements: resources/entitlements.mac.plist
+  entitlementsInherit: resources/entitlements.mac.plist
+  extendInfo:
+    NSMicrophoneUsageDescription: Remind Me uses the microphone only while voice input is active, and transcribes audio on this device.
+linux:
+  icon: icon.png
+  category: Office
+  target:
+    - AppImage
+    - deb
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  shortcutName: Remind Me
+  uninstallDisplayName: Remind Me
+  deleteAppDataOnUninstall: false
+npmRebuild: false

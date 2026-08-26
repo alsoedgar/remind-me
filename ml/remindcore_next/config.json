@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "seed": 8262026,
+  "modelId": "remindcore-hashframe-next-en-qwen-assisted",
+  "version": "0.3.0",
+  "contractVersion": "0.1",
+  "maximumActions": 3,
+  "capacityCandidates": [4096, 8192, 16384],
+  "selectedCapacityTolerance": 0.015,
+  "maximumArtifactBytes": 7340032,
+  "epochs": 7,
+  "ensembleSeedOffsets": [0, 11, 29],
+  "minimumDevelopmentSelectivePrecision": 1.0,
+  "minimumDevelopmentSelectiveExamples": 12,
+  "minimumRoutingConfidence": 0.85,
+  "promotionGates": {
+    "minimumChallengeRouteAccuracy": 0.8,
+    "minimumChallengeFirstCapabilityAccuracy": 0.6,
+    "minimumChallengeExactSequenceAccuracy": 0.5,
+    "minimumChallengeMultiActionExactAccuracy": 0.4,
+    "minimumChallengeGainOverShippedBaseline": 0.18,
+    "minimumChallengeSelectivePrecision": 0.99,
+    "minimumChallengeSelectiveCoverage": 0.04,
+    "maximumQuantizedExactAccuracyReduction": 0.005
+  }
+}

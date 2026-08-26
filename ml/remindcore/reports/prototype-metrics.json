@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "modelId": "remindcore-hashframe-4m-en-qwen-assisted",
+  "version": "0.2.0",
+  "metrics": {
+    "dev": {
+      "operation": {
+        "accuracy": 0.9016666666666666,
+        "macroF1": 0.898680902547711
+      },
+      "risk": {
+        "accuracy": 0.8883333333333333,
+        "macroF1": 0.7121528349048296
+      },
+      "ambiguityRecall": 0.7901990811638591,
+      "oodRecall": 0.9953379953379954,
+      "clearInDomainOperationAccuracy": 0.890844286032524,
+      "eligibleAssistedPrecision": 0.9987908101571947,
+      "eligibleAssistedCoverage": 0.419158641662443,
+      "nonOSequenceLabelAccuracy": 0.6436598224195339,
+      "titleSpanCoverage": 0.3484848484848485,
+      "constrainedAssistedTitleCoverage": 0.6603535353535354,
+      "latencyMs": {
+        "median": 1.0815999703481793,
+        "p95": 2.3933999473229055
+      },
+      "ablations": {
+        "noCharacterNgrams": 0.7228333333333333,
+        "majority": 0.143
+      }
+    },
+    "test": {
+      "operation": {
+        "accuracy": 0.9691666666666666,
+        "macroF1": 0.97204355916623
+      },
+      "risk": {
+        "accuracy": 0.943,
+        "macroF1": 0.7517485281397746
+      },
+      "ambiguityRecall": 0.8881685575364667,
+      "oodRecall": 1.0,
+      "clearInDomainOperationAccuracy": 0.9633149171270718,
+      "eligibleAssistedPrecision": 1.0,
+      "eligibleAssistedCoverage": 0.4721245605223506,
+      "nonOSequenceLabelAccuracy": 0.7465512484480618,
+      "titleSpanCoverage": 0.6540404040404041,
+      "constrainedAssistedTitleCoverage": 0.9797979797979798,
+      "latencyMs": {
+        "median": 1.1787499533966184,
+        "p95": 2.65832498553209
+      },
+      "ablations": {
+        "noCharacterNgrams": 0.8278333333333333,
+        "majority": 0.143
+      }
+    },
+    "teacherChallenge": {
+      "operation": {
+        "accuracy": 0.689873417721519,
+        "macroF1": 0.615053470781025
+      },
+      "risk": {
+        "accuracy": 0.9177215189873418,
+        "macroF1": 0.7257509887676001
+      },
+      "ambiguityRecall": 0.0,
+      "oodRecall": 0.0,
+      "clearInDomainOperationAccuracy": 0.6987179487179487,
+      "eligibleAssistedPrecision": 1.0,
+      "eligibleAssistedCoverage": 0.1527777777777778,
+      "nonOSequenceLabelAccuracy": 0.7621951219512195,
+      "titleSpanCoverage": 0.5416666666666666,
+      "constrainedAssistedTitleCoverage": 0.9583333333333334,
+      "latencyMs": {
+        "median": 1.3650000328198075,
+        "p95": 3.3392599958460782
+      },
+      "ablations": {
+        "noCharacterNgrams": 0.46835443037974683,
+        "majority": 0.012658227848101266
+      }
+    },
+    "quantization": {
+      "floatOperationAccuracy": 0.9691666666666666,
+      "int8OperationAccuracy": 0.969,
+      "absoluteAccuracyDelta": 0.0001666666666666483,
+      "signedAccuracyChange": -0.0001666666666666483,
+      "accuracyReduction": 0.0001666666666666483
+    }
+  },
+  "thresholds": {
+    "operationConfidence": 0.45058,
+    "ambiguityProbability": 0.35,
+    "oodProbability": 0.35,
+    "safeAssistedOperations": [
+      "calendar.availability",
+      "calendar.conflicts",
+      "calendar.list",
+      "calendar.search",
+      "event.create",
+      "reminder.create"
+    ],
+    "destructiveAlwaysConfirmationOnly": true,
+    "seriesAlwaysConfirmationOnly": true,
+    "teacherDistillation": {
+      "method": "teacher-only unseen-hash-bucket residual",
+      "baseExamples": 36000,
+      "teacherExamples": 2640,
+      "teacherExamplesWithNovelFeatures": 2640,
+      "novelBuckets": 937,
+      "baseDevelopmentAccuracy": 0.902,
+      "maximumDevelopmentAccuracyDrop": 0.0005,
+      "selectedStrength": 0.005,
+      "candidates": [
+        {
+          "strength": 0.0,
+          "developmentAccuracy": 0.902,
+          "teacherChallengeAccuracy": 0.6518987341772152,
+          "eligible": true
+        },
+        {
+          "strength": 0.005,
+          "developmentAccuracy": 0.9016666666666666,
+          "teacherChallengeAccuracy": 0.689873417721519,
+          "eligible": true
+        },
+        {
+          "strength": 0.01,
+          "developmentAccuracy": 0.9013333333333333,
+          "teacherChallengeAccuracy": 0.6962025316455697,
+          "eligible": false
+        },
+        {
+          "strength": 0.02,
+          "developmentAccuracy": 0.9005,
+          "teacherChallengeAccuracy": 0.7151898734177216,
+          "eligible": false
+        },
+        {
+          "strength": 0.04,
+          "developmentAccuracy": 0.8993333333333333,
+          "teacherChallengeAccuracy": 0.740506329113924,
+          "eligible": false
+        },
+        {
+          "strength": 0.08,
+          "developmentAccuracy": 0.8848333333333334,
+          "teacherChallengeAccuracy": 0.740506329113924,
+          "eligible": false
+        },
+        {
+          "strength": 0.12,
+          "developmentAccuracy": 0.8806666666666667,
+          "teacherChallengeAccuracy": 0.6962025316455697,
+          "eligible": false
+        }
+      ]
+    }
+  },
+  "artifacts": {
+    "model": {
+      "path": "models/remindcore/remindcore-v0.1-int8.json",
+      "bytes": 5948484,
+      "sha256": "3cf78261a61583a7ccb1e795e16b80220e0903bc6eff3f0f003e12946387a9dc"
+    },
+    "tokenizer": {
+      "path": "models/remindcore/tokenizer.json",
+      "bytes": 336,
+      "sha256": "30cdf31aa4b8bad2b0862febe2d981302ebdd77bdf43e2485906bcfc40a2645c"
+    },
+    "thresholds": {
+      "path": "models/remindcore/thresholds.json",
+      "bytes": 1984,
+      "sha256": "7f35d50b63f5216caed8cd5516116a7c01e4a4c3a4f9f6b06a61c2ff6d69d13e"
+    },
+    "onnx": {
+      "path": "models/remindcore/remindcore-v0.1-int8.onnx",
+      "bytes": 4458645,
+      "sha256": "abf33085a9d741c44a400199d626853c0510d19914ed98baeca773907ef96597"
+    }
+  },
+  "gateStatus": {
+    "schemaValidity": "measured by the TypeScript Phase 5 verifier",
+    "humanBlindSet": "not-met",
+    "automaticExecution": "disabled; model-assisted drafts still require existing review policy",
+    "destructiveAndSeries": "confirmation-only"
+  }
+}
