@@ -24,10 +24,10 @@
     "referenceInTopFiveRate": 0.796,
     "recentExactRepeatRate": 0,
     "latencyMs": {
-      "median": 5.7017000000000735,
-      "p95": 7.622399999999743
+      "median": 5.5965000000001055,
+      "p95": 8.20889999999963
     },
-    "totalEvaluationMs": 2319.0902
+    "totalEvaluationMs": 2320.4811
   },
   "assertions": {
     "teacherUsed": true,

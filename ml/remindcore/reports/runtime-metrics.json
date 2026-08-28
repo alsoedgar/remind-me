@@ -26,8 +26,8 @@
     "rulesSafeOperationAccuracy": 0.10194174757281553,
     "hybridSafeOperationAccuracy": 0.4174757281553398,
     "warmLatencyMs": {
-      "median": 0.6316000000000486,
-      "p95": 1.3601999999999634
+      "median": 0.6203000000000429,
+      "p95": 1.5149000000000115
     }
   },
   "assertions": {

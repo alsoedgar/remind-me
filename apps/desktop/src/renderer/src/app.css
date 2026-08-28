@@ -2,6 +2,13 @@
   box-sizing: border-box;
 }
 
+:root {
+  --motion-quick: 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-smooth: 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-gentle: 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  interpolate-size: allow-keywords;
+}
+
 html,
 body,
 #root {
@@ -1618,6 +1625,336 @@ button:disabled {
   transition-duration: 0.01ms !important;
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
+}
+
+/* Cohesive interaction motion */
+
+.view-transition-layer {
+  transform-origin: 50% 0;
+  animation: view-surface-enter var(--motion-gentle) both;
+}
+
+.dialog-backdrop {
+  animation: backdrop-enter var(--motion-smooth) both;
+}
+
+.editor-dialog,
+.document-dialog {
+  transform-origin: 50% 12%;
+  animation: dialog-enter var(--motion-gentle) both;
+}
+
+.calendar-day-agenda,
+.widget-list,
+.widget-assistant,
+.glance-agenda,
+.glance-assistant-shell,
+.document-review-grid > :not([hidden]) {
+  animation: panel-content-enter var(--motion-smooth) both;
+}
+
+.assistant-sidebar {
+  transition:
+    width var(--motion-gentle),
+    box-shadow var(--motion-smooth);
+}
+
+.assistant-sidebar[data-state='open'] {
+  animation: assistant-drawer-enter var(--motion-smooth) both;
+}
+
+.assistant-sidebar[data-state='closing'] {
+  pointer-events: none;
+  animation: assistant-drawer-exit 220ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+.assistant-rail-button {
+  animation: assistant-rail-enter var(--motion-smooth) both;
+  transition:
+    background var(--motion-quick),
+    box-shadow var(--motion-quick),
+    transform var(--motion-quick);
+}
+
+.assistant-rail-button:hover {
+  background: color-mix(in srgb, var(--color-accent-hover) 78%, var(--color-bg-card));
+  box-shadow: -5px 5px 0 color-mix(in srgb, var(--color-shadow) 75%, transparent);
+  transform: translate(-0.16rem, -50%);
+}
+
+.assistant-rail-button:active {
+  box-shadow: -1px 1px 0 color-mix(in srgb, var(--color-shadow) 72%, transparent);
+  transform: translate(0, calc(-50% + 2px)) scale(0.98);
+}
+
+.settings-disclosure::details-content,
+.settings-inline-details::details-content,
+.document-warning::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition:
+    block-size var(--motion-gentle),
+    opacity var(--motion-smooth),
+    content-visibility var(--motion-gentle) allow-discrete;
+}
+
+.settings-disclosure[open]::details-content,
+.settings-inline-details[open]::details-content,
+.document-warning[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+
+.settings-disclosure > summary,
+.settings-inline-details > summary,
+.document-warning > summary {
+  transition:
+    color var(--motion-quick),
+    background var(--motion-quick);
+}
+
+.settings-disclosure > summary:hover,
+.settings-inline-details > summary:hover,
+.document-warning > summary:hover {
+  color: var(--color-text-primary);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+.settings-disclosure-label::after {
+  transition: transform var(--motion-smooth);
+}
+
+.settings-disclosure[open] .settings-disclosure-label::after {
+  transform: rotate(180deg);
+}
+
+.conversation-turn,
+.proposal-card,
+.voice-status,
+.assistant-error {
+  transform-origin: 20% 100%;
+  animation: chat-item-enter var(--motion-smooth) both;
+}
+
+.conversation-turn.user-turn {
+  transform-origin: 80% 100%;
+  animation-name: chat-user-item-enter;
+}
+
+.toast,
+.error-banner {
+  animation: toast-enter var(--motion-smooth) both;
+}
+
+.document-draft-card[data-active='true'] > :not(.document-draft-heading) {
+  transform-origin: 50% 0;
+  animation: disclosure-content-enter var(--motion-smooth) both;
+}
+
+:is(
+  .calendar-day,
+  .calendar-pill,
+  .calendar-agenda-item,
+  .agenda-item,
+  .reminder-row,
+  .document-draft-card,
+  .widget-list-item,
+  .glance-agenda-item
+) {
+  transition:
+    color var(--motion-quick),
+    background var(--motion-quick),
+    border-color var(--motion-quick),
+    box-shadow var(--motion-quick),
+    opacity var(--motion-quick),
+    transform var(--motion-quick);
+}
+
+:is(
+  .calendar-pill,
+  .calendar-agenda-item,
+  button.agenda-item,
+  .reminder-row,
+  .document-draft-card,
+  .widget-list-item,
+  .glance-agenda-item
+):hover {
+  box-shadow: 3px 4px 0 color-mix(in srgb, var(--color-shadow) 62%, transparent);
+  transform: translateY(-2px);
+}
+
+:is(
+  .calendar-pill,
+  .calendar-agenda-item,
+  button.agenda-item,
+  .widget-list-item,
+  .glance-agenda-item
+):active {
+  box-shadow: 1px 1px 0 color-mix(in srgb, var(--color-shadow) 68%, transparent);
+  transform: translateY(1px) scale(0.992);
+}
+
+:is(
+  .secondary-button,
+  .icon-button,
+  .danger-button,
+  .assistant-window-button,
+  .assistant-toggle-button,
+  .widget-mode-button,
+  .document-import-button,
+  .widget-tabs button,
+  .glance-tabs button,
+  .document-review-tabs button,
+  .surface-options button,
+  .palette-build-actions button
+) {
+  transition:
+    color var(--motion-quick),
+    background var(--motion-quick),
+    border-color var(--motion-quick),
+    box-shadow var(--motion-quick),
+    transform var(--motion-quick);
+}
+
+:is(
+    .secondary-button,
+    .icon-button,
+    .danger-button,
+    .assistant-window-button,
+    .widget-tabs button,
+    .glance-tabs button,
+    .document-review-tabs button,
+    .surface-options button,
+    .palette-build-actions button
+  ):not(:disabled):active {
+  box-shadow: 1px 1px 0 color-mix(in srgb, var(--color-shadow) 66%, transparent);
+  transform: translateY(1px) scale(0.98);
+}
+
+:is(.widget-tabs button, .glance-tabs button, .document-review-tabs button)[data-active='true'] {
+  animation: tab-select var(--motion-smooth) both;
+}
+
+@keyframes view-surface-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.7rem) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes backdrop-enter {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes dialog-enter {
+  from {
+    opacity: 0;
+    transform: translateY(1rem) scale(0.965);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes panel-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.45rem) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes assistant-drawer-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(2.5rem);
+  }
+}
+
+@keyframes assistant-rail-enter {
+  from {
+    opacity: 0;
+    transform: translate(0.8rem, -50%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+  }
+}
+
+@keyframes chat-item-enter {
+  from {
+    opacity: 0;
+    transform: translate(-0.35rem, 0.4rem) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes chat-user-item-enter {
+  from {
+    opacity: 0;
+    transform: translate(0.35rem, 0.4rem) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.55rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes disclosure-content-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-0.35rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tab-select {
+  0% {
+    transform: scale(0.97);
+  }
+  65% {
+    transform: scale(1.025);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .nav-badge {

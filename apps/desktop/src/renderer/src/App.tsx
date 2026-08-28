@@ -648,6 +648,7 @@ function CalendarView({
           <aside
             className="calendar-day-agenda"
             aria-labelledby="selected-day-heading"
+            key={selectedDate}
             ref={dayAgendaRef}
             tabIndex={-1}
             onKeyDown={(event) => {
@@ -2108,6 +2109,7 @@ export function App(): ReactNode {
   const [editor, setEditor] = useState<EditorRequest | null>(null)
   const [repeatDayDate, setRepeatDayDate] = useState<string | null>(null)
   const [documentPlannerOpen, setDocumentPlannerOpen] = useState(false)
+  const [assistantMounted, setAssistantMounted] = useState(assistantOpen)
 
   useEffect(() => {
     void initialize()
@@ -2133,6 +2135,18 @@ export function App(): ReactNode {
       )
     else document.documentElement.dataset.theme = theme
   }, [appInfo?.appearance, setTheme, snapshot?.preferences, theme])
+  useEffect(() => {
+    if (assistantOpen) {
+      setAssistantMounted(true)
+      return
+    }
+    if (!assistantMounted) return
+    const reduceMotion =
+      snapshot?.preferences.reduceMotion === true ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const timeout = window.setTimeout(() => setAssistantMounted(false), reduceMotion ? 0 : 220)
+    return () => window.clearTimeout(timeout)
+  }, [assistantMounted, assistantOpen, snapshot?.preferences.reduceMotion])
 
   const timezone =
     snapshot?.preferences.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
@@ -2170,6 +2184,15 @@ export function App(): ReactNode {
     await setWindowMode('widget')
   }
 
+  function openAssistant(): void {
+    setAssistantMounted(true)
+    setAssistantOpen(true)
+  }
+
+  function closeAssistant(): void {
+    setAssistantOpen(false)
+  }
+
   async function openWidgetEditor(request: EditorRequest): Promise<void> {
     if (await setWindowMode('full')) setEditor(request)
   }
@@ -2194,7 +2217,7 @@ export function App(): ReactNode {
           onExpand={(routeToOpen) => void openFull(routeToOpen)}
           onOpenAssistant={() => {
             void setWindowMode('full').then((opened) => {
-              if (opened) setAssistantOpen(true)
+              if (opened) openAssistant()
             })
           }}
           onOpenDocument={() => void openWidgetDocument()}
@@ -2257,7 +2280,7 @@ export function App(): ReactNode {
               data-active={assistantOpen}
               data-testid="assistant-toggle"
               type="button"
-              onClick={() => setAssistantOpen(!assistantOpen)}
+              onClick={() => (assistantOpen ? closeAssistant() : openAssistant())}
             >
               <span aria-hidden="true">✦</span>
               {assistantOpen ? 'Hide assistant' : 'Ask Remind Me'}
@@ -2290,13 +2313,15 @@ export function App(): ReactNode {
         ) : null}
         <div className="view-container">
           {snapshot ? (
-            <CurrentView
-              route={route}
-              snapshot={snapshot}
-              appInfo={appInfo}
-              onOpen={setEditor}
-              onRepeatDay={setRepeatDayDate}
-            />
+            <div className="view-transition-layer" key={route}>
+              <CurrentView
+                route={route}
+                snapshot={snapshot}
+                appInfo={appInfo}
+                onOpen={setEditor}
+                onRepeatDay={setRepeatDayDate}
+              />
+            </div>
           ) : (
             <section className="paper-card loading-card" aria-live="polite">
               <span className="loading-sun" aria-hidden="true" />
@@ -2306,28 +2331,33 @@ export function App(): ReactNode {
           )}
         </div>
       </main>
-      {assistantOpen ? (
-        <aside className="assistant-sidebar" data-wide={assistantWide} aria-label="Local assistant">
+      {assistantMounted ? (
+        <aside
+          className="assistant-sidebar"
+          data-state={assistantOpen ? 'open' : 'closing'}
+          data-wide={assistantWide}
+          aria-label="Local assistant"
+        >
           <AssistantPanel
             mode="sidebar"
             wide={assistantWide}
             onOpen={setEditor}
-            onClose={() => setAssistantOpen(false)}
+            onClose={closeAssistant}
             onToggleWide={toggleAssistantWide}
             onOpenDocument={() => setDocumentPlannerOpen(true)}
           />
         </aside>
-      ) : (
+      ) : !assistantOpen ? (
         <button
           className="assistant-rail-button"
           type="button"
-          onClick={() => setAssistantOpen(true)}
+          onClick={openAssistant}
           aria-label="Open local assistant"
         >
           <span aria-hidden="true">✦</span>
           Ask
         </button>
-      )}
+      ) : null}
       {editor ? <EditorDialog request={editor} onClose={() => setEditor(null)} /> : null}
       {repeatDayDate && snapshot ? (
         <RepeatDayScheduleDialog

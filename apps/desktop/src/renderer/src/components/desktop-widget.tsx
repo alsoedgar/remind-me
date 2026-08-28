@@ -304,7 +304,7 @@ export function DesktopWidget({
         </nav>
 
         {tab === 'assistant' ? (
-          <section className="glance-assistant-shell" aria-label="Local assistant">
+          <section className="glance-assistant-shell" aria-label="Local assistant" key={tab}>
             <header className="glance-assistant-bar">
               <span>
                 <strong>Local assistant</strong>
@@ -340,7 +340,7 @@ export function DesktopWidget({
                 <small>Scroll to see all</small>
               </div>
             )}
-            <section className="glance-agenda" aria-live="polite">
+            <section className="glance-agenda" aria-live="polite" key={tab}>
               {!snapshot ? (
                 <div className="glance-agenda-empty">
                   <strong>{loading ? 'Opening calendar…' : 'Calendar unavailable'}</strong>
@@ -511,11 +511,11 @@ export function DesktopWidget({
       </nav>
 
       {tab === 'assistant' ? (
-        <section className="widget-assistant" aria-label="Local assistant">
+        <section className="widget-assistant" aria-label="Local assistant" key={tab}>
           {compactAssistant}
         </section>
       ) : (
-        <section className="widget-list" aria-live="polite">
+        <section className="widget-list" aria-live="polite" key={tab}>
           {!snapshot ? (
             <div className="widget-empty">
               <span className="widget-loading-mark" aria-hidden="true" />

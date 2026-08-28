@@ -280,6 +280,17 @@ function scheduleSmokeResult(window: BrowserWindow): void {
           }
           const liveVoice = await window.remindMe.finishVoiceStream('voice:live-smoke')
           stopLiveProgress()
+          let resolveCancellation
+          const cancellationStarted = new Promise((resolve) => {
+            resolveCancellation = resolve
+          })
+          const stopCancellationProgress = window.remindMe.onVoiceProgress((event) => {
+            if (event.jobId === 'voice:cancel-smoke' && event.stage === 'queued') {
+              void window.remindMe
+                .cancelVoiceTranscription('voice:cancel-smoke')
+                .then(resolveCancellation)
+            }
+          })
           const cancelledTranscription = window.remindMe
             .transcribeVoice({
               jobId: 'voice:cancel-smoke',
@@ -287,10 +298,16 @@ function scheduleSmokeResult(window: BrowserWindow): void {
               samples: voiceSamples.buffer.slice(0)
             })
             .then(() => false, () => true)
-          await new Promise((resolveCancel) => setTimeout(resolveCancel, 40))
-          const cancellation = await window.remindMe.cancelVoiceTranscription(
-            'voice:cancel-smoke'
-          )
+          const cancellation = await Promise.race([
+            cancellationStarted,
+            new Promise((_, rejectCancellation) =>
+              setTimeout(
+                () => rejectCancellation(new Error('Voice cancellation did not start in time')),
+                2500
+              )
+            )
+          ])
+          stopCancellationProgress()
           const cancellationRejected = await cancelledTranscription
           const voice = await window.remindMe.transcribeVoice({
             jobId: 'voice:smoke',
@@ -343,6 +360,9 @@ function scheduleSmokeResult(window: BrowserWindow): void {
             '[aria-label="Close assistant sidebar"]'
           )
           closeAssistant?.click()
+          const assistantClosingMotion = Boolean(await waitFor(() =>
+            document.querySelector('.assistant-sidebar[data-state="closing"]')
+          ))
           await waitFor(() => document.querySelector('.assistant-rail-button'))
           document.querySelector('.assistant-rail-button')?.click()
           const composerAfterReopen = await waitFor(() => {
@@ -473,6 +493,7 @@ function scheduleSmokeResult(window: BrowserWindow): void {
               voiceAfterIdle.available === true &&
               voiceAfterIdle.loaded === false &&
               voiceAfterIdle.unloadsWhenIdle === true,
+            assistantClosingMotion,
             assistantComposerRecovery,
             secureDelete:
               deleted.reminderCount >= 1 &&
