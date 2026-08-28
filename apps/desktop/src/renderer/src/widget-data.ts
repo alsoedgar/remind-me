@@ -63,10 +63,10 @@ export function eventsForWidgetDay(
     .slice(0, limit)
 }
 
-export function activeWidgetReminders(
-  reminders: readonly WidgetReminder[],
+export function activeWidgetReminders<T extends WidgetReminder>(
+  reminders: readonly T[],
   limit = Number.POSITIVE_INFINITY
-): WidgetReminder[] {
+): T[] {
   return reminders
     .filter((reminder) => reminder.status === 'active')
     .sort((left, right) => Date.parse(left.dueAtUtc) - Date.parse(right.dueAtUtc))

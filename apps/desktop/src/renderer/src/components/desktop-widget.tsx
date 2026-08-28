@@ -139,6 +139,33 @@ function GlanceAgendaItem({
   )
 }
 
+function GlanceReminderItem({
+  reminder,
+  locale,
+  onOpenReminder
+}: {
+  reminder: CalendarSnapshot['reminders'][number]
+  locale: string
+  onOpenReminder: (reminderId: string) => void
+}): ReactNode {
+  return (
+    <button
+      className="glance-agenda-item glance-reminder-item"
+      type="button"
+      onClick={() => onOpenReminder(reminder.id)}
+    >
+      <time>
+        {formatDueDate(reminder.dueAtUtc, reminder.timezone, locale, { includeDate: true })}
+      </time>
+      <span>
+        <strong>{reminder.title}</strong>
+        {reminder.notes ? <small>{reminder.notes}</small> : <small>Reminder</small>}
+      </span>
+      <span aria-hidden="true">›</span>
+    </button>
+  )
+}
+
 export function DesktopWidget({
   snapshot,
   loading,
@@ -226,13 +253,8 @@ export function DesktopWidget({
   )
 
   if (mode === 'glance') {
-    const glanceTab = tab === 'assistant' ? 'assistant' : 'agenda'
     return (
-      <main
-        className="desktop-widget glance-widget"
-        data-testid="glance-widget"
-        data-view={glanceTab}
-      >
+      <main className="desktop-widget glance-widget" data-testid="glance-widget" data-view={tab}>
         <header className="glance-header">
           <div>
             <span className="widget-brand-mark" aria-hidden="true">
@@ -262,46 +284,69 @@ export function DesktopWidget({
         </header>
 
         <nav className="glance-tabs" aria-label="Tiny view">
-          <button
-            type="button"
-            data-active={glanceTab === 'agenda'}
-            onClick={() => setTab('agenda')}
-          >
+          <button type="button" data-active={tab === 'agenda'} onClick={() => setTab('agenda')}>
             Day <span>{selectedDayItems.length}</span>
           </button>
           <button
             type="button"
-            data-active={glanceTab === 'assistant'}
+            data-active={tab === 'reminders'}
+            onClick={() => setTab('reminders')}
+          >
+            Reminders <span>{reminders.length}</span>
+          </button>
+          <button
+            type="button"
+            data-active={tab === 'assistant'}
             onClick={() => setTab('assistant')}
           >
             ✦ Ask
           </button>
         </nav>
 
-        {glanceTab === 'assistant' ? (
-          <section className="glance-assistant" aria-label="Local assistant">
-            {compactAssistant}
+        {tab === 'assistant' ? (
+          <section className="glance-assistant-shell" aria-label="Local assistant">
+            <header className="glance-assistant-bar">
+              <span>
+                <strong>Local assistant</strong>
+                <small>Private · on device</small>
+              </span>
+              <button type="button" onClick={onOpenAssistant}>
+                Full chat ↗
+              </button>
+            </header>
+            <div className="glance-assistant">{compactAssistant}</div>
           </section>
         ) : (
           <>
-            <div className="glance-day-nav">
-              <button type="button" onClick={() => shiftSelectedDate(-1)} aria-label="Previous day">
-                ←
-              </button>
-              <button type="button" onClick={selectToday} title="Return to today">
-                {compactSelectedDateLabel}
-              </button>
-              <button type="button" onClick={() => shiftSelectedDate(1)} aria-label="Next day">
-                →
-              </button>
-            </div>
+            {tab === 'agenda' ? (
+              <div className="glance-day-nav">
+                <button
+                  type="button"
+                  onClick={() => shiftSelectedDate(-1)}
+                  aria-label="Previous day"
+                >
+                  ←
+                </button>
+                <button type="button" onClick={selectToday} title="Return to today">
+                  {compactSelectedDateLabel}
+                </button>
+                <button type="button" onClick={() => shiftSelectedDate(1)} aria-label="Next day">
+                  →
+                </button>
+              </div>
+            ) : (
+              <div className="glance-section-heading">
+                <strong>Active reminders</strong>
+                <small>Scroll to see all</small>
+              </div>
+            )}
             <section className="glance-agenda" aria-live="polite">
               {!snapshot ? (
                 <div className="glance-agenda-empty">
                   <strong>{loading ? 'Opening calendar…' : 'Calendar unavailable'}</strong>
                   <small>{error ?? 'Your plans stay on this device.'}</small>
                 </div>
-              ) : selectedDayItems.length ? (
+              ) : tab === 'agenda' && selectedDayItems.length ? (
                 selectedDayItems.map((item) => (
                   <GlanceAgendaItem
                     item={item}
@@ -311,7 +356,16 @@ export function DesktopWidget({
                     onOpenReminder={onOpenReminder}
                   />
                 ))
-              ) : (
+              ) : tab === 'reminders' && reminders.length ? (
+                reminders.map((reminder) => (
+                  <GlanceReminderItem
+                    key={reminder.id}
+                    reminder={reminder}
+                    locale={locale}
+                    onOpenReminder={onOpenReminder}
+                  />
+                ))
+              ) : tab === 'agenda' ? (
                 <button
                   type="button"
                   className="glance-agenda-empty"
@@ -320,16 +374,46 @@ export function DesktopWidget({
                   <strong>A quiet day</strong>
                   <small>Tap to add a plan.</small>
                 </button>
+              ) : (
+                <button
+                  type="button"
+                  className="glance-agenda-empty"
+                  onClick={() =>
+                    onOpenEditor({
+                      kind: 'reminder',
+                      reminder: null,
+                      date: selectedDate,
+                      title: null
+                    })
+                  }
+                >
+                  <strong>No active reminders</strong>
+                  <small>Tap to add one.</small>
+                </button>
               )}
             </section>
             <footer className="glance-footer">
               <span>
-                {selectedDayItems.length
+                {tab === 'agenda' && selectedDayItems.length
                   ? `${selectedDayItems.length} ${selectedDayItems.length === 1 ? 'item' : 'items'} · scroll for all`
-                  : 'Private · on device'}
+                  : tab === 'reminders' && reminders.length
+                    ? `${reminders.length} active · scroll for all`
+                    : 'Private · on device'}
               </span>
-              <button type="button" onClick={() => onQuickAdd(selectedDate)}>
-                + Add
+              <button
+                type="button"
+                onClick={() => {
+                  if (tab === 'agenda') onQuickAdd(selectedDate)
+                  else
+                    onOpenEditor({
+                      kind: 'reminder',
+                      reminder: null,
+                      date: selectedDate,
+                      title: null
+                    })
+                }}
+              >
+                {tab === 'agenda' ? '+ Add' : '+ Reminder'}
               </button>
             </footer>
           </>
@@ -422,7 +506,7 @@ export function DesktopWidget({
           Reminders <span>{reminders.length}</span>
         </button>
         <button type="button" data-active={tab === 'assistant'} onClick={() => setTab('assistant')}>
-          ✦ Ask
+          ✦ Assistant
         </button>
       </nav>
 

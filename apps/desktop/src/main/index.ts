@@ -357,12 +357,16 @@ function scheduleSmokeResult(window: BrowserWindow): void {
             nativeValueSetter.call(composerAfterReopen, 'typing works after reopening')
             composerAfterReopen.dispatchEvent(new Event('input', { bubbles: true }))
           }
-          await new Promise((resolveInput) => setTimeout(resolveInput, 35))
+          const typingAfterReopen = Boolean(await waitFor(() =>
+            document.activeElement === composerAfterReopen &&
+            composerAfterReopen?.value === 'typing works after reopening'
+              ? composerAfterReopen
+              : null
+          ))
           const assistantComposerRecovery =
             focusOnOpen &&
             focusAfterClear &&
-            document.activeElement === composerAfterReopen &&
-            composerAfterReopen?.value === 'typing works after reopening'
+            typingAfterReopen
           document.querySelector('[aria-label="Close assistant sidebar"]')?.click()
           await window.remindMe.saveReminder({
             id: null,
@@ -595,12 +599,20 @@ function scheduleSmokeResult(window: BrowserWindow): void {
             'editor',
             'assistant',
             'widget',
+            'widget-assistant',
+            'glance',
+            'glance-reminders',
+            'glance-assistant',
+            'calendar-day',
             'document'
           ].includes(captureView)
         ) {
           const viewControlFound = await window.webContents.executeJavaScript(`
-            (() => {
+            (async () => {
               const captureView = ${JSON.stringify(captureView)}
+              const pause = (duration = 350) => new Promise((resolve) => setTimeout(resolve, duration))
+              const findButton = (selector, text) => [...document.querySelectorAll(selector)]
+                .find((candidate) => candidate.textContent?.includes(text))
               if (captureView === 'editor') {
                 const button = document.querySelector('.quick-add')
                 button?.click()
@@ -611,11 +623,46 @@ function scheduleSmokeResult(window: BrowserWindow): void {
                 button?.click()
                 return Boolean(button)
               }
-               if (captureView === 'widget') {
-                 const button = document.querySelector('[data-testid="widget-mode-button"]')
-                 button?.click()
-                 return Boolean(button)
-               }
+              if (captureView === 'calendar-day') {
+                const button = findButton('.nav-button', 'Calendar')
+                button?.click()
+                await pause()
+                const day = document.querySelector('.calendar-day[data-today="true"] .calendar-day-open')
+                day?.click()
+                await pause()
+                return Boolean(button && day)
+              }
+              if (['widget', 'widget-assistant', 'glance', 'glance-reminders', 'glance-assistant'].includes(captureView)) {
+                const button = document.querySelector('[data-testid="widget-mode-button"]')
+                button?.click()
+                if (!button) return false
+                await pause(500)
+                if (captureView === 'widget-assistant') {
+                  const assistant = findButton('.widget-tabs button', 'Assistant')
+                  assistant?.click()
+                  await pause()
+                  return Boolean(assistant)
+                }
+                if (captureView.startsWith('glance')) {
+                  const tiny = findButton('.widget-window-actions button', 'Tiny')
+                  tiny?.click()
+                  if (!tiny) return false
+                  await pause(500)
+                  if (captureView === 'glance-reminders') {
+                    const reminders = findButton('.glance-tabs button', 'Reminders')
+                    reminders?.click()
+                    await pause()
+                    return Boolean(reminders)
+                  }
+                  if (captureView === 'glance-assistant') {
+                    const assistant = findButton('.glance-tabs button', 'Ask')
+                    assistant?.click()
+                    await pause()
+                    return Boolean(assistant)
+                  }
+                }
+                return true
+              }
                if (captureView === 'document') {
                  const button = [...document.querySelectorAll('button')]
                    .find((candidate) => candidate.textContent?.includes('Import plan'))
@@ -633,7 +680,18 @@ function scheduleSmokeResult(window: BrowserWindow): void {
           if (!viewControlFound)
             console.error(`Smoke capture control was not found: ${captureView}`)
           await new Promise((resolveReady) =>
-            setTimeout(resolveReady, captureView === 'widget' ? 700 : 350)
+            setTimeout(
+              resolveReady,
+              [
+                'widget',
+                'widget-assistant',
+                'glance',
+                'glance-reminders',
+                'glance-assistant'
+              ].includes(captureView)
+                ? 700
+                : 350
+            )
           )
           if (captureView === 'document') {
             const documentDeadline = Date.now() + 30_000

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { isThemeId } from '@remind-me/ui'
 import type {
   AppInfo,
@@ -405,10 +405,9 @@ function CalendarView({
   const [anchor, setAnchor] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   )
-  const [selectedDate, setSelectedDate] = useState<string | null>(() =>
-    todayDate(snapshot.preferences.timezone)
-  )
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const dayAgendaRef = useRef<HTMLElement | null>(null)
   const loadFor = useCalendarStore((state) => state.loadFor)
   const preferences = snapshot.preferences
   const cells = useMemo(
@@ -444,10 +443,24 @@ function CalendarView({
     : ''
   const selectedEventCount = selectedAgenda.filter((item) => item.kind === 'event').length
   const selectedReminderCount = selectedAgenda.length - selectedEventCount
+
+  useEffect(() => {
+    const agenda = dayAgendaRef.current
+    if (!selectedDate || !agenda || window.matchMedia('(min-width: 1280px)').matches) return
+    const frame = window.requestAnimationFrame(() => {
+      agenda.scrollIntoView({
+        behavior: preferences.reduceMotion ? 'auto' : 'smooth',
+        block: 'start'
+      })
+      agenda.focus({ preventScroll: true })
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [preferences.reduceMotion, selectedDate])
+
   function moveMonth(change: number): void {
     const next = new Date(anchor.getFullYear(), anchor.getMonth() + change, 1)
     setAnchor(next)
-    setSelectedDate(dateKey(next.getFullYear(), next.getMonth(), 1))
+    setSelectedDate(null)
     void loadFor(next)
   }
 
@@ -457,6 +470,7 @@ function CalendarView({
         <div>
           <p className="eyebrow">Calendar</p>
           <h2 id="calendar-heading">{monthName}</h2>
+          <p className="calendar-toolbar-hint">Choose any day to see every plan in it.</p>
         </div>
         <label className="search-field">
           <span className="visually-hidden">Search calendar</span>
@@ -631,7 +645,15 @@ function CalendarView({
           </div>
         </div>
         {selectedDate ? (
-          <aside className="calendar-day-agenda" aria-labelledby="selected-day-heading">
+          <aside
+            className="calendar-day-agenda"
+            aria-labelledby="selected-day-heading"
+            ref={dayAgendaRef}
+            tabIndex={-1}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setSelectedDate(null)
+            }}
+          >
             <header className="calendar-agenda-heading">
               <div>
                 <p className="eyebrow">Complete day</p>
@@ -697,6 +719,14 @@ function CalendarView({
                             preferences.locale,
                             occurrence.allDay
                           )}
+                          {!occurrence.allDay
+                            ? `–${formatEventTime(
+                                occurrence.endUtc,
+                                occurrence.timezone,
+                                preferences.locale,
+                                false
+                              )}`
+                            : ''}
                         </time>
                         <span>
                           <strong>{occurrence.title}</strong>
