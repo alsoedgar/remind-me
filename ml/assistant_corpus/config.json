@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
-  "corpusVersion": "0.1.0",
+  "schemaVersion": 2,
+  "corpusVersion": "0.2.0",
   "seed": 260826,
-  "materializationsPerTemplate": 6,
+  "materializationsPerTemplate": 8,
   "teacherParaphrasesPerJob": 1,
   "minimumAcceptedTeacherTemplates": 30,
   "minimumTeacherCapabilityCoverage": 30,

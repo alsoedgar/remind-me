@@ -96,6 +96,9 @@ importers:
         specifier: 5.0.15
         version: 5.0.15(@types/react@19.2.18)(react@19.2.8)
     devDependencies:
+      '@napi-rs/canvas':
+        specifier: 1.0.7
+        version: 1.0.7
       '@tesseract.js-data/eng':
         specifier: 1.0.0
         version: 1.0.0
@@ -136,6 +139,15 @@ importers:
       '@node-llama-cpp/linux-x64':
         specifier: 3.20.0
         version: 3.20.0
+      '@node-llama-cpp/linux-x64-cuda':
+        specifier: 3.20.0
+        version: 3.20.0
+      '@node-llama-cpp/linux-x64-cuda-ext':
+        specifier: 3.20.0
+        version: 3.20.0
+      '@node-llama-cpp/linux-x64-vulkan':
+        specifier: 3.20.0
+        version: 3.20.0
       '@node-llama-cpp/mac-arm64-metal':
         specifier: 3.20.0
         version: 3.20.0
@@ -146,6 +158,15 @@ importers:
         specifier: 3.20.0
         version: 3.20.0
       '@node-llama-cpp/win-x64':
+        specifier: 3.20.0
+        version: 3.20.0
+      '@node-llama-cpp/win-x64-cuda':
+        specifier: 3.20.0
+        version: 3.20.0
+      '@node-llama-cpp/win-x64-cuda-ext':
+        specifier: 3.20.0
+        version: 3.20.0
+      '@node-llama-cpp/win-x64-vulkan':
         specifier: 3.20.0
         version: 3.20.0
 
@@ -188,9 +209,6 @@ importers:
       '@js-temporal/polyfill':
         specifier: 0.5.1
         version: 0.5.1
-      '@remind-me/assistant-core':
-        specifier: workspace:*
-        version: link:../assistant-core
       '@remind-me/calendar-engine':
         specifier: workspace:*
         version: link:../calendar-engine
@@ -3522,7 +3540,6 @@ snapshots:
       '@napi-rs/canvas-linux-x64-musl': 1.0.7
       '@napi-rs/canvas-win32-arm64-msvc': 1.0.7
       '@napi-rs/canvas-win32-x64-msvc': 1.0.7
-    optional: true
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true

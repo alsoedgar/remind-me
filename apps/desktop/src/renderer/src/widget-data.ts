@@ -55,7 +55,7 @@ export function buildWidgetWeek(
 export function eventsForWidgetDay(
   occurrences: readonly WidgetOccurrence[],
   date: string,
-  limit = 5
+  limit = Number.POSITIVE_INFINITY
 ): WidgetOccurrence[] {
   return occurrences
     .filter((occurrence) => occurrence.originalDate === date)
@@ -65,7 +65,7 @@ export function eventsForWidgetDay(
 
 export function activeWidgetReminders(
   reminders: readonly WidgetReminder[],
-  limit = 5
+  limit = Number.POSITIVE_INFINITY
 ): WidgetReminder[] {
   return reminders
     .filter((reminder) => reminder.status === 'active')

@@ -114,6 +114,18 @@ const monthNumbers: Readonly<Record<string, number>> = {
   dec: 12
 }
 
+const politeRequestPrefix =
+  "(?:please\\s+)?(?:(?:can|could|would|will)\\s+you\\s+|i(?:'d| would)\\s+like\\s+(?:you\\s+)?to\\s+)?"
+const reminderRequestPattern = new RegExp(
+  `^${politeRequestPrefix}(?:remind\\s+me(?:\\s+(?:to|about))?|remember\\s+to|(?:set|add|create)\\s+(?:a\\s+)?reminder(?:\\s+(?:to|for|about))?)\\b`,
+  'iu'
+)
+const remindMeRequestPattern = new RegExp(`^${politeRequestPrefix}remind\\s+me\\b`, 'iu')
+const reminderPrefixPattern = new RegExp(
+  `^\\s*${politeRequestPrefix}(?:remind\\s+me(?:\\s+(?:to|about))?|remember\\s+to|(?:set|add|create)\\s+(?:a\\s+)?reminder(?:\\s+(?:to|for|about))?)\\s*`,
+  'iu'
+)
+
 const stopWords = new Set([
   'a',
   'an',
@@ -417,7 +429,7 @@ function parseClock(raw: string): ParsedClock | null {
   const normalized = raw.trim().toLocaleLowerCase().replace(/\./gu, '').replace(/\s+/gu, '')
   if (normalized === 'noon') return { time: '12:00', explicitMeridiem: true, ambiguous: false }
   if (normalized === 'midnight') return { time: '00:00', explicitMeridiem: true, ambiguous: false }
-  const match = /^(\d{1,2})(?::(\d{2}))?(am|pm)?$/u.exec(normalized)
+  const match = /^(\d{1,2})(?::(\d{1,2}))?(am|pm)?$/u.exec(normalized)
   if (!match?.[1]) return null
   let hour = Number(match[1])
   const minute = Number(match[2] ?? '0')
@@ -438,26 +450,62 @@ function inferRangeClocks(
   rightRaw: string
 ): { left: ParsedClock; right: ParsedClock; ambiguous: boolean } | null {
   let left = parseClock(leftRaw)
-  const right = parseClock(rightRaw)
+  let right = parseClock(rightRaw)
   if (!left || !right) return null
-  const rightMeridiem = /p\.?m\.?/iu.test(rightRaw)
-    ? 'pm'
-    : /a\.?m\.?/iu.test(rightRaw)
-      ? 'am'
-      : null
+  const meridiem = (value: string): 'am' | 'pm' | null =>
+    /p\.?m\.?/iu.test(value) ? 'pm' : /a\.?m\.?/iu.test(value) ? 'am' : null
+  const leftMeridiem = meridiem(leftRaw)
+  const rightMeridiem = meridiem(rightRaw)
   if (!left.explicitMeridiem && rightMeridiem) {
     const inferred = parseClock(`${leftRaw}${rightMeridiem}`)
     if (inferred) left = inferred
+  }
+  if (!right.explicitMeridiem && leftMeridiem) {
+    const inferred = parseClock(`${rightRaw}${leftMeridiem}`)
+    if (inferred) right = inferred
   }
   return { left, right, ambiguous: left.ambiguous || right.ambiguous }
 }
 
 function parseTimeMatch(text: string): TimeMatch | null {
-  const rangePattern =
-    /\b(?:from\s+|between\s+)(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)?|noon|midnight)\s+(?:to|until|and|-)\s+(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)?|noon|midnight)\b/iu
+  const malformedRangePattern =
+    /(?<![\d/])(?:from\s+|between\s+)?(\d{1,2}):(\d{1,2})\s*[-–—]\s*(\d{2})\s*(a\.?m\.?|p\.?m\.?)?\b/iu
+  const malformedRange = malformedRangePattern.exec(text)
+  if (
+    malformedRange?.index !== undefined &&
+    malformedRange[1] &&
+    malformedRange[2] &&
+    malformedRange[3]
+  ) {
+    const rightRaw =
+      malformedRange[2] +
+      ':' +
+      malformedRange[3] +
+      (malformedRange[4] ? ' ' + malformedRange[4] : '')
+    const clocks = inferRangeClocks(malformedRange[1], rightRaw)
+    if (clocks) {
+      return {
+        startTime: clocks.left.time,
+        endTime: clocks.right.time,
+        start: malformedRange.index,
+        end: malformedRange.index + malformedRange[0].length,
+        text: malformedRange[0],
+        ambiguous: clocks.ambiguous,
+        period: null
+      }
+    }
+  }
+
+  const clockToken = '(?:\\d{1,2}(?::\\d{1,2})?\\s*(?:a\\.?m\\.?|p\\.?m\\.?)?|noon|midnight)'
+  const rangePattern = new RegExp(
+    `(?<![\\d/-])(from\\s+|between\\s+)?(${clockToken})\\s*(?:to|until|and|[-–—])\\s*(${clockToken})(?![\\d/-])`,
+    'iu'
+  )
   const rangeMatch = rangePattern.exec(text)
-  if (rangeMatch?.index !== undefined && rangeMatch[1] && rangeMatch[2]) {
-    const clocks = inferRangeClocks(rangeMatch[1], rangeMatch[2])
+  if (rangeMatch?.index !== undefined && rangeMatch[2] && rangeMatch[3]) {
+    const hasRangeCue =
+      Boolean(rangeMatch[1]) || /:|a\.?m\.?|p\.?m\.?|noon|midnight/iu.test(rangeMatch[0])
+    const clocks = hasRangeCue ? inferRangeClocks(rangeMatch[2], rangeMatch[3]) : null
     if (clocks) {
       return {
         startTime: clocks.left.time,
@@ -497,7 +545,7 @@ function parseTimeMatch(text: string): TimeMatch | null {
   }
 
   const pointPattern =
-    /(?:\bat\s+|@\s*)(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)?|noon|midnight)\b/iu
+    /(?:\bat\s+|@\s*)(\d{1,2}(?::\d{1,2})?\s*(?:a\.?m\.?|p\.?m\.?)?|noon|midnight)\b/iu
   const pointMatch = pointPattern.exec(text)
   if (pointMatch?.index !== undefined && pointMatch[1]) {
     const clock = parseClock(pointMatch[1])
@@ -514,7 +562,7 @@ function parseTimeMatch(text: string): TimeMatch | null {
     }
   }
 
-  const explicitClock = /\b(\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)|noon|midnight)\b/iu.exec(
+  const explicitClock = /\b(\d{1,2}(?::\d{1,2})?\s*(?:a\.?m\.?|p\.?m\.?)|noon|midnight)\b/iu.exec(
     text
   )
   if (explicitClock?.index !== undefined && explicitClock[1]) {
@@ -722,6 +770,13 @@ function outsideSpans<T extends { start: number; end: number }>(
     : match
 }
 
+function shiftedMatch<T extends { start: number; end: number }>(
+  match: T | null,
+  offset: number
+): T | null {
+  return match ? { ...match, start: match.start + offset, end: match.end + offset } : null
+}
+
 function requestedWindowSpan(
   sourceText: string,
   date: DateMatch | null,
@@ -832,6 +887,170 @@ function dialogueReferenceNumber(query: string): 'singular' | 'plural' | null {
   return null
 }
 
+function dialogueReferencePosition(
+  query: string
+): { kind: 'index'; index: number } | { kind: 'last' } | null {
+  const normalized = query
+    .normalize('NFKC')
+    .toLocaleLowerCase()
+    .replace(/[.!?]+$/gu, '')
+    .trim()
+  const ordinal =
+    /^(?:the\s+)?(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last|final)(?:\s+(?:one|item|event|meeting|appointment|class|course|reminder|task))?$/u.exec(
+      normalized
+    )?.[1]
+  if (!ordinal) return null
+  if (ordinal === 'last' || ordinal === 'final') return { kind: 'last' }
+  const index = {
+    first: 0,
+    '1st': 0,
+    second: 1,
+    '2nd': 1,
+    third: 2,
+    '3rd': 2,
+    fourth: 3,
+    '4th': 3,
+    fifth: 4,
+    '5th': 4
+  }[ordinal]
+  return index === undefined ? null : { kind: 'index', index }
+}
+
+interface DescriptiveTargetCandidate {
+  id: string
+  kind: 'event' | 'reminder'
+  title: string
+  date: string
+  time: string
+  location: string
+}
+
+function resolvedSelectorDate(anchor: TemporalAnchor, localDate: string): string | null {
+  const current = Temporal.PlainDate.from(localDate)
+  switch (anchor.kind) {
+    case 'absolute':
+      return anchor.date
+    case 'relative-day':
+      return current.add({ days: anchor.offset }).toString()
+    case 'weekday': {
+      const targetDay = weekdays.indexOf(anchor.weekday) + 1
+      const delta = (targetDay - current.dayOfWeek + 7) % 7
+      return current.add({ days: anchor.relation === 'next' && delta === 0 ? 7 : delta }).toString()
+    }
+    case 'verbatim':
+      return null
+  }
+}
+
+function eraseSelectorSpans(
+  value: string,
+  spans: ReadonlyArray<{ start: number; end: number } | null>
+): string {
+  const characters = value.split('')
+  for (const span of spans) {
+    if (!span) continue
+    for (
+      let index = Math.max(0, span.start);
+      index < Math.min(characters.length, span.end);
+      index++
+    ) {
+      characters[index] = ' '
+    }
+  }
+  return characters.join('').replace(/\s+/gu, ' ').trim()
+}
+
+function descriptiveLocationQuery(
+  query: string,
+  date: DateMatch | null,
+  time: TimeMatch | null
+): string | null {
+  const remainder = eraseSelectorSpans(query, [date, time])
+  const match = /\b(?:in|inside|at)\s+(.+?)$/iu.exec(remainder)
+  const value = match?.[1]
+    ?.replace(
+      /\b(?:the\s+)?(?:one|item|event|meeting|appointment|class|course|reminder|task)$/iu,
+      ''
+    )
+    .trim()
+  return value ? value : null
+}
+
+function candidateMatchesTime(candidateTime: string, selector: TimeMatch): boolean {
+  if (selector.ambiguous) return false
+  if (selector.period && selector.endTime) {
+    return candidateTime >= selector.startTime && candidateTime < selector.endTime
+  }
+  return candidateTime === selector.startTime
+}
+
+function descriptiveTargetMatch(
+  query: string,
+  candidates: readonly DescriptiveTargetCandidate[],
+  focus: {
+    eventIds?: readonly string[] | undefined
+    reminderIds?: readonly string[] | undefined
+    localDate?: string | undefined
+  }
+): TargetMatch | null {
+  const date = focus.localDate ? parseDateMatch(query, focus.localDate) : null
+  const selectorDate =
+    date && focus.localDate ? resolvedSelectorDate(date.anchor, focus.localDate) : null
+  const time = parseTimeMatch(query)
+  const locationQuery = descriptiveLocationQuery(query, date, time)
+  const normalizedQuery = normalizedTokens(query).join(' ')
+  const queryContainsKnownLocation = candidates.some((candidate) => {
+    const location = normalizedTokens(candidate.location).join(' ')
+    return location.length > 0 && normalizedQuery.includes(location)
+  })
+  const hasDescriptor = Boolean(selectorDate || time || locationQuery || queryContainsKnownLocation)
+  if (!hasDescriptor) return null
+
+  const focusedIds = new Set([...(focus.eventIds ?? []), ...(focus.reminderIds ?? [])])
+  const deictic = /\b(?:it|one|ones|this|that|these|those|them)\b/iu.test(query)
+  const scoped =
+    deictic && focusedIds.size > 0
+      ? candidates.filter((candidate) => focusedIds.has(candidate.id))
+      : candidates
+  const matched = scoped.filter((candidate) => {
+    if (selectorDate && candidate.date !== selectorDate) return false
+    if (time && !candidateMatchesTime(candidate.time, time)) return false
+    if (locationQuery && similarity(locationQuery, candidate.location) < 0.72) return false
+    if (
+      !locationQuery &&
+      queryContainsKnownLocation &&
+      !normalizedQuery.includes(normalizedTokens(candidate.location).join(' '))
+    ) {
+      return false
+    }
+    return true
+  })
+  if (matched.length === 1) {
+    const selected = matched[0]
+    if (!selected) return null
+    return {
+      eventIds: selected.kind === 'event' ? [selected.id] : [],
+      reminderIds: selected.kind === 'reminder' ? [selected.id] : [],
+      ambiguity: null
+    }
+  }
+  return {
+    eventIds: [],
+    reminderIds: [],
+    ambiguity: {
+      code: matched.length > 1 ? 'multiple-targets' : 'unclear-reference',
+      message:
+        matched.length > 1
+          ? 'More than one item matches those details. Which one do you mean?'
+          : 'I could not find an item matching those details.',
+      options: (matched.length > 0 ? matched : scoped)
+        .map((candidate) => candidate.title)
+        .slice(0, 10),
+      sourceSpan: null
+    }
+  }
+}
+
 function targetMatch(
   query: string,
   events: readonly EventEntity[],
@@ -841,29 +1060,78 @@ function targetMatch(
     eventIds?: readonly string[] | undefined
     reminderIds?: readonly string[] | undefined
     allowMultiple?: boolean
+    localDate?: string | undefined
   } = {}
 ): TargetMatch {
   const referenceNumber = dialogueReferenceNumber(query)
+  const referencePosition = dialogueReferencePosition(query)
   const singularReference = referenceNumber === 'singular'
   const pluralReference = referenceNumber === 'plural'
-  if (singularReference || pluralReference) {
-    const focusedEvents = events.filter(
-      (event) =>
-        preference !== 'reminder' &&
-        event.status === 'active' &&
-        (focus.eventIds ?? []).includes(event.id)
-    )
-    const focusedReminders = reminders.filter(
-      (reminder) =>
-        preference !== 'event' &&
-        reminder.status === 'active' &&
-        (focus.reminderIds ?? []).includes(reminder.id)
-    )
-    const focusedCount = focusedEvents.length + focusedReminders.length
+  if (singularReference || pluralReference || referencePosition) {
+    const eventById = new Map(events.map((event) => [event.id, event]))
+    const reminderById = new Map(reminders.map((reminder) => [reminder.id, reminder]))
+    const focusedEvents = (focus.eventIds ?? [])
+      .map((id) => eventById.get(id))
+      .filter((event): event is EventEntity =>
+        Boolean(event && preference !== 'reminder' && event.status === 'active')
+      )
+    const focusedReminders = (focus.reminderIds ?? [])
+      .map((id) => reminderById.get(id))
+      .filter((reminder): reminder is ReminderEntity =>
+        Boolean(reminder && preference !== 'event' && reminder.status === 'active')
+      )
+    const focusedItems = [
+      ...focusedEvents.map((event, index) => ({
+        id: event.id,
+        kind: 'event' as const,
+        title: event.title,
+        at: event.startUtc,
+        stableIndex: index
+      })),
+      ...focusedReminders.map((reminder, index) => ({
+        id: reminder.id,
+        kind: 'reminder' as const,
+        title: reminder.title,
+        at: reminder.dueAtUtc,
+        stableIndex: focusedEvents.length + index
+      }))
+    ].sort((left, right) => {
+      if (focusedEvents.length === 0 || focusedReminders.length === 0) {
+        return left.stableIndex - right.stableIndex
+      }
+      return Date.parse(left.at) - Date.parse(right.at) || left.stableIndex - right.stableIndex
+    })
+    const focusedCount = focusedItems.length
+    if (referencePosition) {
+      const selected =
+        referencePosition.kind === 'last'
+          ? focusedItems.at(-1)
+          : focusedItems[referencePosition.index]
+      if (selected) {
+        return {
+          eventIds: selected.kind === 'event' ? [selected.id] : [],
+          reminderIds: selected.kind === 'reminder' ? [selected.id] : [],
+          ambiguity: null
+        }
+      }
+      return {
+        eventIds: [],
+        reminderIds: [],
+        ambiguity: {
+          code: 'unclear-reference',
+          message:
+            focusedCount === 0
+              ? 'There is no recent calendar result to select from.'
+              : `That position is outside the ${focusedCount} recent item${focusedCount === 1 ? '' : 's'}.`,
+          options: focusedItems.map((item) => item.title).slice(0, 10),
+          sourceSpan: null
+        }
+      }
+    }
     if (focusedCount === 1 || (pluralReference && focus.allowMultiple && focusedCount > 0)) {
       return {
-        eventIds: focusedEvents.map((event) => event.id),
-        reminderIds: focusedReminders.map((reminder) => reminder.id),
+        eventIds: focusedItems.filter((item) => item.kind === 'event').map((item) => item.id),
+        reminderIds: focusedItems.filter((item) => item.kind === 'reminder').map((item) => item.id),
         ambiguity: null
       }
     }
@@ -874,15 +1142,61 @@ function targetMatch(
         ambiguity: {
           code: 'multiple-targets',
           message: 'More than one recent item is in focus. Which one do you mean?',
-          options: [
-            ...focusedEvents.map((event) => event.title),
-            ...focusedReminders.map((reminder) => reminder.title)
-          ].slice(0, 10),
+          options: focusedItems.map((item) => item.title).slice(0, 10),
           sourceSpan: null
         }
       }
     }
   }
+  const descriptiveCandidates: DescriptiveTargetCandidate[] = [
+    ...(preference === 'reminder'
+      ? []
+      : events
+          .filter((event) => event.status === 'active')
+          .map((event) => {
+            const local = Temporal.Instant.from(event.startUtc).toZonedDateTimeISO(event.timezone)
+            return {
+              id: event.id,
+              kind: 'event' as const,
+              title: event.title,
+              date: local.toPlainDate().toString(),
+              time: local.toPlainTime().toString({ smallestUnit: 'minute' }),
+              location: event.location
+            }
+          })),
+    ...(preference === 'event'
+      ? []
+      : reminders
+          .filter((reminder) => reminder.status === 'active')
+          .map((reminder) => {
+            const local = Temporal.Instant.from(reminder.dueAtUtc).toZonedDateTimeISO(
+              reminder.timezone
+            )
+            return {
+              id: reminder.id,
+              kind: 'reminder' as const,
+              title: reminder.title,
+              date: local.toPlainDate().toString(),
+              time: local.toPlainTime().toString({ smallestUnit: 'minute' }),
+              location: ''
+            }
+          }))
+  ]
+  const strongTitleMatches = descriptiveCandidates
+    .map((candidate) => ({ ...candidate, score: similarity(query, candidate.title) }))
+    .filter((candidate) => candidate.score === 1)
+    .sort((left, right) => right.score - left.score)
+  const strongTitle = strongTitleMatches[0]
+  const nextStrongTitle = strongTitleMatches[1]
+  if (strongTitle && (!nextStrongTitle || strongTitle.score - nextStrongTitle.score >= 0.08)) {
+    return {
+      eventIds: strongTitle.kind === 'event' ? [strongTitle.id] : [],
+      reminderIds: strongTitle.kind === 'reminder' ? [strongTitle.id] : [],
+      ambiguity: null
+    }
+  }
+  const descriptive = descriptiveTargetMatch(query, descriptiveCandidates, focus)
+  if (descriptive) return descriptive
   const candidates = [
     ...(preference === 'reminder'
       ? []
@@ -944,12 +1258,13 @@ function targetMatch(
 function selection(
   match: TargetMatch,
   query: string,
-  evidenceId: string
+  evidenceId: string,
+  source: string
 ): NonNullable<CalendarIRDraft['selection']> {
   return {
     eventIds: match.eventIds,
     reminderIds: match.reminderIds,
-    query: sourcedText(query, query, evidenceId)
+    query: sourcedText(query, source, evidenceId)
   }
 }
 
@@ -988,24 +1303,21 @@ function titleBeforeTemporal(raw: string, date: DateMatch | null, time: TimeMatc
     )
     .replace(/^\s*(?:called|named)\s+/iu, '')
     .replace(/\ball[- ]day\b/giu, '')
-    .replace(/\s+(?:on|for|from)\s*$/iu, '')
+    .replace(/\s+(?:on|at|for|from)\s*$/iu, '')
     .trim()
 }
 
 function reminderTitle(raw: string, date: DateMatch | null, time: TimeMatch | null): string {
   const trailingAction = /\bto\s+(.+)$/iu.exec(raw)
   if (
-    /^\s*(?:please\s+)?remind\s+me\b/iu.test(raw) &&
+    remindMeRequestPattern.test(raw) &&
     trailingAction?.index !== undefined &&
     trailingAction[1] &&
     trailingAction.index > Math.min(date?.start ?? raw.length, time?.start ?? raw.length)
   ) {
     return titleBeforeTemporal(trailingAction[1], null, null)
   }
-  const withoutPrefix = raw.replace(
-    /^\s*(?:please\s+)?(?:remind\s+me\s+(?:to|about)|remember\s+to|set\s+(?:a\s+)?reminder\s+(?:to|for|about)?|add\s+(?:a\s+)?reminder\s+(?:to|for|about)?)\s*/iu,
-    ''
-  )
+  const withoutPrefix = raw.replace(reminderPrefixPattern, '')
   const shiftedDate = date
     ? { ...date, start: Math.max(0, date.start - (raw.length - withoutPrefix.length)) }
     : null
@@ -1182,7 +1494,7 @@ export function parseCalendarText(
 
   if (
     (isOrdinalCalendarQuery(sourceText) ||
-      /\b(?:what(?:'s|s| is)? (?:on|in|happening|(?:my )?next)|what(?:'s|s| is) (?:tomorrow|tmr|tmrw|tmw|today)|what (?:do|did) i have|what (?:was|is) on my (?:calendar|schedule|agenda)|what does my day look like|do i have anything|where (?:do i (?:need to )?be|am i going|was i)|show (?:me )?(?:my )?|list (?:my )?|how (?:busy|full)|summari[sz]e|walk me through|tell me (?:more )?about|give me (?:the )?details? (?:for|on)|what(?:'s|s| is) coming up|upcoming (?:plans?|events?))\b/iu.test(
+      /\b(?:what(?:'s|s| is)? (?:on|in|happening|scheduled|(?:my )?next)|what(?:'s|s| is) (?:tomorrow|tmr|tmrw|tmw|today)|what (?:do|did) i have|what (?:classes?|courses?|lectures?|labs?|events?|meetings?|appointments?|reminders?) do i have|what (?:was|is) on my (?:calendar|schedule|agenda)|what does (?:my day|today|tomorrow|tmr|tmrw|tmw|(?:(?:next|this|last)\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)) look like|do i have anything|where (?:do i (?:need to )?be|am i going|was i)|show (?:me )?(?:my )?|list (?:my )?|how (?:busy|full)|summari[sz]e|walk me through|tell me (?:more )?about|give me (?:the )?details? (?:for|on)|what(?:'s|s| is) coming up|upcoming (?:plans?|events?))\b/iu.test(
         sourceText
       ) ||
       context.semanticHint?.operation === 'calendar.list') &&
@@ -1230,7 +1542,8 @@ export function parseCalendarText(
     const focused = targetMatch(query, context.events, context.reminders, 'either', {
       eventIds: context.focusedEventIds,
       reminderIds: context.focusedReminderIds,
-      allowMultiple: true
+      allowMultiple: true,
+      localDate: context.localDate
     })
     if (dialogueReferenceNumber(query) && focused.ambiguity) {
       return clarify(
@@ -1266,7 +1579,8 @@ export function parseCalendarText(
       .trim()
     const match = targetMatch(query, context.events, context.reminders, 'reminder', {
       eventIds: context.focusedEventIds,
-      reminderIds: context.focusedReminderIds
+      reminderIds: context.focusedReminderIds,
+      localDate: context.localDate
     })
     if (match.ambiguity) {
       return clarify(
@@ -1284,7 +1598,7 @@ export function parseCalendarText(
       'low',
       hintedComplete ? Math.min(0.92, context.semanticHint?.confidence ?? 0.92) : 0.96
     )
-    draft.selection = selection(match, query, evidenceId)
+    draft.selection = selection(match, query, evidenceId, sourceText)
     draft.fields.status = 'completed'
     return {
       draft: calendarIRDraftSchema.parse(draft),
@@ -1299,7 +1613,8 @@ export function parseCalendarText(
     const targetQuery = stripScopeWords(repeatUpdateMatch[1])
     const target = targetMatch(targetQuery, context.events, context.reminders, 'either', {
       eventIds: context.focusedEventIds,
-      reminderIds: context.focusedReminderIds
+      reminderIds: context.focusedReminderIds,
+      localDate: context.localDate
     })
     if (target.ambiguity) {
       return clarify(
@@ -1321,7 +1636,7 @@ export function parseCalendarText(
     }
     const operation = target.reminderIds.length ? 'reminder.update' : 'event.update'
     const draft = baseDraft(context, sourceText, operation, 'high', 0.94)
-    draft.selection = selection(target, targetQuery, evidenceId)
+    draft.selection = selection(target, targetQuery, evidenceId, sourceText)
     draft.scope = 'series'
     draft.recurrence = recurrence
     return {
@@ -1342,7 +1657,8 @@ export function parseCalendarText(
     const kind = updateHint.operation === 'reminder.update' ? 'reminder' : 'event'
     const target = targetMatch(targetQuery, context.events, context.reminders, kind, {
       eventIds: context.focusedEventIds,
-      reminderIds: context.focusedReminderIds
+      reminderIds: context.focusedReminderIds,
+      localDate: context.localDate
     })
     if (target.ambiguity) {
       return clarify(
@@ -1398,7 +1714,7 @@ export function parseCalendarText(
       nextRecurrence ? 'high' : 'medium',
       Math.min(0.9, updateHint.confidence)
     )
-    draft.selection = selection(target, targetQuery, evidenceId)
+    draft.selection = selection(target, targetQuery, evidenceId, sourceText)
     draft.scope = nextRecurrence || requestsSeriesScope(sourceText) ? 'series' : 'single'
     draft.fields.title = nextTitle
     draft.fields.description = nextDescription
@@ -1455,7 +1771,8 @@ export function parseCalendarText(
       ''
     const target = targetMatch(targetQuery, context.events, context.reminders, 'event', {
       eventIds: context.focusedEventIds,
-      reminderIds: context.focusedReminderIds
+      reminderIds: context.focusedReminderIds,
+      localDate: context.localDate
     })
     if (target.ambiguity) {
       return clarify(
@@ -1466,7 +1783,29 @@ export function parseCalendarText(
         target.ambiguity.options
       )
     }
-    if (!date) {
+    const destinationText = duplicateMatch?.[2] ?? null
+    const destinationOffset = destinationText ? sourceText.lastIndexOf(destinationText) : 0
+    const requestedDate = hintedDuplicate
+      ? outsideSpans(date, [context.semanticHint?.targetSpan ?? null])
+      : destinationText
+        ? shiftedMatch(parseDateMatch(destinationText, context.localDate), destinationOffset)
+        : date
+    const requestedEndDate = destinationText
+      ? shiftedMatch(
+          parseEndDateMatch(
+            destinationText,
+            context.localDate,
+            parseDateMatch(destinationText, context.localDate)
+          ),
+          destinationOffset
+        )
+      : endDate
+    const requestedTime = hintedDuplicate
+      ? outsideSpans(time, [context.semanticHint?.targetSpan ?? null])
+      : destinationText
+        ? shiftedMatch(parseTimeMatch(destinationText), destinationOffset)
+        : time
+    if (!requestedDate) {
       return clarify(context, sourceText, 'missing-date', 'What day should the copy begin?')
     }
     const source = context.events.find((event) => event.id === target.eventIds[0])
@@ -1475,13 +1814,13 @@ export function parseCalendarText(
     const sourceStart = Temporal.Instant.from(source.startUtc).toZonedDateTimeISO(source.timezone)
     const sourceEnd = Temporal.Instant.from(source.endUtc).toZonedDateTimeISO(source.timezone)
     const effectiveTime: TimeMatch =
-      time ??
+      requestedTime ??
       ({
         startTime: sourceStart.toPlainTime().toString({ smallestUnit: 'minute' }),
         endTime: sourceEnd.toPlainTime().toString({ smallestUnit: 'minute' }),
-        start: date.start,
-        end: date.end,
-        text: date.text,
+        start: requestedDate.start,
+        end: requestedDate.end,
+        text: requestedDate.text,
         ambiguous: false,
         period: null
       } satisfies TimeMatch)
@@ -1501,12 +1840,17 @@ export function parseCalendarText(
       'low',
       hintedDuplicate ? Math.min(0.92, context.semanticHint?.confidence ?? 0.92) : 0.94
     )
-    draft.selection = selection(target, targetQuery, evidenceId)
+    draft.selection = selection(target, targetQuery, evidenceId, sourceText)
     const recurrence = recurrenceFromText(sourceText, context.localDate)
     draft.fields.when = sourcedWindow(
-      mutationWindow(date, recurrence ? null : endDate, effectiveTime, source.allDay),
-      Math.min(date.start, effectiveTime.start),
-      Math.max(date.end, effectiveTime.end),
+      mutationWindow(
+        requestedDate,
+        recurrence ? null : requestedEndDate,
+        effectiveTime,
+        source.allDay
+      ),
+      Math.min(requestedDate.start, effectiveTime.start),
+      Math.max(requestedDate.end, effectiveTime.end),
       evidenceId
     )
     draft.recurrence = recurrence
@@ -1538,7 +1882,8 @@ export function parseCalendarText(
           : 'either'
     const match = targetMatch(query, context.events, context.reminders, preference, {
       eventIds: context.focusedEventIds,
-      reminderIds: context.focusedReminderIds
+      reminderIds: context.focusedReminderIds,
+      localDate: context.localDate
     })
     if (match.ambiguity) {
       return clarify(
@@ -1559,7 +1904,7 @@ export function parseCalendarText(
       'destructive',
       hintedDelete ? Math.min(0.9, context.semanticHint?.confidence ?? 0.9) : 0.93
     )
-    draft.selection = selection(match, query, evidenceId)
+    draft.selection = selection(match, query, evidenceId, sourceText)
     draft.scope = requestsSeriesScope(sourceText) ? 'series' : 'single'
     return {
       draft: calendarIRDraftSchema.parse(draft),
@@ -1578,7 +1923,8 @@ export function parseCalendarText(
     )
     const target = targetMatch(targetQuery, context.events, context.reminders, 'event', {
       eventIds: context.focusedEventIds,
-      reminderIds: context.focusedReminderIds
+      reminderIds: context.focusedReminderIds,
+      localDate: context.localDate
     })
     if (target.ambiguity) {
       return clarify(
@@ -1594,12 +1940,27 @@ export function parseCalendarText(
     const source = context.events.find((event) => event.id === target.eventIds[0])
     if (!source)
       return clarify(context, sourceText, 'unclear-reference', 'Which event should I move?')
+    const destinationText = moveMatch?.[2] ?? null
+    const destinationOffset = destinationText ? sourceText.lastIndexOf(destinationText) : 0
+    const destinationDate = destinationText
+      ? parseDateMatch(destinationText, context.localDate)
+      : null
     const requestedDate = hintedMove
       ? outsideSpans(date, [context.semanticHint?.targetSpan ?? null])
-      : date
+      : destinationText
+        ? shiftedMatch(destinationDate, destinationOffset)
+        : date
+    const requestedEndDate = destinationText
+      ? shiftedMatch(
+          parseEndDateMatch(destinationText, context.localDate, destinationDate),
+          destinationOffset
+        )
+      : endDate
     const requestedTime = hintedMove
       ? outsideSpans(time, [context.semanticHint?.targetSpan ?? null])
-      : time
+      : destinationText
+        ? shiftedMatch(parseTimeMatch(destinationText), destinationOffset)
+        : time
     if (!requestedDate && !requestedTime) {
       return clarify(context, sourceText, 'missing-date', 'What day or time should I move it to?')
     }
@@ -1622,12 +1983,12 @@ export function parseCalendarText(
       'medium',
       hintedMove ? Math.min(0.9, context.semanticHint?.confidence ?? 0.9) : 0.91
     )
-    draft.selection = selection(target, targetQuery, evidenceId)
+    draft.selection = selection(target, targetQuery, evidenceId, sourceText)
     draft.scope = requestsSeriesScope(sourceText) ? 'series' : 'single'
     draft.fields.when = sourcedWindow(
       mutationWindow(
         effectiveDate,
-        requestedDate ? endDate : null,
+        requestedDate ? requestedEndDate : null,
         source.allDay && !requestedTime ? null : effectiveTime,
         source.allDay && !requestedTime
       ),
@@ -1647,7 +2008,8 @@ export function parseCalendarText(
     const targetQuery = stripScopeWords(renameMatch[1])
     const target = targetMatch(targetQuery, context.events, context.reminders, 'either', {
       eventIds: context.focusedEventIds,
-      reminderIds: context.focusedReminderIds
+      reminderIds: context.focusedReminderIds,
+      localDate: context.localDate
     })
     if (target.ambiguity) {
       return clarify(
@@ -1662,7 +2024,7 @@ export function parseCalendarText(
     if (scopeClarification) return scopeClarification
     const operation = target.reminderIds.length ? 'reminder.update' : 'event.update'
     const draft = baseDraft(context, sourceText, operation, 'medium', 0.92)
-    draft.selection = selection(target, targetQuery, evidenceId)
+    draft.selection = selection(target, targetQuery, evidenceId, sourceText)
     draft.scope = requestsSeriesScope(sourceText) ? 'series' : 'single'
     draft.fields.title = sourcedText(renameMatch[2], sourceText, evidenceId)
     return {
@@ -1673,9 +2035,7 @@ export function parseCalendarText(
   }
 
   const isReminder =
-    /^(?:please\s+)?(?:remind\s+me|remember\s+to|set\s+(?:a\s+)?reminder|add\s+(?:a\s+)?reminder)\b/iu.test(
-      sourceText
-    ) || context.semanticHint?.operation === 'reminder.create'
+    reminderRequestPattern.test(sourceText) || context.semanticHint?.operation === 'reminder.create'
   if (isReminder) {
     if (!date) {
       return clarify(context, sourceText, 'missing-date', 'What day should I remind you?', [
@@ -1697,6 +2057,15 @@ export function parseCalendarText(
         '12:00 PM',
         '6:00 PM'
       ])
+    }
+    if (time.endTime) {
+      return clarify(
+        context,
+        sourceText,
+        'unsupported-expression',
+        'I found a time range, but a reminder has one due time. Should I create this as a calendar event instead?',
+        ['Create calendar events']
+      )
     }
     if (time.ambiguous) {
       return clarify(

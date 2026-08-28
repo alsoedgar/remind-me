@@ -73,6 +73,7 @@
     ],
     "minimumDevelopmentPrecision": 1.0,
     "contextRequiredNeedsTypedContext": true,
+    "semanticOutputsAdvisoryOnly": true,
     "neverCreatesPlans": true,
     "neverWritesDatabase": true
   }

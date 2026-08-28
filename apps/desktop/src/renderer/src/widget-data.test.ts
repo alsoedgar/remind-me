@@ -77,4 +77,17 @@ describe('desktop widget data', () => {
       'Later'
     ])
   })
+
+  it('does not hide dense-day events behind an implicit widget limit', () => {
+    const denseDay = Array.from({ length: 8 }, (_, index) => ({
+      ...occurrences[0]!,
+      occurrenceId: `occurrence:${index}`,
+      eventId: `event:${index}`,
+      title: `Event ${index}`,
+      startUtc: `2026-08-25T${String(8 + index).padStart(2, '0')}:00:00.000Z`
+    }))
+
+    expect(eventsForWidgetDay(denseDay, '2026-08-25')).toHaveLength(8)
+    expect(eventsForWidgetDay(denseDay, '2026-08-25', 3)).toHaveLength(3)
+  })
 })

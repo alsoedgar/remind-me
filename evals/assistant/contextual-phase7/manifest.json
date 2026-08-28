@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "suiteVersion": "7.1.0-contextual-release.1",
+  "path": "evals/assistant/contextual-phase7/scenarios.jsonl",
+  "sha256": "2bb94e2fd7e626c4a5e44e5e1caa8333ba77ddd339d08e0623a9442ad8a1d1bf",
+  "scenarios": 433,
+  "turns": 902,
+  "trainingExcluded": true,
+  "frozen": true,
+  "independentHumanBlind": false,
+  "contextualRelease": true,
+  "humanEvidence": false,
+  "sourceSuite": {
+    "path": "evals/assistant/contextual-phase0/scenarios.jsonl",
+    "sha256": "7a5051bb7e334f3c4711483adb7eac74951d2777a898a2dc6c8ef44f46c99bb1"
+  },
+  "languageSha256": "472db9d716ce888b04a00d166b281677459cfd7d577ca24521e7e179a874f023",
+  "coverage": {
+    "exactReferentTurns": 866,
+    "contextualFollowUpTurns": 468
+  }
+}

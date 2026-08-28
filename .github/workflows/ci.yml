@@ -87,5 +87,21 @@ jobs:
       - name: Build platform directory package
         run: pnpm package:dir
 
+      - name: Run packaged document release gate on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum pnpm documents:release:package
+
+      - name: Run packaged document release gate
+        if: runner.os != 'Linux'
+        run: pnpm documents:release:package
+
+      - name: Upload document release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: document-release-${{ runner.os }}-${{ matrix.arch }}
+          path: evals/documents/reports/document-release.*.json
+          if-no-files-found: warn
+
       - name: Audit platform directory package
         run: pnpm package:audit

@@ -6,6 +6,7 @@ export type ConversationIntent =
   | 'local-time'
   | 'wellbeing'
   | 'encouragement'
+  | 'joke'
   | 'thanks'
   | 'goodbye'
 
@@ -68,11 +69,18 @@ export function parseConversationIntent(text: string): ConversationIntent | null
     return 'wellbeing'
   }
   if (
-    /^(?:(?:give|share|tell) me (?:a |some )?(?:(?:short|quick|little) )?(?:motivation|motivational (?:thought|message|note|boost|encouragement))(?: for .+)?|motivate me(?: to .+)?|encourage me(?: to .+)?|i (?:need|could use|want) (?:some )?(?:motivation|encouragement)(?: for .+)?)$/u.test(
+    /^(?:(?:give|share|tell) me (?:a |some )?(?:(?:short|quick|little) )?(?:motivation|motivational (?:thought|message|note|boost|encouragement))(?: for .+)?|motivate me(?: to .+)?|encourage me(?: to .+)?|say something encouraging(?: about| for)? .+|i (?:need|could use|want) (?:some )?(?:motivation|encouragement)(?: for .+)?)$/u.test(
       withoutGreeting
     )
   ) {
     return 'encouragement'
+  }
+  if (
+    /^(?:(?:tell|give) me (?:a |one )?(?:(?:tiny|short|quick|little) )?joke(?: about .+)?|say something funny(?: about .+)?)$/u.test(
+      withoutGreeting
+    )
+  ) {
+    return 'joke'
   }
   if (
     /^(?:thanks|thanks a lot|thanks so much|thank you|thank you so much|thank you very much|much appreciated|i appreciate it)$/u.test(

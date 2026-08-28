@@ -7,7 +7,7 @@
   "globalBuckets": 131072,
   "tokenBuckets": 131072,
   "unknownToken": null,
-  "assistantBuckets": 8192,
+  "assistantBuckets": 4096,
   "assistantMaximumActions": 3,
   "assistantFeatureEncoder": {
     "normalization": "Unicode NFKC, lowercase, whitespace compaction",

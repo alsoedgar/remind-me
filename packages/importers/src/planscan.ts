@@ -64,6 +64,14 @@ const qualityLabels = [
 ] as const
 
 const groupLinkLabels = ['none', 'same-group', 'new-group', 'context'] as const
+const challengeSlices = [
+  'baseline',
+  'ocr-corruption',
+  'neighboring-row-negatives',
+  'repeated-titles',
+  'unfamiliar-column-order',
+  'header-footer-distractions'
+] as const
 
 type PlanScanHeadName =
   'blockRole' | 'entityRole' | 'relation' | 'groupLink' | 'documentType' | 'confidence'
@@ -109,9 +117,19 @@ export interface PlanScanArtifact {
   training: {
     seed: number
     datasetManifestSha256: string
+    challengeSlices: string[]
+    hardNeighborNegativeMining: true
     teacherUsed: false
     pretrainedWeightsUsed: false
     personalDataUsed: false
+  }
+  safety: {
+    exactSourceProjectionRequired: true
+    crossPageLinksAllowed: false
+    deterministicSemanticCompilerRequired: true
+    explicitConfirmationRequired: true
+    repairFallbackCandidateSelectionOnly: true
+    repairFallbackHasMutationAuthority: false
   }
   metrics: Record<string, unknown>
 }
@@ -262,7 +280,12 @@ export function parsePlanScanArtifact(value: unknown): PlanScanArtifact {
   if (!isRecord(value.architecture) || !isRecord(value.weights) || !isRecord(value.heads)) {
     throw new Error('Incomplete PlanScan artifact')
   }
-  if (!isRecord(value.thresholds) || !isRecord(value.training) || !isRecord(value.metrics)) {
+  if (
+    !isRecord(value.thresholds) ||
+    !isRecord(value.training) ||
+    !isRecord(value.safety) ||
+    !isRecord(value.metrics)
+  ) {
     throw new Error('Incomplete PlanScan training metadata')
   }
   const featureBuckets = expectNumber(value.featureBuckets, 'feature buckets')
@@ -332,12 +355,57 @@ export function parsePlanScanArtifact(value: unknown): PlanScanArtifact {
     training: {
       seed: expectNumber(value.training.seed, 'training seed'),
       datasetManifestSha256: expectString(value.training.datasetManifestSha256, 'dataset digest'),
+      challengeSlices: sameLabels(
+        value.training.challengeSlices,
+        challengeSlices,
+        'challenge slices'
+      ),
+      hardNeighborNegativeMining:
+        value.training.hardNeighborNegativeMining === true
+          ? true
+          : (() => {
+              throw new Error('PlanScan hard-neighbor negative mining must be enabled')
+            })(),
       teacherUsed: expectBooleanFalse(value.training.teacherUsed, 'teacherUsed'),
       pretrainedWeightsUsed: expectBooleanFalse(
         value.training.pretrainedWeightsUsed,
         'pretrainedWeightsUsed'
       ),
       personalDataUsed: expectBooleanFalse(value.training.personalDataUsed, 'personalDataUsed')
+    },
+    safety: {
+      exactSourceProjectionRequired:
+        value.safety.exactSourceProjectionRequired === true
+          ? true
+          : (() => {
+              throw new Error('PlanScan must require exact source projection')
+            })(),
+      crossPageLinksAllowed: expectBooleanFalse(
+        value.safety.crossPageLinksAllowed,
+        'crossPageLinksAllowed'
+      ),
+      deterministicSemanticCompilerRequired:
+        value.safety.deterministicSemanticCompilerRequired === true
+          ? true
+          : (() => {
+              throw new Error('PlanScan must retain the deterministic semantic compiler')
+            })(),
+      explicitConfirmationRequired:
+        value.safety.explicitConfirmationRequired === true
+          ? true
+          : (() => {
+              throw new Error('PlanScan must require explicit confirmation')
+            })(),
+      repairFallbackCandidateSelectionOnly:
+        value.safety.repairFallbackCandidateSelectionOnly === true
+          ? true
+          : (() => {
+              throw new Error('PlanScan repair must remain candidate-only')
+            })(),
+      repairFallbackHasMutationAuthority: expectBooleanFalse(
+        value.safety.repairFallbackHasMutationAuthority,
+        'repairFallbackHasMutationAuthority'
+      )
     },
     metrics: value.metrics
   }
@@ -391,6 +459,9 @@ function lexicalFlags(text: string): string[] {
   if (/\b(?:agenda|schedule|syllabus|itinerary|rotation|important dates)\b/iu.test(text)) {
     flags.push('flag:document-heading')
   }
+  if (/\b(?:printed|generated|downloaded|page\s+\d+|questions\?|records?)\b/iu.test(text)) {
+    flags.push('flag:page-chrome')
+  }
   return flags
 }
 
@@ -432,6 +503,10 @@ export function planScanBlockFeatures(
     features.add(`height:${bucket(box.height, 6)}`)
     features.add(`column:${bucket(box.x + box.width / 2, 4)}`)
     features.add(`position:${bucket(index / Math.max(1, pageBlocks.length), 10)}`)
+    const centerY = box.y + box.height / 2
+    features.add(
+      centerY < 0.08 ? 'page-margin:top' : centerY > 0.9 ? 'page-margin:bottom' : 'page-margin:body'
+    )
   }
   for (const [direction, neighbor] of [
     ['previous', pageBlocks[index - 1]],
@@ -490,9 +565,39 @@ export function planScanPairFeatures(
     const dy = toCenterY - fromCenterY
     features.add(`dx:${signedBucket(dx)}`)
     features.add(`dy:${signedBucket(dy)}`)
+    features.add(`abs-dx:${bucket(Math.abs(dx), 16)}`)
+    features.add(`abs-dy:${bucket(Math.abs(dy), 20)}`)
+    features.add(`abs-dx-fine:${bucket(Math.abs(dx), 64)}`)
+    features.add(`abs-dy-fine:${bucket(Math.abs(dy), 80)}`)
+    features.add(`from-x:${bucket(fromCenterX, 8)}`)
+    features.add(`from-y:${bucket(fromCenterY, 12)}`)
+    features.add(`to-x:${bucket(toCenterX, 8)}`)
+    features.add(`to-y:${bucket(toCenterY, 12)}`)
+    const verticalGap = Math.max(
+      0,
+      Math.max(from.block.boundingBox.y, to.block.boundingBox.y) -
+        Math.min(
+          from.block.boundingBox.y + from.block.boundingBox.height,
+          to.block.boundingBox.y + to.block.boundingBox.height
+        )
+    )
+    const rowOverlap = Math.max(
+      0,
+      Math.min(
+        from.block.boundingBox.y + from.block.boundingBox.height,
+        to.block.boundingBox.y + to.block.boundingBox.height
+      ) - Math.max(from.block.boundingBox.y, to.block.boundingBox.y)
+    )
+    features.add(`vertical-gap:${bucket(verticalGap, 80)}`)
+    features.add(`row-overlap:${Number(rowOverlap > 0)}`)
     features.add(`same-row:${Number(Math.abs(dy) <= 0.035)}`)
+    features.add(`same-row-tight:${Number(Math.abs(dy) <= 0.018)}`)
     features.add(`same-column:${Number(Math.abs(dx) <= 0.12)}`)
+    features.add(`same-column-tight:${Number(Math.abs(dx) <= 0.06)}`)
     features.add(`direction:${Math.abs(dx) > Math.abs(dy) ? 'horizontal' : 'vertical'}`)
+    features.add(
+      `same-entity-role:${Number(from.prediction.entityRole === to.prediction.entityRole)}`
+    )
   }
   for (const flag of lexicalFlags(from.block.text)) features.add(`from-${flag}`)
   for (const flag of lexicalFlags(to.block.text)) features.add(`to-${flag}`)
@@ -579,11 +684,24 @@ function spansForContext(context: BlockContext, entityThreshold: number): PlanSc
     }
   }
   const dateMatch = matchFirst(block.text, datePatterns)
-  if (dateMatch && prediction.entityRole !== 'recurrence') {
+  const timeMatch = block.text.match(timePattern)
+  const combinedDateAndTime = Boolean(dateMatch && timeMatch)
+  if (
+    dateMatch &&
+    (prediction.entityRole === 'date' ||
+      (combinedDateAndTime && prediction.entityRole === 'time')) &&
+    prediction.roleConfidence >= entityThreshold * 0.72
+  ) {
     push(exactSpan(block, 'date', dateMatch, Math.max(0.62, roleConfidence), 'date'))
   }
-  const timeMatch = block.text.match(timePattern)
-  if (timeMatch) push(exactSpan(block, 'time', timeMatch, Math.max(0.62, roleConfidence), 'time'))
+  if (
+    timeMatch &&
+    (prediction.entityRole === 'time' ||
+      (combinedDateAndTime && prediction.entityRole === 'date')) &&
+    prediction.roleConfidence >= entityThreshold * 0.72
+  ) {
+    push(exactSpan(block, 'time', timeMatch, Math.max(0.62, roleConfidence), 'time'))
+  }
   const recurrenceMatch = block.text.match(recurrencePattern)
   if (
     recurrenceMatch &&
@@ -820,17 +938,18 @@ export class PlanScanRuntime {
     }
 
     for (const date of dates) {
-      const nextAlignedDate = dates
-        .filter(
-          (candidate) =>
-            candidate.span.page === date.span.page &&
-            candidate.block.boundingBox.y > date.block.boundingBox.y + 0.004 &&
-            Math.abs(candidate.block.boundingBox.x - date.block.boundingBox.x) <= 0.08
-        )
-        .sort((left, right) => left.block.boundingBox.y - right.block.boundingBox.y)[0]
-      const insideDateRow = (item: ScoredSpan): boolean =>
-        item.block.boundingBox.y >= date.block.boundingBox.y - 0.025 &&
-        (!nextAlignedDate || item.block.boundingBox.y < nextAlignedDate.block.boundingBox.y - 0.002)
+      // Column order is not semantic: a card may print time before date and
+      // title after location. Keep a bounded two-sided neighborhood, then let
+      // the hard-negative-trained pair heads rank it. A time printed in the
+      // same block as another date belongs to that date and cannot be borrowed.
+      const dateCenterY = center(date.block).y
+      const insideCandidateWindow = (item: ScoredSpan): boolean =>
+        Math.abs(center(item.block).y - dateCenterY) <= 0.19
+      const dateBlockIds = new Set(
+        dates
+          .filter((candidate) => candidate.span.page === date.span.page)
+          .map((candidate) => candidate.block.id)
+      )
       const titleCandidates = titles
         .filter((item) => item.span.page === date.span.page && !usedTitles.has(item.span.id))
         .map((item) => ({ item, score: association(date, item) }))
@@ -840,7 +959,10 @@ export class PlanScanRuntime {
       const timeCandidates = times
         .filter(
           (item) =>
-            item.span.page === date.span.page && !usedTimes.has(item.span.id) && insideDateRow(item)
+            item.span.page === date.span.page &&
+            !usedTimes.has(item.span.id) &&
+            (!dateBlockIds.has(item.block.id) || item.block.id === date.block.id) &&
+            insideCandidateWindow(item)
         )
         .map((item) => ({
           item,
@@ -856,7 +978,7 @@ export class PlanScanRuntime {
           (item) =>
             item.span.page === date.span.page &&
             !usedLocations.has(item.span.id) &&
-            insideDateRow(item)
+            insideCandidateWindow(item)
         )
         .map((item) => ({
           item,
@@ -877,7 +999,7 @@ export class PlanScanRuntime {
           (item) =>
             item.span.page === date.span.page &&
             !usedRecurrences.has(item.span.id) &&
-            insideDateRow(item)
+            insideCandidateWindow(item)
         )
         .map((item) => ({
           item,
@@ -890,7 +1012,7 @@ export class PlanScanRuntime {
         .filter(
           (item) =>
             item.span.page === date.span.page &&
-            insideDateRow(item) &&
+            insideCandidateWindow(item) &&
             association(date, item) >= this.artifact.thresholds.relation
         )
         .slice(0, 3)

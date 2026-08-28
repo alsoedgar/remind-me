@@ -14,6 +14,14 @@ import { loadModelManifest, verifyModelManifest } from '@remind-me/model-runtime
 
 interface HeldoutPage {
   id: string
+  challengeSlice:
+    | 'baseline'
+    | 'ocr-corruption'
+    | 'neighboring-row-negatives'
+    | 'repeated-titles'
+    | 'unfamiliar-column-order'
+    | 'header-footer-distractions'
+  challenges: string[]
   templateFamily: string
   font: string
   scanStyle: string
@@ -32,6 +40,14 @@ interface HeldoutPage {
       time: string
       location: string
     }>
+    observedGroups: Array<{
+      id: string
+      kind: 'event' | 'reminder'
+      title: string
+      date: string
+      time: string
+      location: string
+    }>
   }
 }
 
@@ -40,6 +56,14 @@ const modelRoot = resolve(workspace, 'models')
 const planScanRoot = resolve(modelRoot, 'planscan')
 const fixturePath = resolve(workspace, 'fixtures', 'planscan', 'heldout.v0.1.jsonl')
 const reportPath = resolve(workspace, 'ml', 'planscan', 'reports', 'runtime-metrics.json')
+const challengeSlices = [
+  'baseline',
+  'ocr-corruption',
+  'neighboring-row-negatives',
+  'repeated-titles',
+  'unfamiliar-column-order',
+  'header-footer-distractions'
+] as const
 
 function assert(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message)
@@ -117,21 +141,69 @@ function goldGroupSignatures(fixture: HeldoutPage): Set<string> {
   )
 }
 
+function observedGroupSignatures(fixture: HeldoutPage): Set<string> {
+  return new Set(
+    fixture.gold.observedGroups.map((group) =>
+      [group.kind, cleanTitle(group.title), group.date, group.time, group.location]
+        .map(compact)
+        .join('|')
+    )
+  )
+}
+
 function setsEqual(left: ReadonlySet<string>, right: ReadonlySet<string>): boolean {
   return left.size === right.size && [...left].every((value) => right.has(value))
 }
 
-const [configurationText, compressedWeights, fixtureText, manifest] = await Promise.all([
-  readFile(resolve(planScanRoot, 'planscan-v0.1-int8.json'), 'utf8'),
-  readFile(resolve(planScanRoot, 'planscan-v0.1-int8.bin.gz')),
-  readFile(fixturePath, 'utf8'),
-  loadModelManifest(modelRoot)
-])
+interface MatchCounts {
+  truePositive: number
+  falsePositive: number
+  falseNegative: number
+}
+
+function emptyCounts(): MatchCounts {
+  return { truePositive: 0, falsePositive: 0, falseNegative: 0 }
+}
+
+function addSetCounts(
+  counts: MatchCounts,
+  actual: ReadonlySet<string>,
+  expected: ReadonlySet<string>
+): void {
+  counts.truePositive += [...actual].filter((value) => expected.has(value)).length
+  counts.falsePositive += [...actual].filter((value) => !expected.has(value)).length
+  counts.falseNegative += [...expected].filter((value) => !actual.has(value)).length
+}
+
+function matchF1(counts: MatchCounts): number {
+  return (
+    (2 * counts.truePositive) /
+    Math.max(1, 2 * counts.truePositive + counts.falsePositive + counts.falseNegative)
+  )
+}
+
+const [configurationText, compressedWeights, fixtureText, manifest, prototypeMetricsText] =
+  await Promise.all([
+    readFile(resolve(planScanRoot, 'planscan-v0.1-int8.json'), 'utf8'),
+    readFile(resolve(planScanRoot, 'planscan-v0.1-int8.bin.gz')),
+    readFile(fixturePath, 'utf8'),
+    loadModelManifest(modelRoot),
+    readFile(resolve(workspace, 'ml', 'planscan', 'reports', 'prototype-metrics.json'), 'utf8')
+  ])
 const verification = await verifyModelManifest(modelRoot, manifest)
 assert(verification.valid, 'The offline model inventory is invalid')
-const runtime = await PlanScanRuntime.create(JSON.parse(configurationText), compressedWeights)
-assert(runtime.info.parameterCount >= 5_000_000, 'PlanScan is below the Phase 7 parameter range')
-assert(runtime.info.parameterCount <= 8_000_000, 'PlanScan is above the Phase 7 parameter range')
+const configuration = JSON.parse(configurationText) as {
+  safety?: {
+    repairFallbackCandidateSelectionOnly?: boolean
+    repairFallbackHasMutationAuthority?: boolean
+  }
+}
+const prototypeMetrics = JSON.parse(prototypeMetricsText) as {
+  promotionGates?: Record<string, boolean>
+}
+const runtime = await PlanScanRuntime.create(configuration, compressedWeights)
+assert(runtime.info.parameterCount >= 5_000_000, 'PlanScan is below the Phase 6 parameter range')
+assert(runtime.info.parameterCount <= 8_000_000, 'PlanScan is above the Phase 6 parameter range')
 assert(runtime.info.modelBytes < 64 * 1024, 'PlanScan compressed artifacts exceed 64 KiB')
 assert(runtime.info.workingSetBytes < 8 * 1024 * 1024, 'PlanScan weights exceed 8 MiB in memory')
 
@@ -139,7 +211,16 @@ const fixtures = fixtureText
   .trim()
   .split(/\r?\n/gu)
   .map((line) => JSON.parse(line) as HeldoutPage)
-assert(fixtures.length === 96, `Expected 96 PlanScan fixtures, found ${fixtures.length}`)
+assert(fixtures.length === 120, `Expected 120 PlanScan fixtures, found ${fixtures.length}`)
+for (const challenge of challengeSlices) {
+  const slice = fixtures.filter((fixture) => fixture.challengeSlice === challenge)
+  assert(slice.length === 20, `Expected 20 ${challenge} fixtures, found ${slice.length}`)
+  assert(
+    slice.filter((fixture) => fixture.method === 'native-text').length === 10 &&
+      slice.filter((fixture) => fixture.method === 'ocr').length === 10,
+    `${challenge} is not balanced across native text and OCR`
+  )
+}
 
 let truePositive = 0
 let falsePositive = 0
@@ -147,14 +228,41 @@ let falseNegative = 0
 let evidenceValues = 0
 let evidenceBacked = 0
 const latencyMs: number[] = []
-const execution = {
+const pristinePageExecution = {
   'native-text': [] as boolean[],
   ocr: [] as boolean[]
 }
-const plannerExecution = {
+const observedPageExecution = {
   'native-text': [] as boolean[],
   ocr: [] as boolean[]
 }
+const plannerPristinePageExecution = {
+  'native-text': [] as boolean[],
+  ocr: [] as boolean[]
+}
+const pristineChallengePageExecution = Object.fromEntries(
+  challengeSlices.map((challenge) => [challenge, [] as boolean[]])
+) as Record<(typeof challengeSlices)[number], boolean[]>
+const observedChallengePageExecution = Object.fromEntries(
+  challengeSlices.map((challenge) => [challenge, [] as boolean[]])
+) as Record<(typeof challengeSlices)[number], boolean[]>
+const plannerPristineChallengePageExecution = Object.fromEntries(
+  challengeSlices.map((challenge) => [challenge, [] as boolean[]])
+) as Record<(typeof challengeSlices)[number], boolean[]>
+const pristineGroupCountsByMethod = {
+  'native-text': emptyCounts(),
+  ocr: emptyCounts()
+}
+const observedGroupCountsByMethod = {
+  'native-text': emptyCounts(),
+  ocr: emptyCounts()
+}
+const pristineGroupCountsByChallenge = Object.fromEntries(
+  challengeSlices.map((challenge) => [challenge, emptyCounts()])
+) as Record<(typeof challengeSlices)[number], MatchCounts>
+const observedGroupCountsByChallenge = Object.fromEntries(
+  challengeSlices.map((challenge) => [challenge, emptyCounts()])
+) as Record<(typeof challengeSlices)[number], MatchCounts>
 const mismatches: Array<{
   id: string
   templateFamily: string
@@ -202,9 +310,18 @@ for (const fixture of fixtures) {
   }
   const actualGroups = modelGroupSignatures(analysis)
   const expectedGroups = goldGroupSignatures(fixture)
-  const modelEquivalent = setsEqual(actualGroups, expectedGroups)
-  execution[fixture.method].push(modelEquivalent)
-  if (!modelEquivalent && mismatches.length < 24) {
+  const observedGroups = observedGroupSignatures(fixture)
+  const pristineModelEquivalent = setsEqual(actualGroups, expectedGroups)
+  const observedModelEquivalent = setsEqual(actualGroups, observedGroups)
+  pristinePageExecution[fixture.method].push(pristineModelEquivalent)
+  observedPageExecution[fixture.method].push(observedModelEquivalent)
+  pristineChallengePageExecution[fixture.challengeSlice].push(pristineModelEquivalent)
+  observedChallengePageExecution[fixture.challengeSlice].push(observedModelEquivalent)
+  addSetCounts(pristineGroupCountsByMethod[fixture.method], actualGroups, expectedGroups)
+  addSetCounts(observedGroupCountsByMethod[fixture.method], actualGroups, observedGroups)
+  addSetCounts(pristineGroupCountsByChallenge[fixture.challengeSlice], actualGroups, expectedGroups)
+  addSetCounts(observedGroupCountsByChallenge[fixture.challengeSlice], actualGroups, observedGroups)
+  if (!pristineModelEquivalent && mismatches.length < 24) {
     mismatches.push({
       id: fixture.id,
       templateFamily: fixture.templateFamily,
@@ -267,7 +384,8 @@ for (const fixture of fixtures) {
     )
   )
   const plannerEquivalent = setsEqual(plannedTitles, goldTitles)
-  plannerExecution[fixture.method].push(plannerEquivalent)
+  plannerPristinePageExecution[fixture.method].push(plannerEquivalent)
+  plannerPristineChallengePageExecution[fixture.challengeSlice].push(plannerEquivalent)
   if (!plannerEquivalent && plannerMismatches.length < 20) {
     plannerMismatches.push({
       id: fixture.id,
@@ -288,14 +406,50 @@ const report = {
   runtime: {
     entityMicroF1: f1,
     evidenceCoverage: evidenceBacked / Math.max(1, evidenceValues),
-    executionEquivalence: {
-      bornDigital: rate(execution['native-text']),
-      scanned: rate(execution.ocr)
+    pristinePageExactEquivalence: {
+      bornDigital: rate(pristinePageExecution['native-text']),
+      scanned: rate(pristinePageExecution.ocr)
     },
-    deterministicPlannerEquivalence: {
-      bornDigital: rate(plannerExecution['native-text']),
-      scanned: rate(plannerExecution.ocr)
+    observedPageExactEquivalence: {
+      bornDigital: rate(observedPageExecution['native-text']),
+      scanned: rate(observedPageExecution.ocr)
     },
+    pristineGroupMicroF1: {
+      bornDigital: matchF1(pristineGroupCountsByMethod['native-text']),
+      scanned: matchF1(pristineGroupCountsByMethod.ocr)
+    },
+    observedGroupMicroF1: {
+      bornDigital: matchF1(observedGroupCountsByMethod['native-text']),
+      scanned: matchF1(observedGroupCountsByMethod.ocr)
+    },
+    pristineChallengeGroupMicroF1: Object.fromEntries(
+      challengeSlices.map((challenge) => [
+        challenge,
+        matchF1(pristineGroupCountsByChallenge[challenge])
+      ])
+    ),
+    observedChallengeGroupMicroF1: Object.fromEntries(
+      challengeSlices.map((challenge) => [
+        challenge,
+        matchF1(observedGroupCountsByChallenge[challenge])
+      ])
+    ),
+    observedChallengePageExactEquivalence: Object.fromEntries(
+      challengeSlices.map((challenge) => [
+        challenge,
+        rate(observedChallengePageExecution[challenge])
+      ])
+    ),
+    deterministicPlannerPristinePageExactEquivalence: {
+      bornDigital: rate(plannerPristinePageExecution['native-text']),
+      scanned: rate(plannerPristinePageExecution.ocr)
+    },
+    deterministicPlannerPristineChallengePageExactEquivalence: Object.fromEntries(
+      challengeSlices.map((challenge) => [
+        challenge,
+        rate(plannerPristineChallengePageExecution[challenge])
+      ])
+    ),
     latencyMs: {
       median: percentile(latencyMs, 0.5),
       p95: percentile(latencyMs, 0.95),
@@ -309,7 +463,11 @@ const report = {
     modelHasNoStorageHandle: true,
     deterministicCalendarCompilerRetained: true,
     explicitBatchReviewRequired: true,
-    rulesFallbackRetained: true
+    rulesFallbackRetained: true,
+    optionalRepairCandidateSelectionOnly:
+      configuration.safety?.repairFallbackCandidateSelectionOnly === true,
+    optionalRepairHasMutationAuthority:
+      configuration.safety?.repairFallbackHasMutationAuthority === true
   }
 }
 
@@ -318,20 +476,41 @@ await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8')
 assert(report.runtime.entityMicroF1 >= 0.95, 'PlanScan runtime entity F1 fell below 95%')
 assert(report.runtime.evidenceCoverage === 1, 'PlanScan lost exact source evidence')
 assert(
-  report.runtime.executionEquivalence.bornDigital >= 0.9,
-  'Born-digital group execution equivalence fell below 90%'
+  challengeSlices.every(
+    (challenge) => (report.runtime.observedChallengeGroupMicroF1[challenge] ?? 0) >= 0.98
+  ),
+  'A Phase 6 challenge slice fell below 98% observed-source group F1'
 )
 assert(
-  report.runtime.executionEquivalence.scanned >= 0.7,
-  'Scanned group execution equivalence fell below 70%'
+  challengeSlices.every(
+    (challenge) => (report.runtime.observedChallengePageExactEquivalence[challenge] ?? 0) >= 0.95
+  ),
+  'A Phase 6 challenge slice fell below 95% observed-source exact-page equivalence'
+)
+assert(
+  prototypeMetrics.promotionGates && Object.values(prototypeMetrics.promotionGates).every(Boolean),
+  'A PlanScan Phase 6 training promotion gate failed'
+)
+assert(report.safety.optionalRepairCandidateSelectionOnly, 'Document repair gained open generation')
+assert(
+  !report.safety.optionalRepairHasMutationAuthority,
+  'Document repair gained calendar mutation authority'
+)
+assert(
+  report.runtime.observedGroupMicroF1.bornDigital >= 0.98,
+  'Born-digital observed-source group F1 fell below 98%'
+)
+assert(
+  report.runtime.observedGroupMicroF1.scanned >= 0.98,
+  'Scanned observed-source group F1 fell below 98%'
 )
 assert(report.runtime.latencyMs.p95 <= 2_000, 'PlanScan exceeded the ordinary-page latency target')
 
 console.log(
   `PlanScan ${runtime.info.parameterCount.toLocaleString()} params | ` +
     `entity F1 ${(f1 * 100).toFixed(1)}% | ` +
-    `native execution ${(report.runtime.executionEquivalence.bornDigital * 100).toFixed(1)}% | ` +
-    `scan execution ${(report.runtime.executionEquivalence.scanned * 100).toFixed(1)}% | ` +
+    `native observed-group F1 ${(report.runtime.observedGroupMicroF1.bornDigital * 100).toFixed(1)}% | ` +
+    `scan observed-group F1 ${(report.runtime.observedGroupMicroF1.scanned * 100).toFixed(1)}% | ` +
     `evidence ${(report.runtime.evidenceCoverage * 100).toFixed(1)}% | ` +
     `p95 ${report.runtime.latencyMs.p95.toFixed(1)} ms`
 )

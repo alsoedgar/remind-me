@@ -49,7 +49,7 @@ All preview data below is synthetic. The captures are produced by the production
 - Handle single actions and reviewed multi-action batches, including whole-day schedule copies and recurring weekday patterns.
 - Answer grounded questions such as “what’s my first class today?”, “am I free Friday afternoon?”, or “tell me more about tomorrow,” then keep the selected item in context for concise follow-ups such as “what room?”, “when does it start?”, or “what should I bring?”
 - Transcribe speech live with a bundled offline English Zipformer model; audio stays in memory and the transcript remains editable.
-- Read born-digital PDFs locally, fall back to offline OCR for scanned PDFs and images, reconstruct schedule rows, and show source evidence beside editable proposals.
+- Read born-digital PDFs locally, fall back to offline OCR for scanned PDFs and images, reconstruct schedule rows, and let the optional Qwen pack group exact source blocks only when PlanScan/rules leave a coverage gap.
 - Preserve lectures, labs, recurrence days, date ranges, times, and locations without silently creating arranged or asynchronous meetings that have no fixed time.
 - Import/export ICS, back up and restore JSON, schedule native notifications, and persist everything in local SQLite.
 - Run as a full app, a pinned 420 × 680 mini calendar, or a tiny glance window at sign-in.
@@ -68,15 +68,15 @@ This project is deliberately more than an Electron shell around an API:
 
 ### Local intelligence stack
 
-| Component                        | Role                                                                               | Footprint and boundary                                                                                     |
-| -------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **RemindCore HashFrame Next**    | Intent, operation, source-span, ambiguity, OOD, risk, and native capability advice | 4.89M parameters; zero initialization; confidence-gated; cannot resolve or execute calendar actions        |
-| **RemindSpeak PhraseLattice**    | Varied, style-aware grounded replies                                               | 28.31M logical sparse entries; 223 KiB compressed; protected facts are inserted only after validation      |
-| **PlanScan SpatialHashGraph**    | Layout-aware PDF/image field and row grouping                                      | 5.24M parameters; about 22 KiB compressed; exact-evidence links only; no OCR or database access            |
-| **Zipformer INT8 + sherpa-onnx** | Streaming English speech recognition                                               | 43.3 MiB model; live partial transcripts; lazy isolated process with idle unload                           |
-| **Optional Qwen3 1.7B Q4_K_M**   | Broader conversation and difficult paraphrase fallback                             | Explicit ~1.19 GiB install; local llama.cpp inference; removable; never receives direct mutation authority |
+| Component                        | Role                                                                               | Footprint and boundary                                                                                                       |
+| -------------------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **RemindCore HashFrame Next**    | Intent, operation, source-span, ambiguity, OOD, risk, and native capability advice | 4.89M parameters; zero initialization; confidence-gated; cannot resolve or execute calendar actions                          |
+| **RemindSpeak PhraseLattice**    | Varied, style-aware grounded replies                                               | 28.31M logical sparse entries; 223 KiB compressed; protected facts are inserted only after validation                        |
+| **PlanScan SpatialHashGraph**    | Layout-aware PDF/image field and row grouping                                      | 5.24M parameters; about 22 KiB compressed; exact-evidence links only; no OCR or database access                              |
+| **Zipformer INT8 + sherpa-onnx** | Streaming English speech recognition                                               | 43.3 MiB model; live partial transcripts; lazy isolated process with idle unload                                             |
+| **Optional Qwen3 1.7B Q4_K_M**   | Broader language fallback plus evidence-ID grouping for missed PDF/image items     | Explicit ~1.19 GiB install; local llama.cpp inference; removable; never emits document values or receives mutation authority |
 
-The current RemindCore checkpoint reports 97.73% operation accuracy and 100% precision on eligible assisted candidates on its generated held-out split. PlanScan reports 100% born-digital execution equivalence and 79.2% OCR-like end-to-end equivalence on its tracked synthetic runtime fixture. These are reproducible generated-data measurements, not claims of universal real-world accuracy; the model cards document limitations and the absence of an independent human-blind benchmark.
+The current RemindCore checkpoint reports 97.73% operation accuracy and 100% precision on eligible assisted candidates on its generated held-out split. PlanScan reports 100% born-digital execution equivalence and 79.2% OCR-like end-to-end equivalence on its tracked synthetic runtime fixture. These are reproducible generated-data measurements, not claims of universal real-world accuracy. The [Phase 8 protocol](evals/assistant/human-blind/protocol-v1.md) implements a consented, contamination-audited human gate, but its honest collection count is still zero and no independent result is claimed.
 
 ## Safety-first architecture
 
@@ -129,22 +129,30 @@ pnpm dev
 ```bash
 pnpm verify
 pnpm package:dir
+pnpm documents:release:package
 pnpm package:audit
 pnpm package:installer
 ```
 
 The complete gate includes formatting, linting, type checking, 300+ unit/integration tests, 256 language-to-execution golden fixtures across 17 calendar operations, model parity and integrity checks, document fixtures, a production build, and an offline Electron smoke test that crosses renderer, preload, main, utility-process, and SQLite boundaries.
 
+After packaging, `documents:release:package` drives native PDF, scanned PDF, direct-image OCR, and multi-page recurrence fixtures through the actual packaged Electron worker and review UI with networking disabled. It requires exact proposals, aligned visible evidence, no write before confirmation, atomic commit, same-source duplicate lockout, distinct CRN/component identity, and one-action undo. CI records this gate independently on Windows x64, Linux x64, macOS arm64, and macOS x64.
+
 Useful focused commands:
 
 ```bash
 pnpm eval:assistant:baseline
+pnpm eval:assistant:release-phase7
+pnpm eval:assistant:human-blind:status
 pnpm remindcore:check
 pnpm remindcore-next:check
 pnpm remindspeak:check
 pnpm planscan:check
 pnpm documents:fixtures:check
+pnpm documents:release:package
 pnpm flex:benchmark
+pnpm eval:flex-model:phase6:check
+pnpm eval:flex-model:phase7:check
 ```
 
 ## Repository map
@@ -178,7 +186,7 @@ Good interview discussion areas include why calendar execution remains determini
 
 Remind Me has no account requirement, telemetry, or required server. Calendar data and assistant history remain on the device. The optional language pack is downloaded only after explicit consent, verified by SHA-256, and used locally afterward.
 
-Current limitations include English-only speech and language handling, an unsigned first Windows release, generated rather than independently human-authored model benchmarks, and imperfect OCR on noisy scans. The app surfaces uncertainty and preserves review/fallback paths instead of treating model output as authoritative.
+Current limitations include English-only speech and language handling, an unsigned first Windows release, a pending independently human-authored Phase 8 benchmark, and imperfect OCR on noisy scans. The app surfaces uncertainty and preserves review/fallback paths instead of treating model output as authoritative.
 
 ## License
 

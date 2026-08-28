@@ -1,5 +1,10 @@
 # Qwen runtime Phase 7 report
 
+> This file records the earlier runtime-tuning checkpoint. The current hash-bound contextual
+> release measurement, including Phase 6 prompt/scheduling changes, first-token latency, worker RSS,
+> per-tier budgets, and honest human-evidence status, is in
+> `docs/evaluation/assistant-contextual-phase7.md`.
+
 ## Outcome
 
 The optional Qwen path is now hardware-bounded, workload-separated, observable,

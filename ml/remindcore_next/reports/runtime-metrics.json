@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "model": {
     "available": true,
-    "id": "remindcore-hashframe-next-en-qwen-assisted",
-    "version": "0.3.0",
-    "architecture": "HashFrame Next joint semantic and AssistantPlan advisory planner",
-    "parameterCount": 4890624,
+    "id": "remindcore-hashframe-context-en-qwen-assisted",
+    "version": "0.4.0",
+    "architecture": "HashFrame Context joint semantic and AssistantPlan advisory planner",
+    "parameterCount": 4796416,
     "quantization": "symmetric-int8-per-output-channel",
-    "modelBytes": 6537010,
+    "modelBytes": 6414443,
     "mode": "confidence-gated-hybrid",
     "teacherUsed": true,
     "assistantPlanAvailable": true,
@@ -16,21 +16,29 @@
     "error": null
   },
   "challenge": {
-    "examples": 293,
-    "routeAccuracy": 0.9044368600682594,
-    "firstCapabilityAccuracy": 0.6382252559726962,
-    "actionCountAccuracy": 0.8805460750853242,
-    "exactSequenceAccuracy": 0.5221843003412969,
+    "examples": 390,
+    "routeAccuracy": 0.8923076923076924,
+    "firstCapabilityAccuracy": 0.6,
+    "actionCountAccuracy": 0.9102564102564102,
+    "exactSequenceAccuracy": 0.5076923076923077,
     "selectivePrecision": 1,
-    "selectiveCoverage": 0.10921501706484642
+    "selectiveCoverage": 0.15384615384615385,
+    "dialogueRelationAccuracy": 0.958974358974359,
+    "requestedAttributeAccuracy": 0.8717948717948718,
+    "scopeAccuracy": 0.9717948717948718,
+    "selectionAccuracy": 0.9358974358974359,
+    "turnKindAccuracy": 0.8589743589743589
   },
   "latencyMs": {
-    "median": 0.5666999999999689,
-    "p95": 1.4805999999999813
+    "median": 0.5276999999999816,
+    "p95": 1.3777999999999793
   },
   "assertions": {
     "typescriptInt8Parity": true,
     "advisoryOnly": true,
+    "phase5SemanticHeadsPresent": true,
+    "semanticOutputsAdvisoryOnly": true,
+    "contextualTopicSwitchProbesPassed": true,
     "existingCalendarIRAuthorityRetained": true,
     "humanBlindExamplesUsed": 0
   }

@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "seed": 9062026,
-  "modelId": "remindspeak-phrase-lattice-28m-en-phase6",
-  "version": "0.3.0",
-  "featureBuckets": 65536,
+  "modelId": "remindspeak-phrase-lattice-32m-en-context-boundaries",
+  "version": "0.4.0",
+  "featureBuckets": 61440,
   "epochs": 4,
   "learningRate": 0.35,
   "splits": {

@@ -6,7 +6,7 @@
   "license": "MIT",
   "provenance": {
     "programGeneratedExamples": 40000,
-    "projectAuthoredSurfaceAtoms": 432,
+    "projectAuthoredSurfaceAtoms": 528,
     "projectAuthoredStyleProfiles": 20,
     "independentlyHumanAuthoredBlindExamples": 0,
     "teacherGeneratedExamples": 1661,
@@ -25,20 +25,20 @@
     "train": {
       "path": "ml/remindspeak/.generated/dataset/train.jsonl",
       "examples": 31650,
-      "uniqueReferences": 1037,
-      "sha256": "8e0770f7b9c212d7a295af980ee726fb55cc81e13faf536a7681755a3015d2d3"
+      "uniqueReferences": 1183,
+      "sha256": "56e72ae128f9e8717c134938f9ef7498646434a5ae3b5c8376b0e299416e2e28"
     },
     "dev": {
       "path": "ml/remindspeak/.generated/dataset/dev.jsonl",
       "examples": 5000,
-      "uniqueReferences": 682,
-      "sha256": "fffe6e1704e521540add7da1a6a894bb1c687f5cd720a0c6e12ca5d4a3570d1e"
+      "uniqueReferences": 802,
+      "sha256": "78377982119ad870ee3c9fe464a8ba70056796ef09fad9f5bf0a1e1c9dfc60b8"
     },
     "test": {
       "path": "ml/remindspeak/.generated/dataset/test.jsonl",
       "examples": 5000,
-      "uniqueReferences": 679,
-      "sha256": "887f61d915ca5fd8b65e9ef43a35da8e29bc37739e75b5312992c65e952c66ac"
+      "uniqueReferences": 794,
+      "sha256": "93b1b54f02b1dba1b30df1e94b2aaadb7b594edf2a686ae1dc1727240f221489"
     },
     "teacherChallenge": {
       "path": "ml/remindspeak/.generated/dataset/teacher-challenge.jsonl",
@@ -50,6 +50,6 @@
   "heldoutFixture": {
     "path": "fixtures/remindspeak/heldout.v0.1.jsonl",
     "examples": 250,
-    "sha256": "d4ec3f53edd9f47fafcbececb3a58d9761ab223915ac2c6d2c052b505682c8e5"
+    "sha256": "c90c4205988de66ab8a9c8fea1d1e2406e4bb026153d2d01c6d0e93d7fce7ad6"
   }
 }

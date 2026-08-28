@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Remind Me independent human-blind document annotation",
+  "description": "Store rows only in human-blind.local.jsonl until collection closes. Raw private documents belong under the ignored local-private directory, never in a training or teacher-generation path.",
+  "allOf": [
+    { "$ref": "corpus.schema.json#/$defs/record" },
+    {
+      "properties": {
+        "provenance": { "const": "independent-human-blind" },
+        "trainingExcluded": { "const": true },
+        "independentHumanBlind": { "const": true }
+      }
+    }
+  ]
+}

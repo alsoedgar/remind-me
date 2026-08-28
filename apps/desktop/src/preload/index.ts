@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import {
   appInfoResponseSchema,
+  assistantStreamEventSchema,
   flexModelProgressEventSchema,
   ipcChannels,
   ipcContracts,
@@ -136,6 +137,16 @@ const bridge: RemindMeBridge = {
     const response: unknown = await ipcRenderer.invoke(ipcChannels.documentDiscard, request)
     return ipcContracts[ipcChannels.documentDiscard].response.parse(response)
   },
+  repairDocumentDisagreement: async (input) => {
+    const request = ipcContracts[ipcChannels.documentRepair].request.parse(input)
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.documentRepair, request)
+    return ipcContracts[ipcChannels.documentRepair].response.parse(response)
+  },
+  groupDocumentCoverageGap: async (input) => {
+    const request = ipcContracts[ipcChannels.documentFallback].request.parse(input)
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.documentFallback, request)
+    return ipcContracts[ipcChannels.documentFallback].response.parse(response)
+  },
   getAssistantConversation: async (conversationId = null) => {
     const request = ipcContracts[ipcChannels.assistantGetConversation].request.parse({
       conversationId
@@ -150,6 +161,19 @@ const bridge: RemindMeBridge = {
     const request = ipcContracts[ipcChannels.assistantSend].request.parse(input)
     const response: unknown = await ipcRenderer.invoke(ipcChannels.assistantSend, request)
     return ipcContracts[ipcChannels.assistantSend].response.parse(response)
+  },
+  cancelAssistantMessage: async (streamId) => {
+    const request = ipcContracts[ipcChannels.assistantCancel].request.parse({ streamId })
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.assistantCancel, request)
+    return ipcContracts[ipcChannels.assistantCancel].response.parse(response)
+  },
+  onAssistantStream: (listener) => {
+    const wrapped = (_event: Electron.IpcRendererEvent, value: unknown): void => {
+      const chunk = assistantStreamEventSchema.safeParse(value)
+      if (chunk.success) listener(chunk.data)
+    }
+    ipcRenderer.on(ipcChannels.assistantStream, wrapped)
+    return () => ipcRenderer.removeListener(ipcChannels.assistantStream, wrapped)
   },
   confirmAssistantProposal: async (input) => {
     const request = ipcContracts[ipcChannels.assistantConfirm].request.parse(input)
@@ -195,6 +219,11 @@ const bridge: RemindMeBridge = {
     const request = ipcContracts[ipcChannels.flexModelSetEnabled].request.parse({ enabled })
     const response: unknown = await ipcRenderer.invoke(ipcChannels.flexModelSetEnabled, request)
     return ipcContracts[ipcChannels.flexModelSetEnabled].response.parse(response)
+  },
+  configureFlexModel: async (input) => {
+    const request = ipcContracts[ipcChannels.flexModelConfigure].request.parse(input)
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.flexModelConfigure, request)
+    return ipcContracts[ipcChannels.flexModelConfigure].response.parse(response)
   },
   onFlexModelProgress: (listener) => {
     const wrapped = (_event: Electron.IpcRendererEvent, value: unknown): void => {

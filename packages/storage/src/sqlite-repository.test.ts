@@ -242,15 +242,145 @@ describe('SqliteCalendarRepository', () => {
       const conversation = migratedRepository.getAssistantConversation('conversation:v2')
       expect(conversation.title).toBe('Version two chat')
       expect(conversation.dialogueState).toMatchObject({
-        version: 1,
+        version: 2,
         focusedEventIds: [],
         focusedReminderIds: [],
         lastQuery: null,
-        pendingClarification: null
+        pendingClarification: null,
+        queryFrames: [],
+        activeQueryFrameId: null
       })
       expect(migratedRepository.getSchemaVersion()).toBe(databaseSchemaVersion)
     } finally {
       migratedRepository.close()
+    }
+  })
+
+  it('upgrades a persisted v1 dialogue payload in place without losing focus', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'remind-me-dialogue-payload-upgrade-'))
+    temporaryDirectories.push(directory)
+    const databasePath = join(directory, 'calendar.sqlite3')
+    const firstRepository = new SqliteCalendarRepository(databasePath)
+    const saved = new PersistentCalendarService(firstRepository).saveEvent(eventForm, range)
+    const eventId = saved.snapshot.events[0]?.id
+    if (!eventId) throw new Error('Expected a saved event')
+    firstRepository.ensureAssistantConversation('conversation:v1-payload')
+    firstRepository.close()
+
+    const legacyDatabase = new DatabaseSync(databasePath)
+    legacyDatabase
+      .prepare(
+        `UPDATE assistant_dialogue_state SET payload_json = ?, updated_at = ?
+         WHERE conversation_id = 'conversation:v1-payload'`
+      )
+      .run(
+        JSON.stringify({
+          version: 1,
+          focusedEventIds: [eventId],
+          focusedReminderIds: [],
+          lastResultEventIds: [eventId],
+          lastResultReminderIds: [],
+          lastQuery: {
+            requestId: 'request:v1-payload',
+            operation: 'calendar.list',
+            sourceText: 'What do I have on March 8?',
+            rangeStartUtc: '2026-03-08T00:00:00.000Z',
+            rangeEndUtc: '2026-03-09T00:00:00.000Z',
+            queryText: null,
+            answeredAt: '2026-03-01T12:00:00.000Z'
+          },
+          activeRange: {
+            rangeStartUtc: '2026-03-08T00:00:00.000Z',
+            rangeEndUtc: '2026-03-09T00:00:00.000Z',
+            timezone: 'America/Chicago'
+          },
+          pendingClarification: null,
+          updatedAt: '2026-03-01T12:00:00.000Z'
+        }),
+        '2026-03-01T12:00:00.000Z'
+      )
+    legacyDatabase.close()
+
+    const reopenedRepository = new SqliteCalendarRepository(databasePath)
+    try {
+      const state = reopenedRepository.getAssistantDialogueState('conversation:v1-payload')
+      expect(state).toMatchObject({
+        version: 2,
+        focusedEventIds: [eventId],
+        activeQueryFrameId: 'frame:request:v1-payload'
+      })
+      expect(state.queryFrames[0]).toMatchObject({
+        orderedItems: [{ kind: 'event', id: eventId, occurrenceStart: null }],
+        selectedItems: [{ kind: 'event', id: eventId, occurrenceStart: null }]
+      })
+    } finally {
+      reopenedRepository.close()
+    }
+
+    const verificationDatabase = new DatabaseSync(databasePath, { readOnly: true })
+    try {
+      const row = verificationDatabase
+        .prepare(
+          `SELECT payload_json FROM assistant_dialogue_state
+           WHERE conversation_id = 'conversation:v1-payload'`
+        )
+        .get() as { payload_json: string }
+      expect(JSON.parse(row.payload_json)).toMatchObject({ version: 2 })
+    } finally {
+      verificationDatabase.close()
+    }
+  })
+
+  it('migrates a version 3 database to document identities without changing events', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'remind-me-document-identity-migration-'))
+    temporaryDirectories.push(directory)
+    const databasePath = join(directory, 'calendar.sqlite3')
+    const legacyDatabase = new DatabaseSync(databasePath)
+    legacyDatabase.exec(initialMigrationSql)
+    legacyDatabase.exec('DROP TABLE document_import_identities')
+    legacyDatabase.exec('PRAGMA user_version = 3')
+    legacyDatabase
+      .prepare(
+        `INSERT INTO calendars (
+          id, name, color, timezone, is_default, created_at, updated_at
+        ) VALUES ('calendar:legacy', 'Legacy', '#abc123', 'America/Chicago', 1, ?, ?)`
+      )
+      .run('2026-03-01T12:00:00.000Z', '2026-03-01T12:00:00.000Z')
+    legacyDatabase
+      .prepare(
+        `INSERT INTO events (
+          id, calendar_id, title, description, location, start_utc, end_utc, timezone,
+          all_day, recurrence_json, status, provenance, created_at, updated_at
+        ) VALUES (
+          'event:legacy', 'calendar:legacy', 'Legacy class', '', 'SES 130',
+          '2026-03-08T14:00:00.000Z', '2026-03-08T15:00:00.000Z',
+          'America/Chicago', 0, NULL, 'active', 'import', ?, ?
+        )`
+      )
+      .run('2026-03-01T12:00:00.000Z', '2026-03-01T12:00:00.000Z')
+    legacyDatabase.close()
+
+    const migratedRepository = new SqliteCalendarRepository(databasePath)
+    try {
+      expect(migratedRepository.getSchemaVersion()).toBe(databaseSchemaVersion)
+      expect(migratedRepository.getEvent('event:legacy')).toMatchObject({
+        title: 'Legacy class',
+        importIdentity: null
+      })
+    } finally {
+      migratedRepository.close()
+    }
+
+    const verificationDatabase = new DatabaseSync(databasePath, { readOnly: true })
+    try {
+      const identityTable = verificationDatabase
+        .prepare(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'document_import_identities'"
+        )
+        .get()
+      expect(identityTable).toBeTruthy()
+    } finally {
+      verificationDatabase.close()
     }
   })
 

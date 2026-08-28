@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "suiteVersion": "0.1.0",
+  "thresholds": {
+    "proposalPrecision": 0.99,
+    "nativeRecall": 0.97,
+    "scannedRecall": 0.94,
+    "recurrenceExactAccuracy": 0.99,
+    "evidenceCoverage": 1
+  },
+  "packagedCases": [
+    {
+      "caseId": "row-table.native",
+      "expectedExtraction": "native-text"
+    },
+    {
+      "caseId": "row-table.scan-pdf",
+      "expectedExtraction": "ocr"
+    },
+    {
+      "caseId": "row-table.image",
+      "expectedExtraction": "ocr"
+    },
+    {
+      "caseId": "course-syllabus.multipage",
+      "expectedExtraction": "native-text"
+    }
+  ],
+  "requiredRuntimeAssertions": [
+    "packagedRuntime",
+    "offlineRuntime",
+    "localReleaseReady",
+    "noFabricatedProposals",
+    "exactFieldPlacement",
+    "selectedByDefault",
+    "visibleEvidenceAlignment",
+    "selectionRoundTrip",
+    "editRoundTrip",
+    "explicitConfirmation",
+    "atomicCommit",
+    "duplicateReconciliation",
+    "singleUndo"
+  ]
+}

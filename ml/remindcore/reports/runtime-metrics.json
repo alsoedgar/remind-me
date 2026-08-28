@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "model": {
     "available": true,
-    "id": "remindcore-hashframe-next-en-qwen-assisted",
-    "version": "0.3.0",
-    "architecture": "HashFrame Next joint semantic and AssistantPlan advisory planner",
-    "parameterCount": 4890624,
+    "id": "remindcore-hashframe-context-en-qwen-assisted",
+    "version": "0.4.0",
+    "architecture": "HashFrame Context joint semantic and AssistantPlan advisory planner",
+    "parameterCount": 4796416,
     "quantization": "symmetric-int8-per-output-channel",
-    "modelBytes": 6537010,
+    "modelBytes": 6414443,
     "mode": "confidence-gated-hybrid",
     "teacherUsed": true,
     "assistantPlanAvailable": true,
@@ -24,10 +24,10 @@
     "eligibleAssistedCoverage": 0.175,
     "schemaValidity": 1,
     "rulesSafeOperationAccuracy": 0.10194174757281553,
-    "hybridSafeOperationAccuracy": 0.4320388349514563,
+    "hybridSafeOperationAccuracy": 0.4174757281553398,
     "warmLatencyMs": {
-      "median": 0.58400000000006,
-      "p95": 1.1988999999999805
+      "median": 0.641399999999976,
+      "p95": 1.2617999999999938
     }
   },
   "assertions": {

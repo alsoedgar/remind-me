@@ -25,9 +25,32 @@ const planScanInfoArtifactSchema = z
       .object({
         seed: z.number().int().nonnegative(),
         datasetManifestSha256: z.string().regex(/^[a-f0-9]{64}$/u),
+        challengeSlices: z
+          .array(
+            z.enum([
+              'baseline',
+              'ocr-corruption',
+              'neighboring-row-negatives',
+              'repeated-titles',
+              'unfamiliar-column-order',
+              'header-footer-distractions'
+            ])
+          )
+          .length(6),
+        hardNeighborNegativeMining: z.literal(true),
         teacherUsed: z.literal(false),
         pretrainedWeightsUsed: z.literal(false),
         personalDataUsed: z.literal(false)
+      })
+      .strict(),
+    safety: z
+      .object({
+        exactSourceProjectionRequired: z.literal(true),
+        crossPageLinksAllowed: z.literal(false),
+        deterministicSemanticCompilerRequired: z.literal(true),
+        explicitConfirmationRequired: z.literal(true),
+        repairFallbackCandidateSelectionOnly: z.literal(true),
+        repairFallbackHasMutationAuthority: z.literal(false)
       })
       .strict()
   })

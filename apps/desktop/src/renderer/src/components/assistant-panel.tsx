@@ -57,7 +57,7 @@ export function AssistantPanel({
   onOpenDocument
 }: {
   onOpen: (request: EditorRequest) => void
-  mode?: 'workspace' | 'sidebar'
+  mode?: 'workspace' | 'sidebar' | 'compact'
   wide?: boolean
   onClose?: () => void
   onToggleWide?: () => void
@@ -69,10 +69,15 @@ export function AssistantPanel({
   const busy = useAssistantStore((state) => state.busy)
   const pendingMessage = useAssistantStore((state) => state.pendingMessage)
   const activity = useAssistantStore((state) => state.activity)
+  const activityMessage = useAssistantStore((state) => state.activityMessage)
+  const streamId = useAssistantStore((state) => state.streamId)
+  const cancelRequested = useAssistantStore((state) => state.cancelRequested)
+  const streamingReply = useAssistantStore((state) => state.streamingReply)
   const error = useAssistantStore((state) => state.error)
   const initialize = useAssistantStore((state) => state.initialize)
   const setComposer = useAssistantStore((state) => state.setComposer)
   const send = useAssistantStore((state) => state.send)
+  const cancel = useAssistantStore((state) => state.cancel)
   const confirm = useAssistantStore((state) => state.confirm)
   const reject = useAssistantStore((state) => state.reject)
   const clearConversation = useAssistantStore((state) => state.clearConversation)
@@ -149,9 +154,15 @@ export function AssistantPanel({
   useEffect(() => {
     timelineRef.current?.scrollTo({
       top: timelineRef.current.scrollHeight,
-      behavior: 'smooth'
+      behavior: streamingReply ? 'auto' : 'smooth'
     })
-  }, [activity, conversation?.turns.length, conversation?.activeProposal?.id, pendingMessage])
+  }, [
+    activity,
+    conversation?.turns.length,
+    conversation?.activeProposal?.id,
+    pendingMessage,
+    streamingReply
+  ])
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
@@ -234,39 +245,49 @@ export function AssistantPanel({
     ? bulkClearPayload.eventIds.length + bulkClearPayload.reminderIds.length
     : 0
   const bulkClearPreview = bulkClearPayload ? bulkDeletePreview(bulkClearPayload, snapshot) : []
-  const visibleTurns = conversation?.turns.slice(mode === 'sidebar' ? -16 : -24) ?? []
+  const compact = mode === 'compact'
+  const visibleTurns =
+    conversation?.turns.slice(compact ? -8 : mode === 'sidebar' ? -16 : -24) ?? []
   const headingId = `assistant-heading-${mode}`
   const inputId = `assistant-input-${mode}`
   const activityLabel =
-    activity === 'applying'
+    activityMessage ??
+    (activity === 'applying'
       ? 'Checking and saving that locally…'
       : activity === 'updating'
         ? 'Updating the conversation…'
-        : 'Thinking with your calendar…'
+        : 'Thinking with your calendar…')
   return (
     <>
       <section
         className={`assistant-card assistant-workspace assistant-${mode}-panel`}
         aria-labelledby={headingId}
         aria-busy={busy}
+        data-testid={compact ? 'compact-assistant' : undefined}
       >
         <header className="assistant-intro">
           <span className="assistant-spark" aria-hidden="true">
             ✦
           </span>
           <div>
-            <p className="eyebrow">Local assistant</p>
+            <p className="eyebrow">{compact ? 'Private assistant' : 'Local assistant'}</p>
             <h2 id={headingId}>
-              {mode === 'sidebar' ? 'Your calendar, listening' : 'Talk through your time'}
+              {compact
+                ? 'Ask from right here'
+                : mode === 'sidebar'
+                  ? 'Your calendar, listening'
+                  : 'Talk through your time'}
             </h2>
             <p>
-              {mode === 'sidebar'
-                ? 'Ask from anywhere in the app. Answers stay grounded in this device.'
-                : 'Ask naturally. Every answer comes from your on-device calendar, and every change waits for your review.'}
+              {compact
+                ? 'Get a local answer or make a reviewed calendar change without opening the full app.'
+                : mode === 'sidebar'
+                  ? 'Ask naturally about any day. Answers use your private on-device calendar, and changes always wait for review.'
+                  : 'Ask naturally. Every answer comes from your on-device calendar, and every change waits for your review.'}
             </p>
           </div>
           <div className="assistant-header-actions">
-            <span className="local-pill">offline · private</span>
+            <span className="local-pill">{compact ? 'local' : 'offline · private'}</span>
             {mode === 'sidebar' ? (
               <>
                 <button
@@ -294,7 +315,7 @@ export function AssistantPanel({
 
         <div className="prompt-suggestions" aria-label="Things to try">
           {assistantSuggestions
-            .slice(0, mode === 'sidebar' ? 2 : assistantSuggestions.length)
+            .slice(0, mode === 'workspace' ? assistantSuggestions.length : 2)
             .map((suggestion) => (
               <button
                 key={suggestion}
@@ -309,6 +330,16 @@ export function AssistantPanel({
               </button>
             ))}
         </div>
+
+        {!compact ? (
+          <div className="assistant-context-strip" aria-label="Assistant privacy and safety">
+            <span>
+              <i aria-hidden="true" /> Ready on device
+            </span>
+            <span>Calendar-aware answers</span>
+            <span>Review before changes</span>
+          </div>
+        ) : null}
 
         <div className="conversation-timeline" ref={timelineRef} aria-live="polite">
           {loading && visibleTurns.length === 0 ? (
@@ -332,8 +363,9 @@ export function AssistantPanel({
             <article className="conversation-turn assistant-turn assistant-welcome-turn">
               <span className="turn-author">Remind Me</span>
               <p>
-                Hi. Say hello, ask what I can do, find a free pocket of time, or describe the
-                calendar change you want in your own words.
+                {compact
+                  ? 'Ask what is next, check a day, or describe a change in your own words.'
+                  : 'Hi. Say hello, ask what I can do, find a free pocket of time, or describe the calendar change you want in your own words.'}
               </p>
             </article>
           ) : null}
@@ -344,7 +376,8 @@ export function AssistantPanel({
             >
               <span className="turn-author">{turn.role === 'user' ? 'You' : 'Remind Me'}</span>
               <p>{turn.text}</p>
-              {turn.role === 'assistant' &&
+              {!compact &&
+              turn.role === 'assistant' &&
               turn.requestId &&
               feedbackEligibleRequestIds.includes(turn.requestId) ? (
                 <div className="reply-feedback" aria-label="Rate this reply">
@@ -381,7 +414,29 @@ export function AssistantPanel({
             </article>
           ) : null}
 
-          {busy && activity ? (
+          {busy && activity === 'responding' && streamingReply ? (
+            <article
+              className="conversation-turn assistant-turn streaming-turn"
+              role="status"
+              data-testid="assistant-streaming"
+            >
+              <span className="turn-author">Remind Me</span>
+              <p>
+                {streamingReply}
+                <span className="streaming-caret" aria-hidden="true" />
+              </p>
+              {streamId ? (
+                <button
+                  className="assistant-stop-button"
+                  type="button"
+                  disabled={cancelRequested}
+                  onClick={() => void cancel()}
+                >
+                  {cancelRequested ? 'Stopping…' : 'Stop'}
+                </button>
+              ) : null}
+            </article>
+          ) : busy && activity ? (
             <article
               className="conversation-turn assistant-turn thinking-turn"
               role="status"
@@ -396,6 +451,16 @@ export function AssistantPanel({
                 </span>
                 <span>{activityLabel}</span>
               </div>
+              {streamId ? (
+                <button
+                  className="assistant-stop-button"
+                  type="button"
+                  disabled={cancelRequested}
+                  onClick={() => void cancel()}
+                >
+                  {cancelRequested ? 'Stopping…' : 'Stop'}
+                </button>
+              ) : null}
             </article>
           ) : null}
 
@@ -420,7 +485,9 @@ export function AssistantPanel({
               <p className="proposal-note">
                 {bulkClearPayload
                   ? `Nothing has changed yet. The exact ${bulkClearCount} ${bulkClearCount === 1 ? 'item' : 'items'} will be checked again and deleted as one undoable action.`
-                  : 'Nothing has changed yet. This proposal was validated and dry-run by the same engine that powers the calendar editors.'}
+                  : proposal.payload.kind === 'batch'
+                    ? 'Nothing has changed yet. Ask about a numbered item, check for conflicts, or revise it in chat.'
+                    : 'Nothing has changed yet. Ask for details, check for conflicts, or revise it in chat.'}
               </p>
               {proposal.payload.kind === 'batch' ? (
                 <ol className="proposal-batch-list">
@@ -603,7 +670,9 @@ export function AssistantPanel({
             placeholder={
               busy
                 ? 'You can type your next message while I work…'
-                : 'Try “Am I free Friday afternoon?”'
+                : compact
+                  ? 'Ask about your calendar…'
+                  : 'Try “Am I free Friday afternoon?”'
             }
             autoComplete="off"
             enterKeyHint="send"
@@ -638,24 +707,41 @@ export function AssistantPanel({
               </svg>
             </span>
           </button>
-          <button className="send-button" type="submit" disabled={busy || !composer.trim()}>
-            {busy ? 'Thinking…' : 'Send'}
+          <button
+            className="send-button"
+            type="submit"
+            disabled={busy || !composer.trim()}
+            aria-label={compact ? 'Send message' : undefined}
+          >
+            {busy
+              ? compact
+                ? '…'
+                : activity === 'responding'
+                  ? 'Responding…'
+                  : 'Thinking…'
+              : compact
+                ? '↑'
+                : 'Send'}
           </button>
         </form>
-        <div className="assistant-footnote">
-          <span>RemindCore understanding · RemindSpeak replies · validated IR · local SQLite</span>
-          <button
-            type="button"
-            data-armed={clearArmed}
-            disabled={busy}
-            aria-label={
-              clearArmed ? 'Confirm clearing this conversation' : 'Clear this local conversation'
-            }
-            onClick={() => void handleClearConversation()}
-          >
-            {clearArmed ? 'Click again to clear' : 'Clear conversation'}
-          </button>
-        </div>
+        {!compact ? (
+          <div className="assistant-footnote">
+            <span>
+              RemindCore understanding · RemindSpeak replies · validated IR · local SQLite
+            </span>
+            <button
+              type="button"
+              data-armed={clearArmed}
+              disabled={busy}
+              aria-label={
+                clearArmed ? 'Confirm clearing this conversation' : 'Clear this local conversation'
+              }
+              onClick={() => void handleClearConversation()}
+            >
+              {clearArmed ? 'Click again to clear' : 'Clear conversation'}
+            </button>
+          </div>
+        ) : null}
       </section>
     </>
   )

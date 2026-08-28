@@ -1,5 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { AssistantExchange, RemindMeBridge } from '@remind-me/contracts'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type {
+  AssistantExchange,
+  AssistantSendRequest,
+  AssistantStreamEvent,
+  RemindMeBridge
+} from '@remind-me/contracts'
 import { useAssistantStore } from './assistant-store'
 
 function deferred<T>(): {
@@ -46,6 +51,11 @@ describe('assistant optimistic conversation state', () => {
       busy: false,
       pendingMessage: null,
       activity: null,
+      activityMessage: null,
+      queuePosition: 0,
+      cancelRequested: false,
+      streamId: null,
+      streamingReply: null,
       error: null,
       feedbackEligibleRequestIds: [],
       replyRatings: {}
@@ -82,6 +92,116 @@ describe('assistant optimistic conversation state', () => {
       busy: false,
       pendingMessage: null,
       activity: null
+    })
+  })
+
+  it('keeps thinking until the first local token and then forms the reply live', async () => {
+    const response = deferred<AssistantExchange>()
+    let listener: (event: AssistantStreamEvent) => void = () => undefined
+    let sentStreamId = ''
+    const unsubscribe = vi.fn()
+    const bridge = {
+      onAssistantStream: (next: (event: AssistantStreamEvent) => void) => {
+        listener = next
+        return unsubscribe
+      },
+      sendAssistantMessage: (request: AssistantSendRequest) => {
+        sentStreamId = request.streamId ?? ''
+        return response.promise
+      }
+    } as unknown as RemindMeBridge
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: { remindMe: bridge }
+    })
+
+    const request = useAssistantStore.getState().send('Tell me something encouraging')
+    expect(sentStreamId).toMatch(/^assistant-stream:/u)
+    expect(useAssistantStore.getState()).toMatchObject({
+      activity: 'thinking',
+      streamingReply: null
+    })
+
+    listener({ type: 'chunk', streamId: 'assistant-stream:other', text: 'Wrong request' })
+    expect(useAssistantStore.getState().activity).toBe('thinking')
+
+    listener({ type: 'chunk', streamId: sentStreamId, text: 'You have' })
+    expect(useAssistantStore.getState()).toMatchObject({
+      activity: 'responding',
+      streamingReply: 'You have'
+    })
+
+    listener({
+      type: 'chunk',
+      streamId: sentStreamId,
+      text: 'You have room to take this one step at a time.'
+    })
+    expect(useAssistantStore.getState().streamingReply).toBe(
+      'You have room to take this one step at a time.'
+    )
+
+    response.resolve(answerExchange())
+    await expect(request).resolves.toBe(true)
+    expect(useAssistantStore.getState()).toMatchObject({
+      activity: null,
+      streamId: null,
+      streamingReply: null
+    })
+    expect(unsubscribe).toHaveBeenCalledOnce()
+  })
+
+  it('shows queue progress and cooperatively stops the active local response', async () => {
+    const response = deferred<AssistantExchange>()
+    let listener: (event: AssistantStreamEvent) => void = () => undefined
+    let sentStreamId = ''
+    const cancelAssistantMessage = vi.fn(async () => ({ cancelled: true }))
+    const bridge = {
+      onAssistantStream: (next: (event: AssistantStreamEvent) => void) => {
+        listener = next
+        return () => undefined
+      },
+      sendAssistantMessage: (request: AssistantSendRequest) => {
+        sentStreamId = request.streamId ?? ''
+        return response.promise
+      },
+      cancelAssistantMessage
+    } as unknown as RemindMeBridge
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: { remindMe: bridge }
+    })
+
+    const sending = useAssistantStore.getState().send('Write a short plan for me')
+    listener({
+      type: 'status',
+      streamId: sentStreamId,
+      status: {
+        workload: 'chat',
+        phase: 'queued',
+        queuePosition: 3,
+        queuedJobs: 3,
+        canCancel: true
+      }
+    })
+    expect(useAssistantStore.getState()).toMatchObject({
+      activity: 'thinking',
+      activityMessage: 'Waiting behind 2 local tasks…',
+      queuePosition: 3
+    })
+
+    await expect(useAssistantStore.getState().cancel()).resolves.toBe(true)
+    expect(cancelAssistantMessage).toHaveBeenCalledWith(sentStreamId)
+    expect(useAssistantStore.getState()).toMatchObject({
+      cancelRequested: true,
+      activityMessage: 'Stopping the local response…'
+    })
+
+    response.resolve(answerExchange())
+    await expect(sending).resolves.toBe(true)
+    expect(useAssistantStore.getState()).toMatchObject({
+      busy: false,
+      cancelRequested: false,
+      activityMessage: null
     })
   })
 

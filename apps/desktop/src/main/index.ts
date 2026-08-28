@@ -22,13 +22,20 @@ import {
   getAppearanceSupport,
   windowAppearanceOptions
 } from './appearance-runtime'
+import { scheduleDocumentReleaseGate } from './document-release-gate'
 
 const applicationScheme = 'remind-me'
 const applicationHost = 'app'
 const applicationName = 'Remind Me'
 const windowsAppUserModelId = 'com.remindme.desktop'
 const isSmokeTest = process.argv.includes('--smoke-test')
+const isDocumentReleaseGate = process.argv.includes('--document-release-gate')
+const isTestRun = isSmokeTest || isDocumentReleaseGate
 const isOfflineSmokeTest = process.argv.includes('--offline-smoke')
+
+if (isDocumentReleaseGate && process.env.REMIND_ME_DOCUMENT_GATE_USER_DATA) {
+  app.setPath('userData', process.env.REMIND_ME_DOCUMENT_GATE_USER_DATA)
+}
 
 app.setName(applicationName)
 if (process.platform === 'win32') app.setAppUserModelId(windowsAppUserModelId)
@@ -639,6 +646,29 @@ function scheduleSmokeResult(window: BrowserWindow): void {
             }
             if (!documentReady)
               console.error('Document showcase did not finish processing in time.')
+            const documentTab = process.env.REMIND_ME_SMOKE_DOCUMENT_TAB
+            if (
+              documentReady &&
+              documentTab &&
+              ['week', 'timeline', 'month', 'details', 'source'].includes(documentTab)
+            ) {
+              await window.webContents.executeJavaScript(`
+                (() => {
+                  const tab = ${JSON.stringify(documentTab)}
+                  const labels = {
+                    week: 'Week preview',
+                    timeline: 'Chronological',
+                    month: 'Month',
+                    details: 'Edit details',
+                    source: 'Source'
+                  }
+                  const button = [...document.querySelectorAll('.document-review-tabs button')]
+                    .find((candidate) => candidate.textContent?.includes(labels[tab]))
+                  button?.click()
+                  return Boolean(button)
+                })()
+              `)
+            }
             await new Promise((resolveReady) => setTimeout(resolveReady, 350))
           }
           if (captureView === 'settings-glass') {
@@ -714,7 +744,8 @@ function createMainWindow(preferences: PreferencesEntity): BrowserWindow {
   if (appearanceSupport.windowControlsOverlay) window.setMenuBarVisibility(false)
   applyWindowAppearance(window, preferences, appearanceSupport)
   configureWindowSecurity(window)
-  if (isSmokeTest) scheduleSmokeResult(window)
+  if (isDocumentReleaseGate) scheduleDocumentReleaseGate(window)
+  else if (isSmokeTest) scheduleSmokeResult(window)
   else window.once('ready-to-show', () => window.show())
 
   const developmentUrl = process.env.ELECTRON_RENDERER_URL
@@ -724,7 +755,7 @@ function createMainWindow(preferences: PreferencesEntity): BrowserWindow {
   return window
 }
 
-const hasSingleInstanceLock = isSmokeTest || app.requestSingleInstanceLock()
+const hasSingleInstanceLock = isTestRun || app.requestSingleInstanceLock()
 if (!hasSingleInstanceLock) {
   app.quit()
 } else {
@@ -770,7 +801,8 @@ if (!hasSingleInstanceLock) {
           'node-llama-cpp',
           'dist',
           'index.js'
-        )
+        ),
+        backendManifest: join(process.resourcesPath, 'llama-backends.json')
       }
     }
     const applicationRoot = app.getAppPath()
@@ -798,7 +830,7 @@ if (!hasSingleInstanceLock) {
     .then(async () => {
       await registerApplicationProtocol()
       configureSessionSecurity()
-      const databasePath = isSmokeTest
+      const databasePath = isTestRun
         ? ':memory:'
         : join(app.getPath('userData'), 'remind-me.sqlite3')
       const openedDatabase = await openCalendarDatabase(databasePath)
@@ -814,7 +846,7 @@ if (!hasSingleInstanceLock) {
       const service = new PersistentCalendarService(repository)
       const localRelease = await loadAndAttestLocalRelease({
         modelRoot: localModelRoot(),
-        providerCachePath: isSmokeTest
+        providerCachePath: isTestRun
           ? null
           : join(app.getPath('userData'), 'release-provider-cache-v1.json')
       })
@@ -828,9 +860,12 @@ if (!hasSingleInstanceLock) {
         localRelease.plannerInfo,
         localRelease.speaker,
         localRelease.speakerInfo,
-        flexModelRuntime
+        {
+          calendarPlanner: flexModelRuntime,
+          generalResponder: flexModelRuntime
+        }
       )
-      voiceRuntime = new OfflineVoiceRuntime(voiceRuntimePaths(), isSmokeTest ? 300 : undefined)
+      voiceRuntime = new OfflineVoiceRuntime(voiceRuntimePaths(), isTestRun ? 300 : undefined)
       notificationScheduler = new ReminderNotificationScheduler(
         repository,
         () => {
@@ -839,7 +874,7 @@ if (!hasSingleInstanceLock) {
           mainWindow.show()
           mainWindow.focus()
         },
-        !isSmokeTest
+        !isTestRun
       )
       registerCalendarIpcHandlers({
         service,

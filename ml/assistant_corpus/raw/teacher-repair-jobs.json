@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "corpusVersion": "0.1.0",
+  "corpusVersion": "0.2.0",
   "generator": "scripts/build-assistant-corpus.ts prepare-repairs",
   "seed": 260826,
   "paraphrasesPerJob": 1,
@@ -10,71 +10,6 @@
   "labelAuthority": "project-authored capability registry and seed programs",
   "registrySha256": "7da27bed9f18b097f40db8f09a6f9c8b0bcdfb0b9866dcdbc947a620bcd6163f",
   "jobs": [
-    {
-      "id": "assistant:calendar.query.list:1",
-      "capabilityId": "calendar.query.list",
-      "meaning": "List schedule",
-      "seedTemplate": "list my plans for <DATE>",
-      "placeholders": [
-        "DATE"
-      ],
-      "cues": [
-        "agenda",
-        "calendar",
-        "plans",
-        "scheduled"
-      ],
-      "split": "train",
-      "familyId": "single:calendar.query.list:1"
-    },
-    {
-      "id": "assistant:calendar.query.conflicts:1",
-      "capabilityId": "calendar.query.conflicts",
-      "meaning": "Check conflicts",
-      "seedTemplate": "check for conflicts on <DATE>",
-      "placeholders": [
-        "DATE"
-      ],
-      "cues": [
-        "conflict",
-        "overlap",
-        "double",
-        "clash"
-      ],
-      "split": "train",
-      "familyId": "single:calendar.query.conflicts:1"
-    },
-    {
-      "id": "assistant:calendar.query.next:2",
-      "capabilityId": "calendar.query.next",
-      "meaning": "Next item",
-      "seedTemplate": "which appointment is coming up soonest",
-      "placeholders": [],
-      "cues": [
-        "next",
-        "upcoming",
-        "soonest"
-      ],
-      "split": "development",
-      "familyId": "single:calendar.query.next:2"
-    },
-    {
-      "id": "assistant:calendar.query.details:3",
-      "capabilityId": "calendar.query.details",
-      "meaning": "Item details",
-      "seedTemplate": "tell me more information about <TARGET>",
-      "placeholders": [
-        "TARGET"
-      ],
-      "cues": [
-        "details",
-        "location",
-        "information",
-        "tell"
-      ],
-      "split": "challenge",
-      "familyId": "single:calendar.query.details:3"
-    },
     {
       "id": "assistant:calendar.query.summary:1",
       "capabilityId": "calendar.query.summary",
@@ -91,41 +26,6 @@
       ],
       "split": "train",
       "familyId": "single:calendar.query.summary:1"
-    },
-    {
-      "id": "assistant:calendar.schedule.copy-day:2",
-      "capabilityId": "calendar.schedule.copy-day",
-      "meaning": "Copy day schedule",
-      "seedTemplate": "mirror my <SOURCE_DATE> schedule on <DESTINATION_DAYS>",
-      "placeholders": [
-        "SOURCE_DATE",
-        "DESTINATION_DAYS"
-      ],
-      "cues": [
-        "copy",
-        "mirror",
-        "repeat",
-        "reuse"
-      ],
-      "split": "development",
-      "familyId": "single:calendar.schedule.copy-day:2"
-    },
-    {
-      "id": "assistant:calendar.schedule.clear:3",
-      "capabilityId": "calendar.schedule.clear",
-      "meaning": "Clear schedule",
-      "seedTemplate": "wipe both events and reminders during <RANGE>",
-      "placeholders": [
-        "RANGE"
-      ],
-      "cues": [
-        "clear",
-        "delete",
-        "remove",
-        "wipe"
-      ],
-      "split": "challenge",
-      "familyId": "single:calendar.schedule.clear:3"
     },
     {
       "id": "assistant:assistant.chat.respond:1",
@@ -146,21 +46,6 @@
       "familyId": "single:assistant.chat.respond:1"
     },
     {
-      "id": "assistant:assistant.identity:3",
-      "capabilityId": "assistant.identity",
-      "meaning": "Identity",
-      "seedTemplate": "tell me who I am chatting with",
-      "placeholders": [],
-      "cues": [
-        "name",
-        "assistant",
-        "introduce",
-        "yourself"
-      ],
-      "split": "challenge",
-      "familyId": "single:assistant.identity:3"
-    },
-    {
       "id": "assistant:assistant.architecture:1",
       "capabilityId": "assistant.architecture",
       "meaning": "Architecture",
@@ -174,37 +59,6 @@
       ],
       "split": "train",
       "familyId": "single:assistant.architecture:1"
-    },
-    {
-      "id": "assistant:assistant.local-time:2",
-      "capabilityId": "assistant.local-time",
-      "meaning": "Local time",
-      "seedTemplate": "tell me today’s local date",
-      "placeholders": [],
-      "cues": [
-        "time",
-        "date",
-        "day",
-        "clock"
-      ],
-      "split": "development",
-      "familyId": "single:assistant.local-time:2"
-    },
-    {
-      "id": "assistant:assistant.wellbeing:3",
-      "capabilityId": "assistant.wellbeing",
-      "meaning": "Wellbeing",
-      "seedTemplate": "give me a short word of encouragement",
-      "placeholders": [],
-      "cues": [
-        "doing",
-        "there",
-        "encourage",
-        "hello",
-        "morning"
-      ],
-      "split": "challenge",
-      "familyId": "single:assistant.wellbeing:3"
     },
     {
       "id": "assistant:assistant.memory.remember:1",
@@ -222,21 +76,6 @@
       ],
       "split": "train",
       "familyId": "single:assistant.memory.remember:1"
-    },
-    {
-      "id": "assistant:assistant.memory.recall:2",
-      "capabilityId": "assistant.memory.recall",
-      "meaning": "Recall memory",
-      "seedTemplate": "show my locally saved preferences",
-      "placeholders": [],
-      "cues": [
-        "remember",
-        "memory",
-        "saved",
-        "know"
-      ],
-      "split": "development",
-      "familyId": "single:assistant.memory.recall:2"
     },
     {
       "id": "assistant:assistant.memory.forget:3",
@@ -288,38 +127,6 @@
       "familyId": "single:app.navigation.open:2"
     },
     {
-      "id": "assistant:app.window.set-mode:1",
-      "capabilityId": "app.window.set-mode",
-      "meaning": "Set window mode",
-      "seedTemplate": "switch the window into <MODE> mode",
-      "placeholders": [
-        "MODE"
-      ],
-      "cues": [
-        "window",
-        "widget",
-        "glance",
-        "mode"
-      ],
-      "split": "train",
-      "familyId": "single:app.window.set-mode:1"
-    },
-    {
-      "id": "assistant:app.window.set-pinned:2",
-      "capabilityId": "app.window.set-pinned",
-      "meaning": "Pin window",
-      "seedTemplate": "keep the calendar on top of the desktop",
-      "placeholders": [],
-      "cues": [
-        "pin",
-        "top",
-        "desktop",
-        "window"
-      ],
-      "split": "development",
-      "familyId": "single:app.window.set-pinned:2"
-    },
-    {
       "id": "assistant:app.startup.configure:3",
       "capabilityId": "app.startup.configure",
       "meaning": "Configure startup",
@@ -337,6 +144,6 @@
       "familyId": "single:app.startup.configure:3"
     }
   ],
-  "parentJobsSha256": "68760769e91e2671d1601f86d768b06dd466dc97e117c87edbd552daa4e402ab",
+  "parentJobsSha256": "6043699dbfc3b3c5b300e1511781ec80bf13e314b004915ba65b288dddc15f90",
   "repairRound": 1
 }

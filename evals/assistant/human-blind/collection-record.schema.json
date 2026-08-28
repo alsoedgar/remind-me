@@ -1,0 +1,552 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schemaVersion": { "type": "number", "const": 1 },
+    "protocolVersion": { "type": "string", "const": "1.0" },
+    "recordId": { "type": "string", "pattern": "^hb-[a-z0-9][a-z0-9-]{7,63}$" },
+    "participantId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{7,63}$" },
+    "consent": {
+      "type": "object",
+      "properties": {
+        "consentRecordId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{7,63}$" },
+        "collectedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "evaluationUse": { "type": "boolean", "const": true },
+        "publicRelease": { "type": "boolean", "const": true },
+        "withdrawn": { "type": "boolean", "const": false },
+        "withdrawalClosesAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        }
+      },
+      "required": [
+        "consentRecordId",
+        "collectedAt",
+        "evaluationUse",
+        "publicRelease",
+        "withdrawn",
+        "withdrawalClosesAt"
+      ],
+      "additionalProperties": false
+    },
+    "independence": {
+      "type": "object",
+      "properties": {
+        "participantAuthoredRequests": { "type": "boolean", "const": true },
+        "shownTrainingExamples": { "type": "boolean", "const": false },
+        "shownEvaluationExamples": { "type": "boolean", "const": false },
+        "modelOutputSeenBeforeAuthorship": { "type": "boolean", "const": false },
+        "developerRewroteParticipantLanguage": { "type": "boolean", "const": false }
+      },
+      "required": [
+        "participantAuthoredRequests",
+        "shownTrainingExamples",
+        "shownEvaluationExamples",
+        "modelOutputSeenBeforeAuthorship",
+        "developerRewroteParticipantLanguage"
+      ],
+      "additionalProperties": false
+    },
+    "privacy": {
+      "type": "object",
+      "properties": {
+        "syntheticCalendarFactsOnly": { "type": "boolean", "const": true },
+        "containsRealCalendarExport": { "type": "boolean", "const": false },
+        "obviousPiiReviewPassed": { "type": "boolean", "const": true }
+      },
+      "required": [
+        "syntheticCalendarFactsOnly",
+        "containsRealCalendarExport",
+        "obviousPiiReviewPassed"
+      ],
+      "additionalProperties": false
+    },
+    "annotation": {
+      "type": "object",
+      "properties": {
+        "annotatorIds": {
+          "minItems": 2,
+          "maxItems": 5,
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{7,63}$" },
+          "uniqueItems": true
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "independentPassesCompleted": { "type": "boolean", "const": true },
+        "annotatedBeforeModelOutput": { "type": "boolean", "const": true },
+        "consensusReached": { "type": "boolean", "const": true }
+      },
+      "required": [
+        "annotatorIds",
+        "completedAt",
+        "independentPassesCompleted",
+        "annotatedBeforeModelOutput",
+        "consensusReached"
+      ],
+      "additionalProperties": false
+    },
+    "scenario": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+        "category": {
+          "type": "string",
+          "enum": [
+            "single-action",
+            "multi-action",
+            "mutation",
+            "bulk",
+            "query",
+            "multi-turn",
+            "conversation",
+            "memory",
+            "ambiguity",
+            "safety",
+            "open-dialogue"
+          ]
+        },
+        "source": { "const": "user-reported", "type": "string" },
+        "inDomain": { "type": "boolean" },
+        "trainingExcluded": { "type": "boolean", "const": true },
+        "tags": { "default": [], "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "world": {
+          "default": { "events": [], "reminders": [] },
+          "type": "object",
+          "properties": {
+            "events": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string", "minLength": 1 },
+                  "date": {
+                    "type": "string",
+                    "pattern": "^(?:today|tomorrow|yesterday|[+-]\\d+d|(?:this|next):(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\\d{4}-\\d{2}-\\d{2})$"
+                  },
+                  "startTime": { "type": "string", "pattern": "^\\d{2}:\\d{2}$" },
+                  "endTime": { "type": "string", "pattern": "^\\d{2}:\\d{2}$" },
+                  "location": { "default": "", "type": "string" },
+                  "description": { "default": "", "type": "string" },
+                  "recurrence": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "frequency": {
+                            "type": "string",
+                            "enum": ["daily", "weekly", "monthly", "yearly"]
+                          },
+                          "interval": { "type": "integer", "exclusiveMinimum": 0, "maximum": 365 },
+                          "byWeekday": {
+                            "maxItems": 7,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "monday",
+                                "tuesday",
+                                "wednesday",
+                                "thursday",
+                                "friday",
+                                "saturday",
+                                "sunday"
+                              ]
+                            }
+                          },
+                          "byMonthDay": {
+                            "maxItems": 31,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": -31, "maximum": 31 }
+                          },
+                          "end": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": { "kind": { "type": "string", "const": "never" } },
+                                "required": ["kind"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": { "type": "string", "const": "count" },
+                                  "count": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                },
+                                "required": ["kind", "count"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": { "type": "string", "const": "until" },
+                                  "date": {
+                                    "type": "string",
+                                    "pattern": "^(?:today|tomorrow|yesterday|[+-]\\d+d|(?:this|next):(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\\d{4}-\\d{2}-\\d{2})$"
+                                  }
+                                },
+                                "required": ["kind", "date"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "required": ["frequency", "interval", "byWeekday", "byMonthDay", "end"],
+                        "additionalProperties": false
+                      },
+                      { "type": "null" }
+                    ]
+                  }
+                },
+                "required": [
+                  "title",
+                  "date",
+                  "startTime",
+                  "endTime",
+                  "location",
+                  "description",
+                  "recurrence"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "reminders": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string", "minLength": 1 },
+                  "date": {
+                    "type": "string",
+                    "pattern": "^(?:today|tomorrow|yesterday|[+-]\\d+d|(?:this|next):(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\\d{4}-\\d{2}-\\d{2})$"
+                  },
+                  "time": { "type": "string", "pattern": "^\\d{2}:\\d{2}$" },
+                  "notes": { "default": "", "type": "string" },
+                  "recurrence": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "frequency": {
+                            "type": "string",
+                            "enum": ["daily", "weekly", "monthly", "yearly"]
+                          },
+                          "interval": { "type": "integer", "exclusiveMinimum": 0, "maximum": 365 },
+                          "byWeekday": {
+                            "maxItems": 7,
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "monday",
+                                "tuesday",
+                                "wednesday",
+                                "thursday",
+                                "friday",
+                                "saturday",
+                                "sunday"
+                              ]
+                            }
+                          },
+                          "byMonthDay": {
+                            "maxItems": 31,
+                            "type": "array",
+                            "items": { "type": "integer", "minimum": -31, "maximum": 31 }
+                          },
+                          "end": {
+                            "oneOf": [
+                              {
+                                "type": "object",
+                                "properties": { "kind": { "type": "string", "const": "never" } },
+                                "required": ["kind"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": { "type": "string", "const": "count" },
+                                  "count": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                },
+                                "required": ["kind", "count"],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": { "type": "string", "const": "until" },
+                                  "date": {
+                                    "type": "string",
+                                    "pattern": "^(?:today|tomorrow|yesterday|[+-]\\d+d|(?:this|next):(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\\d{4}-\\d{2}-\\d{2})$"
+                                  }
+                                },
+                                "required": ["kind", "date"],
+                                "additionalProperties": false
+                              }
+                            ]
+                          }
+                        },
+                        "required": ["frequency", "interval", "byWeekday", "byMonthDay", "end"],
+                        "additionalProperties": false
+                      },
+                      { "type": "null" }
+                    ]
+                  }
+                },
+                "required": ["title", "date", "time", "notes", "recurrence"],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": ["events", "reminders"],
+          "additionalProperties": false
+        },
+        "turns": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string", "minLength": 1 },
+              "expect": {
+                "type": "object",
+                "properties": {
+                  "responseKinds": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "answer",
+                        "clarification",
+                        "preview",
+                        "receipt",
+                        "rejected",
+                        "unsupported",
+                        "error"
+                      ]
+                    }
+                  },
+                  "textAll": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+                  "textAny": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+                  "textNone": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+                  "maxWords": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "relatedEventMin": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "relatedReminderMin": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "relatedEventSeedIndexesExact": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                  },
+                  "relatedReminderSeedIndexesExact": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 }
+                  },
+                  "proposalKind": {
+                    "type": "string",
+                    "enum": [
+                      "event-save",
+                      "event-delete",
+                      "reminder-save",
+                      "reminder-complete",
+                      "reminder-delete",
+                      "bulk-delete",
+                      "batch"
+                    ]
+                  },
+                  "proposalOperation": { "type": "string", "minLength": 1 },
+                  "proposalItemCount": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "proposalItemKinds": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  },
+                  "proposalTitlesAll": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  },
+                  "proposalDatesAll": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?:today|tomorrow|yesterday|[+-]\\d+d|(?:this|next):(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\\d{4}-\\d{2}-\\d{2})$"
+                    }
+                  },
+                  "proposalTimesAll": {
+                    "type": "array",
+                    "items": { "type": "string", "pattern": "^\\d{2}:\\d{2}$" }
+                  },
+                  "proposalEndDatesAll": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^(?:today|tomorrow|yesterday|[+-]\\d+d|(?:this|next):(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\\d{4}-\\d{2}-\\d{2})$"
+                    }
+                  },
+                  "proposalEndTimesAll": {
+                    "type": "array",
+                    "items": { "type": "string", "pattern": "^\\d{2}:\\d{2}$" }
+                  },
+                  "proposalLocationsAll": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  },
+                  "proposalDetailsAll": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  },
+                  "proposalWeekdaysAll": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  },
+                  "proposalFrequenciesAll": {
+                    "type": "array",
+                    "items": { "type": "string", "enum": ["daily", "weekly", "monthly", "yearly"] }
+                  },
+                  "calendarState": { "type": "string", "enum": ["unchanged", "changed"] },
+                  "activeProposal": { "type": "string", "enum": ["present", "absent"] },
+                  "proposalTransition": {
+                    "type": "string",
+                    "enum": ["created", "same", "replaced", "cleared", "none"]
+                  },
+                  "bulkScope": { "type": "string", "enum": ["events", "reminders", "both"] },
+                  "bulkEventCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "bulkReminderCount": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "state": {
+                    "type": "object",
+                    "properties": {
+                      "eventCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "reminderCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "eventTitlesAll": {
+                        "type": "array",
+                        "items": { "type": "string", "minLength": 1 }
+                      },
+                      "eventTitlesNone": {
+                        "type": "array",
+                        "items": { "type": "string", "minLength": 1 }
+                      },
+                      "reminderTitlesAll": {
+                        "type": "array",
+                        "items": { "type": "string", "minLength": 1 }
+                      },
+                      "reminderTitlesNone": {
+                        "type": "array",
+                        "items": { "type": "string", "minLength": 1 }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "required": ["responseKinds"],
+                "additionalProperties": false
+              },
+              "after": { "type": "string", "enum": ["confirm", "reject"] },
+              "postState": {
+                "type": "object",
+                "properties": {
+                  "eventCount": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                  "reminderCount": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+                  "eventTitlesAll": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  },
+                  "eventTitlesNone": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  },
+                  "reminderTitlesAll": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  },
+                  "reminderTitlesNone": {
+                    "type": "array",
+                    "items": { "type": "string", "minLength": 1 }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": ["text", "expect"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "source",
+        "inDomain",
+        "trainingExcluded",
+        "tags",
+        "world",
+        "turns"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "protocolVersion",
+    "recordId",
+    "participantId",
+    "consent",
+    "independence",
+    "privacy",
+    "annotation",
+    "scenario"
+  ],
+  "additionalProperties": false,
+  "title": "Remind Me Phase 8 independent human-blind collection record",
+  "description": "One private collection record. The TypeScript validator additionally enforces temporal ordering, participant/annotator separation, user-reported provenance, uniqueness, privacy scans, coverage, and contamination boundaries."
+}

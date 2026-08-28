@@ -1,40 +1,40 @@
 {
   "schemaVersion": 1,
   "model": {
-    "id": "remindspeak-phrase-lattice-28m-en-phase6",
-    "version": "0.3.0",
+    "id": "remindspeak-phrase-lattice-32m-en-context-boundaries",
+    "version": "0.4.0",
     "architecture": {
       "name": "PhraseLattice conditional surface generator",
-      "parameterCount": 28311984,
+      "parameterCount": 32440848,
       "parameterInitialization": "zero",
       "featureEncoder": "structured-response-plan-hashing",
       "decoder": "overgenerate-validate-rerank protected phrase lattice",
       "quantization": "symmetric-int8-per-output-channel"
     },
-    "configurationBytes": 118750,
-    "compressedWeightBytes": 104437,
-    "uncompressedWeightBytes": 28311552
+    "configurationBytes": 145413,
+    "compressedWeightBytes": 127295,
+    "uncompressedWeightBytes": 32440320
   },
   "dataset": {
     "train": 31650,
     "dev": 5000,
     "test": 5000,
-    "manifestSha256": "e9b5a5ff6ed57b13785296dfd068cff1eb4aada81ebf50c387624620606fc3e9"
+    "manifestSha256": "1d95621f5626a94b496da19f2b125a8d9734b4d1ce29b2de10db43db5c1ce4b5"
   },
   "metrics": {
     "testExamples": 5000,
     "floatHeadAccuracy": {
-      "lead": 0.8002,
-      "body": 0.6396,
-      "close": 0.83
+      "lead": 0.812,
+      "body": 0.6144,
+      "close": 0.827
     },
     "int8HeadAccuracy": {
-      "lead": 0.8006,
-      "body": 0.6396,
-      "close": 0.8296
+      "lead": 0.8106,
+      "body": 0.6108,
+      "close": 0.827
     },
-    "meanInt8HeadAccuracy": 0.7566,
-    "quantizationAccuracyReduction": 0.00039999999999995595,
+    "meanInt8HeadAccuracy": 0.7494666666666667,
+    "quantizationAccuracyReduction": 0.0035999999999999366,
     "schemaValidCandidateRate": 1.0,
     "protectedFactRetention": 1.0,
     "unsupportedFactIntroductionRate": 0.0,
@@ -55,31 +55,35 @@
       "item-details-answer:SUMMARY": 350,
       "empty-schedule-answer:": 350,
       "conversation-answer:DETAIL": 350,
+      "conversation-clarification:DETAIL": 350,
       "memory-answer:DETAIL": 350,
       "undo-confirmed:RECEIPT": 350,
       "proposal-rejected:SUMMARY": 350,
       "clarification:SUMMARY": 175,
       "clarification:DETAIL": 175,
       "conflict-warning:SUMMARY": 350,
+      "runtime-unavailable:DETAIL": 350,
+      "offline-fact-limit:DETAIL": 350,
+      "policy-boundary:DETAIL": 350,
       "unsupported:DETAIL": 350,
       "error:DETAIL": 350
     },
     "teacherPreferenceChallengeExamples": 11,
     "teacherPreferenceFloatHeadAccuracy": {
-      "lead": 0.5454545454545454,
-      "body": 0.18181818181818182,
+      "lead": 0.2727272727272727,
+      "body": 0.2727272727272727,
       "close": 0.18181818181818182
     },
     "teacherPreferenceInt8HeadAccuracy": {
-      "lead": 0.5454545454545454,
-      "body": 0.18181818181818182,
+      "lead": 0.2727272727272727,
+      "body": 0.2727272727272727,
       "close": 0.18181818181818182
     },
-    "meanTeacherPreferenceInt8HeadAccuracy": 0.30303030303030304,
+    "meanTeacherPreferenceInt8HeadAccuracy": 0.24242424242424243,
     "teacherUsed": true,
     "pretrainedWeightsUsed": false,
-    "protectedSpeechActCount": 18,
-    "projectAuthoredSurfaceAtoms": 432,
+    "protectedSpeechActCount": 22,
+    "projectAuthoredSurfaceAtoms": 528,
     "localPreferenceBiasBounded": true,
     "humanPreferenceEvaluationComplete": false,
     "engineeringPromotionGates": {
@@ -98,71 +102,71 @@
     "lead": [
       {
         "epoch": 1,
-        "mistakes": 8371,
-        "mistakeRate": 0.2644865718799368
+        "mistakes": 8502,
+        "mistakeRate": 0.26862559241706163
       },
       {
         "epoch": 2,
-        "mistakes": 6658,
-        "mistakeRate": 0.21036334913112165
+        "mistakes": 6661,
+        "mistakeRate": 0.21045813586097947
       },
       {
         "epoch": 3,
-        "mistakes": 6289,
-        "mistakeRate": 0.1987045813586098
+        "mistakes": 6253,
+        "mistakeRate": 0.19756714060031597
       },
       {
         "epoch": 4,
-        "mistakes": 6096,
-        "mistakeRate": 0.19260663507109005
+        "mistakes": 5960,
+        "mistakeRate": 0.1883096366508689
       }
     ],
     "body": [
       {
         "epoch": 1,
-        "mistakes": 14612,
-        "mistakeRate": 0.4616745655608215
+        "mistakes": 15141,
+        "mistakeRate": 0.47838862559241707
       },
       {
         "epoch": 2,
-        "mistakes": 11499,
-        "mistakeRate": 0.3633175355450237
+        "mistakes": 11892,
+        "mistakeRate": 0.3757345971563981
       },
       {
         "epoch": 3,
-        "mistakes": 10906,
-        "mistakeRate": 0.3445813586097946
+        "mistakes": 11145,
+        "mistakeRate": 0.352132701421801
       },
       {
         "epoch": 4,
-        "mistakes": 10465,
-        "mistakeRate": 0.3306477093206951
+        "mistakes": 10707,
+        "mistakeRate": 0.33829383886255926
       }
     ],
     "close": [
       {
         "epoch": 1,
-        "mistakes": 7688,
-        "mistakeRate": 0.24290679304897314
+        "mistakes": 7721,
+        "mistakeRate": 0.24394944707740918
       },
       {
         "epoch": 2,
-        "mistakes": 6047,
-        "mistakeRate": 0.19105845181674566
+        "mistakes": 5707,
+        "mistakeRate": 0.18031595576619272
       },
       {
         "epoch": 3,
-        "mistakes": 5648,
-        "mistakeRate": 0.1784518167456556
+        "mistakes": 5296,
+        "mistakeRate": 0.16733017377567141
       },
       {
         "epoch": 4,
-        "mistakes": 5481,
-        "mistakeRate": 0.17317535545023696
+        "mistakes": 5156,
+        "mistakeRate": 0.16290679304897315
       }
     ]
   },
-  "elapsedSeconds": 18.519465400022455,
+  "elapsedSeconds": 20.369570199982263,
   "limitations": [
     "The current corpus and surface atoms are project-generated/project-authored, not an independent human blind set.",
     "This prototype is a bounded conditional surface model, not an open-domain language model.",

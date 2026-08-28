@@ -1,4 +1,5 @@
 export * from './dry-run'
+export * from './document-reconciliation'
 export * from './golden-fixture'
 export * from './occurrences'
 export * from './resolver'

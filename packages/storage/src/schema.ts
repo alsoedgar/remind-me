@@ -7,7 +7,7 @@ import type {
   ReminderEntity
 } from '@remind-me/contracts'
 
-export const databaseSchemaVersion = 3
+export const databaseSchemaVersion = 4
 
 export const databaseTables = [
   'calendars',
@@ -19,6 +19,7 @@ export const databaseTables = [
   'conversation_turns',
   'assistant_proposals',
   'assistant_dialogue_state',
+  'document_import_identities',
   'preferences',
   'action_history',
   'notification_deliveries'
@@ -88,6 +89,22 @@ CREATE TABLE reminders (
 );
 
 CREATE INDEX reminders_due ON reminders(status, due_at_utc);
+
+CREATE TABLE document_import_identities (
+  entity_kind TEXT NOT NULL CHECK (entity_kind IN ('event', 'reminder')),
+  entity_id TEXT NOT NULL,
+  source_sha256 TEXT NOT NULL,
+  source_row_id TEXT NOT NULL,
+  semantic_key TEXT NOT NULL,
+  identity_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (entity_kind, entity_id),
+  UNIQUE (source_sha256, source_row_id)
+);
+
+CREATE INDEX document_import_semantic_key
+  ON document_import_identities(semantic_key, entity_kind);
 
 CREATE TABLE recurrence_exceptions (
   id TEXT PRIMARY KEY,
@@ -214,4 +231,22 @@ CREATE TABLE IF NOT EXISTS assistant_dialogue_state (
   payload_json TEXT NOT NULL,
   updated_at TEXT NOT NULL
 );
+`
+
+export const fourthMigrationSql = `
+CREATE TABLE IF NOT EXISTS document_import_identities (
+  entity_kind TEXT NOT NULL CHECK (entity_kind IN ('event', 'reminder')),
+  entity_id TEXT NOT NULL,
+  source_sha256 TEXT NOT NULL,
+  source_row_id TEXT NOT NULL,
+  semantic_key TEXT NOT NULL,
+  identity_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (entity_kind, entity_id),
+  UNIQUE (source_sha256, source_row_id)
+);
+
+CREATE INDEX IF NOT EXISTS document_import_semantic_key
+  ON document_import_identities(semantic_key, entity_kind);
 `

@@ -12,10 +12,10 @@ pnpm planscan:train
 pnpm planscan:check
 ```
 
-`planscan:train` regenerates 16,000 program-first pages, trains six task heads, evaluates disjoint layout assets, quantizes the 5,242,880 coefficients, exports the compressed model, and refreshes `models/manifest.json`. The generated corpus and float checkpoints remain ignored under `ml/planscan/.generated`; the data manifest, 96-page TypeScript fixture, reports, configuration, and release weights are tracked.
+`planscan:train` regenerates 21,000 program-first pages (16,000 train, 2,500 development, and 2,500 test), trains six task heads, evaluates disjoint layout assets, quantizes the 5,242,880 coefficients, exports the compressed model, and refreshes `models/manifest.json`. Native-text and OCR pages are balanced across baseline, OCR corruption, neighboring-row negatives, repeated titles, unfamiliar column order, and header/footer distractions. The generated corpus and float checkpoints remain ignored under `ml/planscan/.generated`; the data manifest, stratified 120-page TypeScript fixture, reports, configuration, and release weights are tracked.
 
 ## Boundary
 
-PlanScan never reads a filesystem path, performs OCR, resolves a date, or writes calendar data. Every emitted span must be an exact substring of a known source block, every relationship stays on one source page, and every proposal still passes the deterministic calendar compiler and editable batch review. Missing or corrupt weights fall back to the Phase 4 rules planner.
+PlanScan never reads a filesystem path, performs OCR, resolves a date, or writes calendar data. Every emitted span must be an exact substring of a known source block, every relationship stays on one source page, and every proposal still passes the deterministic calendar compiler and editable batch review. Missing or corrupt weights fall back to the Phase 4 rules planner. When PlanScan and rules disagree over one exact source anchor, an enabled optional local Qwen pack may select only one already validated, exactly cited draft or withhold. That advisory response cannot synthesize fields or save data.
 
 See [MODEL_CARD.md](MODEL_CARD.md) and [the architecture guide](../../docs/architecture/planscan.md).

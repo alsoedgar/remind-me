@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "recordedOn": "2026-08-28",
+  "suite": {
+    "version": "0.2.0-context.1",
+    "sha256": "7a5051bb7e334f3c4711483adb7eac74951d2777a898a2dc6c8ef44f46c99bb1",
+    "scenarios": 433,
+    "turns": 902,
+    "trainingExcluded": true,
+    "independentHumanBlind": false
+  },
+  "exactScreenshotRegression": {
+    "request": "do I have anything tomorrow? -> what times?",
+    "rulesOnlyPassed": true,
+    "nativeHybridPassed": true,
+    "fallbackCalls": 0,
+    "route": "calendar",
+    "contextFrame": "last-query"
+  },
+  "modes": {
+    "rules-only": {
+      "scenarioPassRate": 0.162,
+      "inDomainAnsweredRate": 0.513,
+      "p95Ms": 47.8,
+      "familiesPassed": {
+        "time": "25/36",
+        "location": "9/36",
+        "date": "14/36",
+        "duration": "4/36",
+        "notes": "4/36",
+        "recurrence": "0/36",
+        "ordinal": "5/36",
+        "subset": "0/36",
+        "all-items": "4/36",
+        "summary": "0/36",
+        "typo-spacing": "2/36",
+        "topic-switch": "2/36"
+      }
+    },
+    "native-hybrid": {
+      "scenarioPassRate": 0.182,
+      "inDomainAnsweredRate": 0.606,
+      "p95Ms": 110.9,
+      "familiesPassed": {
+        "time": "30/36",
+        "location": "10/36",
+        "date": "16/36",
+        "duration": "4/36",
+        "notes": "4/36",
+        "recurrence": "0/36",
+        "ordinal": "6/36",
+        "subset": "0/36",
+        "all-items": "4/36",
+        "summary": "0/36",
+        "typo-spacing": "2/36",
+        "topic-switch": "2/36"
+      }
+    }
+  },
+  "note": "Synthetic diagnostic baseline only. Known Phase 1 and Phase 2 gaps are expected; this is not a release gate or human-study result."
+}

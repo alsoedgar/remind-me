@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "suiteVersion": "8.0.0-synthetic.1",
+  "path": "evals/assistant/synthetic-phase8/scenarios.jsonl",
+  "sha256": "658d982b9816b9db9536e1297e2803c2a3d590d70a36af5706c1c5580a58f217",
+  "scenarios": 2000,
+  "turns": 2400,
+  "trainingExcluded": true,
+  "frozen": true,
+  "independentHumanBlind": false,
+  "syntheticEngineeringProxy": true,
+  "humanEvidence": false,
+  "provenance": "deterministic-project-authored",
+  "generator": {
+    "path": "scripts/generate-assistant-synthetic-phase8.ts",
+    "sha256": "307ac316ebddeed7b111c747f0bcf22d04cdcba0fd878beb92d4fe329093c64c",
+    "version": 1,
+    "seed": "remind-me-phase8-synthetic-v1"
+  },
+  "coverage": {
+    "categoryCounts": {
+      "single-action": 200,
+      "multi-action": 200,
+      "mutation": 200,
+      "bulk": 100,
+      "query": 300,
+      "multi-turn": 200,
+      "conversation": 150,
+      "memory": 100,
+      "ambiguity": 150,
+      "safety": 150,
+      "open-dialogue": 250
+    },
+    "outOfDomain": 200,
+    "noisyLanguage": 260,
+    "uniqueRequestSurfaces": 1072
+  }
+}

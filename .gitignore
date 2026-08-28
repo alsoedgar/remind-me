@@ -6,6 +6,11 @@ coverage/
 artifacts/
 tmp/
 evals/**/human-blind.local.jsonl
+evals/assistant/human-blind/collection.local.jsonl
+evals/assistant/human-blind/local-private/
+evals/documents/**/observations.local.jsonl
+evals/documents/local-private/
+evals/documents/reports/document-release.*.json
 evals/remindspeak/v0.3/sealed-source-key.json
 *.log
 .DS_Store

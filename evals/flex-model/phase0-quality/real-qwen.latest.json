@@ -1,0 +1,889 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-08-28T14:31:00.382Z",
+  "suite": {
+    "version": "0.1.0",
+    "sha256": "ceecfee48f661faad235f00489472ebcad3e998963ea976e70bc557ab2969c99",
+    "cases": 12,
+    "trainingExcluded": true,
+    "syntheticPromptsOnly": true
+  },
+  "model": {
+    "id": "qwen3-1.7b-q4",
+    "quantization": "Q4_K_M",
+    "bytes": 1282439264,
+    "sha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
+    "realModelVerified": true,
+    "mocked": false
+  },
+  "hardware": {
+    "platform": "win32",
+    "arch": "x64",
+    "logicalThreads": 24,
+    "totalMemoryMiB": 31866,
+    "freeMemoryMiB": 9065
+  },
+  "artifacts": {
+    "worker": {
+      "path": "apps/desktop/resources/workers/flex-model-worker.cjs",
+      "sha256": "f185f3cbf7fdc7d43be88b9744f7fee56f69ea96c05ade2dd65b4d7d4fa7587f"
+    },
+    "prompts": {
+      "path": "apps/desktop/resources/workers/flex-model-prompts.cjs",
+      "sha256": "d74e4294680904a185671c8fb42996e50f1bc22cd5505d8201a5b8e18ea10fe0"
+    },
+    "plannerSchema": {
+      "path": "apps/desktop/resources/workers/flex-model-planner-schema.json",
+      "sha256": "c7b01f3cb4c081ce2cc246c13b23c7c1e90361456c46f4990d52bffdc3ef9d53"
+    },
+    "chatSchema": {
+      "path": "apps/desktop/resources/workers/flex-model-chat-schema.json",
+      "sha256": "754eff49093c85be037ba6f371ce6bcf0d8d084a3f7f95afffc7f78d5d7c7ddb"
+    }
+  },
+  "runtimeProfile": {
+    "id": "performance",
+    "label": "Automatic performance",
+    "backend": "cpu",
+    "threads": 16,
+    "contextSize": 4096,
+    "sequences": 2,
+    "batchSize": 512,
+    "maxChatTokens": 96,
+    "idleUnloadMs": 600000,
+    "requestTimeoutMs": 90000
+  },
+  "metrics": {
+    "passed": 10,
+    "failed": 2,
+    "passRate": 0.8333333333333334,
+    "planPassRate": 0.8,
+    "chatPassRate": 0.8571428571428571,
+    "latencyMs": {
+      "median": 27359,
+      "p95": 70973,
+      "max": 70973
+    },
+    "warmLatencyMs": {
+      "planP95": 30207,
+      "chatP95": 41852,
+      "firstTokenP95": 29810
+    },
+    "memoryMiB": {
+      "peakWorkerRss": 2848
+    },
+    "benignResolutionRate": 1,
+    "groundingRate": 1,
+    "falseWriteClaims": 0,
+    "truncatedInputs": 0
+  },
+  "cases": [
+    {
+      "id": "plan.two-events.shared-range",
+      "type": "plan",
+      "passed": false,
+      "assertions": [
+        {
+          "name": "plan.actionCount",
+          "passed": false,
+          "expected": 2,
+          "actual": 1
+        },
+        {
+          "name": "plan.operations",
+          "passed": false,
+          "expected": ["event.create", "event.create"],
+          "actual": ["event.create"]
+        },
+        {
+          "name": "plan.titlesAll",
+          "passed": false,
+          "expected": ["Calculus III exam", "Physics exam"],
+          "actual": ["Calculus III exam"]
+        },
+        {
+          "name": "plan.sourceGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 70973
+        }
+      ],
+      "output": {
+        "actions": [
+          {
+            "sourceText": "Can you add my Calculus III exam on October 31, 2026 and my Physics exam on November 1, 2026, both from 6 PM to 7:30 PM?",
+            "operation": "event.create",
+            "titleText": "Calculus III exam",
+            "whenText": "October 31, 2026",
+            "normalizedWhenText": "2026-10-31 from 6:00 PM to 7:30 PM"
+          }
+        ]
+      },
+      "metrics": {
+        "workload": "plan",
+        "elapsedMs": 70973,
+        "inputTokens": 937,
+        "outputTokens": 150,
+        "tokenLimit": 500,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": true,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": null,
+        "backend": "cpu",
+        "prefixCacheReused": false,
+        "processRssMiB": 2820
+      }
+    },
+    {
+      "id": "plan.mixed-event-reminder",
+      "type": "plan",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "plan.actionCount",
+          "passed": true,
+          "expected": 2,
+          "actual": 2
+        },
+        {
+          "name": "plan.operations",
+          "passed": true,
+          "expected": ["event.create", "reminder.create"],
+          "actual": ["event.create", "reminder.create"]
+        },
+        {
+          "name": "plan.titlesAll",
+          "passed": true,
+          "expected": ["dentist visit", "submit the insurance form"],
+          "actual": ["dentist visit", "submit the insurance form"]
+        },
+        {
+          "name": "plan.sourceGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 27359
+        }
+      ],
+      "output": {
+        "actions": [
+          {
+            "sourceText": "Add a dentist visit tomorrow at 10 AM",
+            "operation": "event.create",
+            "titleText": "dentist visit"
+          },
+          {
+            "sourceText": "Friday at 4 PM",
+            "operation": "reminder.create",
+            "titleText": "submit the insurance form"
+          }
+        ]
+      },
+      "metrics": {
+        "workload": "plan",
+        "elapsedMs": 27359,
+        "inputTokens": 914,
+        "outputTokens": 176,
+        "tokenLimit": 320,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": null,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2823
+      }
+    },
+    {
+      "id": "plan.update-location",
+      "type": "plan",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "plan.actionCount",
+          "passed": true,
+          "expected": 1,
+          "actual": 1
+        },
+        {
+          "name": "plan.operations",
+          "passed": true,
+          "expected": ["event.update"],
+          "actual": ["event.update"]
+        },
+        {
+          "name": "plan.targetsAll",
+          "passed": true,
+          "expected": ["Design review"],
+          "actual": ["Design review"]
+        },
+        {
+          "name": "plan.locationsAll",
+          "passed": true,
+          "expected": ["Room 204"],
+          "actual": ["Room 204"]
+        },
+        {
+          "name": "plan.sourceGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 18799
+        }
+      ],
+      "output": {
+        "actions": [
+          {
+            "sourceText": "Could you change Design review's location to Room 204?",
+            "operation": "event.update",
+            "targetText": "Design review",
+            "locationText": "Room 204"
+          }
+        ]
+      },
+      "metrics": {
+        "workload": "plan",
+        "elapsedMs": 18799,
+        "inputTokens": 917,
+        "outputTokens": 105,
+        "tokenLimit": 230,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": null,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2825
+      }
+    },
+    {
+      "id": "plan.delete-reminder",
+      "type": "plan",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "plan.actionCount",
+          "passed": true,
+          "expected": 1,
+          "actual": 1
+        },
+        {
+          "name": "plan.operations",
+          "passed": true,
+          "expected": ["reminder.delete"],
+          "actual": ["reminder.delete"]
+        },
+        {
+          "name": "plan.targetsAll",
+          "passed": true,
+          "expected": ["grocery reminder"],
+          "actual": ["grocery reminder"]
+        },
+        {
+          "name": "plan.sourceGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 16069
+        }
+      ],
+      "output": {
+        "actions": [
+          {
+            "sourceText": "Please remove the grocery reminder.",
+            "operation": "reminder.delete",
+            "targetText": "grocery reminder"
+          }
+        ]
+      },
+      "metrics": {
+        "workload": "plan",
+        "elapsedMs": 16069,
+        "inputTokens": 906,
+        "outputTokens": 90,
+        "tokenLimit": 320,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": null,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2827
+      }
+    },
+    {
+      "id": "plan.noisy-two-events",
+      "type": "plan",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "plan.actionCount",
+          "passed": true,
+          "expected": 2,
+          "actual": 2
+        },
+        {
+          "name": "plan.operations",
+          "passed": true,
+          "expected": ["event.create", "event.create"],
+          "actual": ["event.create", "event.create"]
+        },
+        {
+          "name": "plan.titlesAll",
+          "passed": true,
+          "expected": ["calc study", "chem review"],
+          "actual": ["calc study", "chem review"]
+        },
+        {
+          "name": "plan.sourceGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 30207
+        }
+      ],
+      "output": {
+        "actions": [
+          {
+            "sourceText": "plz add calc study tmr at 6pm",
+            "operation": "event.create",
+            "titleText": "calc study"
+          },
+          {
+            "sourceText": "chem review friday at 7:30 pm",
+            "operation": "event.create",
+            "titleText": "chem review"
+          }
+        ]
+      },
+      "metrics": {
+        "workload": "plan",
+        "elapsedMs": 30207,
+        "inputTokens": 916,
+        "outputTokens": 189,
+        "tokenLimit": 410,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": null,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2831
+      }
+    },
+    {
+      "id": "chat.greeting-capabilities",
+      "type": "chat",
+      "passed": false,
+      "assertions": [
+        {
+          "name": "chat.structuredGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "chat.textAny",
+          "passed": false,
+          "expected": ["calendar", "schedule", "reminder", "plans"],
+          "actual": []
+        },
+        {
+          "name": "chat.textNone",
+          "passed": true,
+          "expected": ["safe local action"],
+          "actual": []
+        },
+        {
+          "name": "chat.maxWords",
+          "passed": true,
+          "expected": 55,
+          "actual": 12
+        },
+        {
+          "name": "chat.complete",
+          "passed": true,
+          "expected": true,
+          "actual": "h."
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 34912
+        }
+      ],
+      "output": {
+        "text": "Please share your notes or any specific requests you'd like assistance with.",
+        "envelope": {
+          "kind": "clarification",
+          "text": "Please share your notes or any specific requests you'd like assistance with.",
+          "factRefs": [],
+          "writeClaim": false
+        }
+      },
+      "metrics": {
+        "workload": "chat",
+        "elapsedMs": 34912,
+        "inputTokens": 477,
+        "outputTokens": 79,
+        "tokenLimit": 208,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": 21095,
+        "backend": "cpu",
+        "prefixCacheReused": false,
+        "processRssMiB": 2835
+      }
+    },
+    {
+      "id": "chat.general-study-advice",
+      "type": "chat",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "chat.structuredGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "chat.textNone",
+          "passed": true,
+          "expected": ["safe local action", "could not map that request"],
+          "actual": []
+        },
+        {
+          "name": "chat.maxWords",
+          "passed": true,
+          "expected": 45,
+          "actual": 8
+        },
+        {
+          "name": "chat.complete",
+          "passed": true,
+          "expected": true,
+          "actual": "s."
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 6121
+        }
+      ],
+      "output": {
+        "text": "I cannot provide personal advice on study sessions.",
+        "envelope": {
+          "kind": "refusal",
+          "text": "I cannot provide personal advice on study sessions.",
+          "factRefs": [],
+          "writeClaim": false
+        }
+      },
+      "metrics": {
+        "workload": "chat",
+        "elapsedMs": 6121,
+        "inputTokens": 470,
+        "outputTokens": 26,
+        "tokenLimit": 208,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": 1773,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2839
+      }
+    },
+    {
+      "id": "chat.contextual-times",
+      "type": "chat",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "chat.structuredGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "chat.textAll",
+          "passed": true,
+          "expected": ["Linear Algebra", "9:00", "Data Structures", "11:00"],
+          "actual": []
+        },
+        {
+          "name": "chat.textNone",
+          "passed": true,
+          "expected": ["not specified", "safe local action"],
+          "actual": []
+        },
+        {
+          "name": "chat.maxWords",
+          "passed": true,
+          "expected": 55,
+          "actual": 12
+        },
+        {
+          "name": "chat.complete",
+          "passed": true,
+          "expected": true,
+          "actual": "M."
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 41852
+        }
+      ],
+      "output": {
+        "text": "Linear Algebra — 9:00 AM–9:50 AM; Data Structures — 11:00 AM–11:50 AM.",
+        "envelope": {
+          "kind": "answer",
+          "text": "{{F1.title}} — {{F1.time}}; {{F2.title}} — {{F2.time}}.",
+          "factRefs": [
+            {
+              "ref": "F1",
+              "factId": "event:linear:quality:1",
+              "fields": ["title", "time"]
+            },
+            {
+              "ref": "F2",
+              "factId": "event:data:quality:2",
+              "fields": ["title", "time"]
+            }
+          ],
+          "writeClaim": false
+        }
+      },
+      "metrics": {
+        "workload": "chat",
+        "elapsedMs": 41852,
+        "inputTokens": 1006,
+        "outputTokens": 84,
+        "tokenLimit": 208,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": 29810,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2837
+      }
+    },
+    {
+      "id": "chat.contextual-locations",
+      "type": "chat",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "chat.structuredGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "chat.textAll",
+          "passed": true,
+          "expected": ["Science Hall 130", "Learning Center 1426"],
+          "actual": []
+        },
+        {
+          "name": "chat.textNone",
+          "passed": true,
+          "expected": ["not specified", "safe local action"],
+          "actual": []
+        },
+        {
+          "name": "chat.maxWords",
+          "passed": true,
+          "expected": 55,
+          "actual": 12
+        },
+        {
+          "name": "chat.complete",
+          "passed": true,
+          "expected": true,
+          "actual": "6."
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 38595
+        }
+      ],
+      "output": {
+        "text": "Linear Algebra — Science Hall 130; Data Structures — Learning Center 1426.",
+        "envelope": {
+          "kind": "answer",
+          "text": "{{F1.title}} — {{F1.location}}; {{F2.title}} — {{F2.location}}.",
+          "factRefs": [
+            {
+              "ref": "F1",
+              "factId": "event:linear:quality:1",
+              "fields": ["title", "location"]
+            },
+            {
+              "ref": "F2",
+              "factId": "event:data:quality:2",
+              "fields": ["title", "location"]
+            }
+          ],
+          "writeClaim": false
+        }
+      },
+      "metrics": {
+        "workload": "chat",
+        "elapsedMs": 38595,
+        "inputTokens": 927,
+        "outputTokens": 84,
+        "tokenLimit": 192,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": 24608,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2842
+      }
+    },
+    {
+      "id": "chat.offline-current-fact",
+      "type": "chat",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "chat.structuredGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "chat.textAny",
+          "passed": true,
+          "expected": [
+            "offline",
+            "live",
+            "real-time",
+            "current",
+            "latest",
+            "verify",
+            "can't",
+            "cannot"
+          ],
+          "actual": ["live", "verify", "cannot"]
+        },
+        {
+          "name": "chat.textNone",
+          "passed": true,
+          "expected": ["safe local action"],
+          "actual": []
+        },
+        {
+          "name": "chat.maxWords",
+          "passed": true,
+          "expected": 55,
+          "actual": 11
+        },
+        {
+          "name": "chat.complete",
+          "passed": true,
+          "expected": true,
+          "actual": "e."
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 29353
+        }
+      ],
+      "output": {
+        "text": "I cannot verify the live weather. Please check a reliable source.",
+        "envelope": {
+          "kind": "clarification",
+          "text": "I cannot verify the live weather. Please check a reliable source.",
+          "factRefs": [],
+          "writeClaim": false
+        }
+      },
+      "metrics": {
+        "workload": "chat",
+        "elapsedMs": 29353,
+        "inputTokens": 471,
+        "outputTokens": 133,
+        "tokenLimit": 192,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": 2942,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2844
+      }
+    },
+    {
+      "id": "chat.future-planning",
+      "type": "chat",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "chat.structuredGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "chat.textNone",
+          "passed": true,
+          "expected": ["safe local action", "could not map that request"],
+          "actual": []
+        },
+        {
+          "name": "chat.maxWords",
+          "passed": true,
+          "expected": 55,
+          "actual": 16
+        },
+        {
+          "name": "chat.complete",
+          "passed": true,
+          "expected": true,
+          "actual": "r."
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 26330
+        }
+      ],
+      "output": {
+        "text": "Please provide your notes or any specific details about your schedule to tailor the preparation better.",
+        "envelope": {
+          "kind": "clarification",
+          "text": "Please provide your notes or any specific details about your schedule to tailor the preparation better.",
+          "factRefs": [],
+          "writeClaim": false
+        }
+      },
+      "metrics": {
+        "workload": "chat",
+        "elapsedMs": 26330,
+        "inputTokens": 468,
+        "outputTokens": 121,
+        "tokenLimit": 192,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": 1994,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2846
+      }
+    },
+    {
+      "id": "chat.concise-follow-up",
+      "type": "chat",
+      "passed": true,
+      "assertions": [
+        {
+          "name": "chat.structuredGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "chat.textNone",
+          "passed": true,
+          "expected": ["safe local action"],
+          "actual": []
+        },
+        {
+          "name": "chat.maxWords",
+          "passed": true,
+          "expected": 30,
+          "actual": 20
+        },
+        {
+          "name": "chat.complete",
+          "passed": true,
+          "expected": true,
+          "actual": "r."
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 11898
+        }
+      ],
+      "output": {
+        "text": "Please clarify if you want a more concise version of the advice or if there's a specific context to consider.",
+        "envelope": {
+          "kind": "clarification",
+          "text": "Please clarify if you want a more concise version of the advice or if there's a specific context to consider.",
+          "factRefs": [],
+          "writeClaim": false
+        }
+      },
+      "metrics": {
+        "workload": "chat",
+        "elapsedMs": 11898,
+        "inputTokens": 501,
+        "outputTokens": 39,
+        "tokenLimit": 208,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": false,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": 5320,
+        "backend": "cpu",
+        "prefixCacheReused": true,
+        "processRssMiB": 2848
+      }
+    }
+  ],
+  "privacy": "Frozen synthetic prompts only; no database, user calendar, conversation log, profile, or memory state opened."
+}

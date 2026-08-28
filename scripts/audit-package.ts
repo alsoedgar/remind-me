@@ -197,7 +197,13 @@ const flexWorkerPath = join(layout.resources, 'workers', 'flex-model-worker.cjs'
 if (!(await exists(flexWorkerPath)) || (await stat(flexWorkerPath)).size === 0) {
   throw new Error('The isolated optional-model worker is missing from the package')
 }
-for (const requiredWorkerAsset of ['flex-model-prompts.cjs', 'flex-model-planner-schema.json']) {
+for (const requiredWorkerAsset of [
+  'flex-model-prompts.cjs',
+  'flex-model-planner-schema.json',
+  'flex-model-chat-schema.json',
+  'flex-model-document-repair-schema.json',
+  'flex-model-document-fallback-schema.json'
+]) {
   const requiredPath = join(layout.resources, 'workers', requiredWorkerAsset)
   if (!(await exists(requiredPath)) || (await stat(requiredPath)).size === 0) {
     throw new Error(`The optional-model worker dependency is missing: ${requiredWorkerAsset}`)

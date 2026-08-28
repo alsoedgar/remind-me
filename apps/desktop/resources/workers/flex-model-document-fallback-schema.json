@@ -1,0 +1,41 @@
+{
+  "type": "object",
+  "properties": {
+    "groups": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "properties": {
+          "titleBlockIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 3,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "dateBlockId": { "type": "string", "minLength": 1 },
+          "timeBlockId": { "type": ["string", "null"] },
+          "locationBlockId": { "type": ["string", "null"] },
+          "recurrenceBlockId": { "type": ["string", "null"] },
+          "descriptionBlockIds": {
+            "type": "array",
+            "maxItems": 4,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "required": [
+          "titleBlockIds",
+          "dateBlockId",
+          "timeBlockId",
+          "locationBlockId",
+          "recurrenceBlockId",
+          "descriptionBlockIds"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["groups"],
+  "additionalProperties": false
+}

@@ -1,4 +1,7 @@
 export * from './document-geometry'
+export * from './document-extraction-quality'
 export * from './document-text-layout'
 export * from './document-planner'
+export * from './document-repair'
+export * from './document-fallback'
 export * from './planscan'

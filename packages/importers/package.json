@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
-    "@remind-me/assistant-core": "workspace:*",
     "@remind-me/calendar-engine": "workspace:*",
     "@remind-me/contracts": "workspace:*",
     "ical.js": "2.2.1"

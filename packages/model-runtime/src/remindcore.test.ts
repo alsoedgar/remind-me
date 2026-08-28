@@ -64,4 +64,34 @@ describe('RemindCore INT8 runtime', () => {
     })
     expect(planner.info.mode).toBe('confidence-gated-hybrid')
   })
+
+  it('classifies contextual fields, scope, selection, and topic changes with native heads', async () => {
+    const planner = await RemindCorePlanner.load(modelRoot)
+    const context = {
+      focusedKind: 'mixed' as const,
+      focusedCount: 4,
+      ordinal: null,
+      priorCapabilityId: 'calendar.query.list' as const,
+      pendingCapabilityId: null
+    }
+
+    expect(planner.classifyAssistant('what times are they', context)).toMatchObject({
+      dialogueRelation: 'follow-up',
+      requestedAttribute: 'time',
+      scope: 'plural',
+      selection: 'none',
+      turnKind: 'calendar-read'
+    })
+    expect(planner.classifyAssistant('delete the first and third events', context)).toMatchObject({
+      dialogueRelation: 'follow-up',
+      scope: 'plural',
+      selection: 'subset',
+      turnKind: 'calendar-write'
+    })
+    expect(planner.classifyAssistant('anyway hello how are you doing', context)).toMatchObject({
+      dialogueRelation: 'new-topic',
+      scope: 'none',
+      turnKind: 'conversation'
+    })
+  })
 })

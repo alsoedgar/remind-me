@@ -11,6 +11,30 @@ import type { AssistantCapabilityId } from '@remind-me/contracts'
 type Split = 'train' | 'development' | 'challenge'
 type CoarseRoute = 'calendar' | 'conversation' | 'memory' | 'broad-chat' | 'app' | 'document'
 type NoiseProfile = 'clean' | 'typo' | 'extra-space' | 'asr' | 'punctuation'
+type DialogueRelation = 'standalone' | 'follow-up' | 'new-topic'
+type RequestedAttribute =
+  | 'none'
+  | 'name'
+  | 'time'
+  | 'start'
+  | 'end'
+  | 'date'
+  | 'location'
+  | 'duration'
+  | 'notes'
+  | 'recurrence'
+  | 'details'
+type AssistantScope = 'none' | 'singular' | 'plural' | 'all'
+type AssistantSelection = 'none' | 'first' | 'second' | 'third' | 'last' | 'next' | 'subset'
+type AssistantTurnKind = 'calendar-read' | 'calendar-write' | 'conversation' | 'memory' | 'unclear'
+
+interface AssistantSemanticTargets {
+  dialogueRelation: DialogueRelation
+  requestedAttribute: RequestedAttribute
+  scope: AssistantScope
+  selection: AssistantSelection
+  turnKind: AssistantTurnKind
+}
 
 interface CorpusConfig {
   schemaVersion: number
@@ -84,6 +108,7 @@ interface CorpusRow {
     priorCapabilityId: AssistantCapabilityId | null
     pendingCapabilityId: AssistantCapabilityId | null
   }
+  semantics: AssistantSemanticTargets
   familyId: string
   source:
     | 'project-seed'
@@ -535,7 +560,32 @@ interface DialogueProgram {
   template: string
   capabilityId: AssistantCapabilityId
   context: NonNullable<CorpusRow['context']>
+  semantics?: Partial<AssistantSemanticTargets>
 }
+
+const MULTI_RESULT_CONTEXT = {
+  focusedKind: 'mixed',
+  focusedCount: 4,
+  ordinal: null,
+  priorCapabilityId: 'calendar.query.list',
+  pendingCapabilityId: null
+} as const satisfies NonNullable<CorpusRow['context']>
+
+const SINGLE_EVENT_CONTEXT = {
+  focusedKind: 'event',
+  focusedCount: 1,
+  ordinal: null,
+  priorCapabilityId: 'calendar.query.details',
+  pendingCapabilityId: null
+} as const satisfies NonNullable<CorpusRow['context']>
+
+const MEMORY_FOCUS_CONTEXT = {
+  focusedKind: 'memory',
+  focusedCount: 2,
+  ordinal: null,
+  priorCapabilityId: 'assistant.memory.recall',
+  pendingCapabilityId: null
+} as const satisfies NonNullable<CorpusRow['context']>
 
 const DIALOGUE_PROGRAMS: readonly DialogueProgram[] = [
   {
@@ -666,6 +716,433 @@ const DIALOGUE_PROGRAMS: readonly DialogueProgram[] = [
       ordinal: null,
       priorCapabilityId: 'assistant.memory.recall',
       pendingCapabilityId: null
+    }
+  },
+  {
+    id: 'semantic-train-time-plural',
+    split: 'train',
+    template: 'what times are they',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-location-all',
+    split: 'train',
+    template: 'where are all of them',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-details-second',
+    split: 'train',
+    template: 'give me the full details for the second one',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-start-first',
+    split: 'train',
+    template: 'when does the first class start',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-end-third',
+    split: 'train',
+    template: 'what is the end time for the third item',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-duration-both',
+    split: 'train',
+    template: 'how long do both of those last',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-recurrence-all',
+    split: 'train',
+    template: 'what days do all those classes repeat',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-notes-subset',
+    split: 'train',
+    template: 'show the notes for the first and third',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-date-last',
+    split: 'train',
+    template: 'which date is the last one on',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-name-rest',
+    split: 'train',
+    template: 'what are the names of the remaining ones',
+    capabilityId: 'calendar.query.list',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-next-selection',
+    split: 'train',
+    template: 'show the next item in those results',
+    capabilityId: 'calendar.query.next',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-delete-subset',
+    split: 'train',
+    template: 'delete the first and third events',
+    capabilityId: 'calendar.event.delete',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-update-all',
+    split: 'train',
+    template: 'move all of those to <DATE> at <TIME>',
+    capabilityId: 'calendar.event.move',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-train-unclear',
+    split: 'train',
+    template: 'change whichever one I meant earlier',
+    capabilityId: 'assistant.chat.respond',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { turnKind: 'unclear' }
+  },
+  {
+    id: 'semantic-train-topic-conversation',
+    split: 'train',
+    template: 'anyway hello how are you doing',
+    capabilityId: 'assistant.wellbeing',
+    context: SINGLE_EVENT_CONTEXT,
+    semantics: {
+      dialogueRelation: 'new-topic',
+      requestedAttribute: 'none',
+      scope: 'none',
+      selection: 'none'
+    }
+  },
+  {
+    id: 'semantic-train-topic-memory',
+    split: 'train',
+    template: 'separate question what do you remember about me',
+    capabilityId: 'assistant.memory.recall',
+    context: SINGLE_EVENT_CONTEXT,
+    semantics: {
+      dialogueRelation: 'new-topic',
+      requestedAttribute: 'none',
+      scope: 'none',
+      selection: 'none'
+    }
+  },
+  {
+    id: 'semantic-train-topic-write',
+    split: 'train',
+    template: 'new topic add <TITLE> on <DATE> at <TIME>',
+    capabilityId: 'calendar.event.create',
+    context: SINGLE_EVENT_CONTEXT,
+    semantics: {
+      dialogueRelation: 'new-topic',
+      requestedAttribute: 'none',
+      scope: 'none',
+      selection: 'none'
+    }
+  },
+  {
+    id: 'semantic-development-time-plural',
+    split: 'development',
+    template: 'at what times do these happen',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-location-all',
+    split: 'development',
+    template: 'give me the rooms for every one of those',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-details-last',
+    split: 'development',
+    template: 'tell me everything about the final one',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-start-second',
+    split: 'development',
+    template: 'what is the second item starting time',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-end-first',
+    split: 'development',
+    template: 'when does the first one finish',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-duration-all',
+    split: 'development',
+    template: 'list the durations for all those items',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-recurrence-plural',
+    split: 'development',
+    template: 'which days do these classes recur',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-notes-third',
+    split: 'development',
+    template: 'what notes are saved on the third one',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-date-first',
+    split: 'development',
+    template: 'what day is the first result',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-name-selected',
+    split: 'development',
+    template: 'which items were the first and second',
+    capabilityId: 'calendar.query.list',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-delete-second',
+    split: 'development',
+    template: 'remove the second one',
+    capabilityId: 'calendar.event.delete',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-update-subset',
+    split: 'development',
+    template: 'rename the first and last ones to <NEW_TITLE>',
+    capabilityId: 'calendar.event.update',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-development-remaining',
+    split: 'development',
+    template: 'what about the rest of those results',
+    capabilityId: 'calendar.query.list',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'name' }
+  },
+  {
+    id: 'semantic-development-unclear',
+    split: 'development',
+    template: 'do that to one of them sometime',
+    capabilityId: 'assistant.chat.respond',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { turnKind: 'unclear' }
+  },
+  {
+    id: 'semantic-development-topic-conversation',
+    split: 'development',
+    template: 'changing subjects can you tell me a quick joke',
+    capabilityId: 'assistant.chat.respond',
+    context: SINGLE_EVENT_CONTEXT,
+    semantics: {
+      dialogueRelation: 'new-topic',
+      requestedAttribute: 'none',
+      scope: 'none',
+      selection: 'none'
+    }
+  },
+  {
+    id: 'semantic-development-topic-memory',
+    split: 'development',
+    template: 'before we continue remember that <MEMORY>',
+    capabilityId: 'assistant.memory.remember',
+    context: SINGLE_EVENT_CONTEXT,
+    semantics: {
+      dialogueRelation: 'new-topic',
+      requestedAttribute: 'none',
+      scope: 'none',
+      selection: 'none'
+    }
+  },
+  {
+    id: 'semantic-development-topic-write',
+    split: 'development',
+    template: 'unrelated plan remind me to <TITLE> on <DATE> at <TIME>',
+    capabilityId: 'calendar.reminder.create',
+    context: SINGLE_EVENT_CONTEXT,
+    semantics: {
+      dialogueRelation: 'new-topic',
+      requestedAttribute: 'none',
+      scope: 'none',
+      selection: 'none'
+    }
+  },
+  {
+    id: 'semantic-challenge-time-plural',
+    split: 'challenge',
+    template: 'wht times r they',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'time', scope: 'plural' }
+  },
+  {
+    id: 'semantic-challenge-location-all',
+    split: 'challenge',
+    template: 'were r all thse classes located',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'location', scope: 'all' }
+  },
+  {
+    id: 'semantic-challenge-details-last',
+    split: 'challenge',
+    template: 'more on the final one pls',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'details' }
+  },
+  {
+    id: 'semantic-challenge-start-first',
+    split: 'challenge',
+    template: 'when dus the 1st begin',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'start' }
+  },
+  {
+    id: 'semantic-challenge-end-second',
+    split: 'challenge',
+    template: 'when is number two finished',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'end', selection: 'second' }
+  },
+  {
+    id: 'semantic-challenge-duration-both',
+    split: 'challenge',
+    template: 'how lng do both last',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'duration', scope: 'plural' }
+  },
+  {
+    id: 'semantic-challenge-recurrence-plural',
+    split: 'challenge',
+    template: 'wat days do em recur',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'recurrence', scope: 'plural' }
+  },
+  {
+    id: 'semantic-challenge-notes-subset',
+    split: 'challenge',
+    template: 'shwo notes on items one n three',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'notes', scope: 'plural', selection: 'subset' }
+  },
+  {
+    id: 'semantic-challenge-date-third',
+    split: 'challenge',
+    template: 'which date is item three',
+    capabilityId: 'calendar.query.details',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'date', selection: 'third' }
+  },
+  {
+    id: 'semantic-challenge-name-all',
+    split: 'challenge',
+    template: 'just the names for every one',
+    capabilityId: 'calendar.query.list',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'name', scope: 'all' }
+  },
+  {
+    id: 'semantic-challenge-delete-subset',
+    split: 'challenge',
+    template: 'get rid of first plus third',
+    capabilityId: 'calendar.event.delete',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { scope: 'plural', selection: 'subset' }
+  },
+  {
+    id: 'semantic-challenge-update-all',
+    split: 'challenge',
+    template: 'change every one of those to <DATE> at <TIME>',
+    capabilityId: 'calendar.event.move',
+    context: MULTI_RESULT_CONTEXT
+  },
+  {
+    id: 'semantic-challenge-remaining',
+    split: 'challenge',
+    template: 'wat abt the remaining ones',
+    capabilityId: 'calendar.query.list',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { requestedAttribute: 'name', scope: 'plural', selection: 'subset' }
+  },
+  {
+    id: 'semantic-challenge-unclear',
+    split: 'challenge',
+    template: 'make the one we talked about different',
+    capabilityId: 'assistant.chat.respond',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: { turnKind: 'unclear' }
+  },
+  {
+    id: 'semantic-challenge-topic-conversation',
+    split: 'challenge',
+    template: 'forget that list for now what can you do',
+    capabilityId: 'assistant.help',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: {
+      dialogueRelation: 'new-topic',
+      requestedAttribute: 'none',
+      scope: 'none',
+      selection: 'none'
+    }
+  },
+  {
+    id: 'semantic-challenge-topic-memory',
+    split: 'challenge',
+    template: 'different thing forget the preference <MEMORY>',
+    capabilityId: 'assistant.memory.forget',
+    context: MEMORY_FOCUS_CONTEXT,
+    semantics: {
+      dialogueRelation: 'new-topic',
+      requestedAttribute: 'none',
+      scope: 'none',
+      selection: 'none'
+    }
+  },
+  {
+    id: 'semantic-challenge-topic-write',
+    split: 'challenge',
+    template: 'on another note schedule <TITLE> for <DATE> at <TIME>',
+    capabilityId: 'calendar.event.create',
+    context: MULTI_RESULT_CONTEXT,
+    semantics: {
+      dialogueRelation: 'new-topic',
+      requestedAttribute: 'none',
+      scope: 'none',
+      selection: 'none'
     }
   }
 ]
@@ -838,6 +1315,110 @@ function routeFor(capability: AssistantCapabilityDefinition): CoarseRoute {
   if (capability.domain === 'document') return 'document'
   if (capability.domain === 'app' || capability.domain === 'model') return 'app'
   return 'calendar'
+}
+
+function turnKindFor(capabilityId: AssistantCapabilityId): AssistantTurnKind {
+  if (
+    capabilityId === 'assistant.clarify' ||
+    capabilityId === 'assistant.reject' ||
+    capabilityId === 'assistant.unsupported'
+  ) {
+    return 'unclear'
+  }
+  if (capabilityId.startsWith('assistant.memory.')) return 'memory'
+  if (capabilityId.startsWith('calendar.query.') || capabilityId === 'calendar.export.file') {
+    return 'calendar-read'
+  }
+  if (capabilityId.startsWith('calendar.')) return 'calendar-write'
+  return 'conversation'
+}
+
+function requestedAttributeFor(template: string): RequestedAttribute {
+  const value = template.toLocaleLowerCase()
+  const matches: RequestedAttribute[] = []
+  const add = (attribute: RequestedAttribute): void => {
+    if (!matches.includes(attribute)) matches.push(attribute)
+  }
+  if (/\b(?:where|locations?|rooms?|buildings?|places?)\b/iu.test(value)) add('location')
+  if (/\b(?:how long|how much time|durations?|lengths?)\b/iu.test(value)) add('duration')
+  if (/\b(?:end|ends|ending|finish|finishes|finished)\s*(?:times?)?\b/iu.test(value)) add('end')
+  if (/\b(?:start|starts|starting|begin|begins)\s*(?:times?)?\b/iu.test(value)) add('start')
+  if (
+    /\b(?:recurrence|repeats?|recurring|recurs?|how often|what days|which days)\b/iu.test(value)
+  ) {
+    add('recurrence')
+  }
+  if (/\b(?:notes?|instructions?|descriptions?|prepare|bring)\b/iu.test(value)) add('notes')
+  if (/\b(?:what|which)\s+(?:day|date)\b|\bdates?\b/iu.test(value)) add('date')
+  if (
+    /\b(?:what|which|their|these|those)\s+times?\b|\btimes?\s+(?:are|were|for|of)\b|\bwhen\b/iu.test(
+      value
+    ) &&
+    !matches.includes('start') &&
+    !matches.includes('end')
+  ) {
+    add('time')
+  }
+  if (/\b(?:names?|called|which ones?|which items?)\b/iu.test(value)) add('name')
+  if (/\b(?:details?|more about|tell me more|full entry|everything about)\b/iu.test(value)) {
+    add('details')
+  }
+  return matches.length === 1 ? (matches[0] ?? 'none') : matches.length > 1 ? 'details' : 'none'
+}
+
+function selectionFor(template: string): AssistantSelection {
+  const value = template.toLocaleLowerCase()
+  if (
+    /\b(?:first|1st|second|2nd|third|3rd|last|final)\b[^.;!?]{0,30}\b(?:and|&|plus)\b[^.;!?]{0,30}\b(?:first|1st|second|2nd|third|3rd|last|final)\b|\bfirst\s+(?:two|three)\b|\b(?:items?|numbers?)\s+(?:one|1)[^.;!?]{0,20}(?:and|&|plus)[^.;!?]{0,20}(?:two|2|three|3)\b|\b(?:others?|rest|remaining)\b/iu.test(
+      value
+    )
+  ) {
+    return 'subset'
+  }
+  if (/\b(?:first|1st|number one|item one)\b/iu.test(value)) return 'first'
+  if (/\b(?:second|2nd|number two|item two)\b/iu.test(value)) return 'second'
+  if (/\b(?:third|3rd|number three|item three)\b/iu.test(value)) return 'third'
+  if (/\b(?:last|final)\s+(?:one|item|event|class|reminder|result)?\b/iu.test(value)) return 'last'
+  if (/\bnext\s+(?:one|item|event|class|reminder|result)\b/iu.test(value)) return 'next'
+  return 'none'
+}
+
+function scopeFor(template: string, context: CorpusRow['context']): AssistantScope {
+  if (!context) return 'none'
+  const value = template.toLocaleLowerCase()
+  if (/\b(?:all|every one|everything|entire|whole set)\b/iu.test(value)) return 'all'
+  if (
+    selectionFor(value) === 'subset' ||
+    /\b(?:both|they|them|these|those|classes|events|items|reminders|ones)\b/iu.test(value) ||
+    /\btimes\b/iu.test(value)
+  ) {
+    return 'plural'
+  }
+  if (
+    selectionFor(value) !== 'none' ||
+    /\b(?:it|that one|this one|that event|that reminder)\b/iu.test(value)
+  ) {
+    return 'singular'
+  }
+  return context.focusedCount === 1 ? 'singular' : 'plural'
+}
+
+function semanticTargets(input: {
+  template: string
+  capabilities: readonly AssistantCapabilityId[]
+  context: CorpusRow['context']
+  overrides: Partial<AssistantSemanticTargets> | undefined
+}): AssistantSemanticTargets {
+  const turnKind = turnKindFor(input.capabilities[0] ?? 'assistant.unsupported')
+  const base: AssistantSemanticTargets = {
+    dialogueRelation: input.context ? 'follow-up' : 'standalone',
+    requestedAttribute:
+      turnKind === 'calendar-read' ? requestedAttributeFor(input.template) : 'none',
+    scope: scopeFor(input.template, input.context),
+    selection: selectionFor(input.template),
+    turnKind
+  }
+  return { ...base, ...input.overrides }
 }
 
 function capabilityMap(): Map<AssistantCapabilityId, AssistantCapabilityDefinition> {
@@ -1104,9 +1685,11 @@ async function curateTemplates(
   if (
     repairJobsPayload.teacherModelId !== config.teacherModelId ||
     repairJobsPayload.teacherSha256 !== config.teacherSha256 ||
-    repairJobsPayload.parentJobsSha256 !== (await sha256File(JOBS_PATH)) ||
     repairJobsPayload.repairRound !== 1
   ) {
+    throw new Error('Assistant curation-repair jobs do not match the pinned teacher contract')
+  }
+  if (enforceMinimum && repairJobsPayload.parentJobsSha256 !== (await sha256File(JOBS_PATH))) {
     throw new Error('Assistant curation-repair jobs do not match the protected parent job set')
   }
   const repairJobIds = new Set<string>()
@@ -1424,6 +2007,7 @@ function makeRow(input: {
   template: string
   capabilities: readonly AssistantCapabilityId[]
   context: CorpusRow['context']
+  semantics?: Partial<AssistantSemanticTargets>
   familyId: string
   source: CorpusRow['source']
   teacherJobId: string | null
@@ -1453,6 +2037,12 @@ function makeRow(input: {
     ),
     slots: materialized.slots,
     context: input.context,
+    semantics: semanticTargets({
+      template: input.template,
+      capabilities: input.capabilities,
+      context: input.context,
+      overrides: input.semantics
+    }),
     familyId: input.familyId,
     source: input.source,
     noise,
@@ -1512,6 +2102,7 @@ async function buildDataset(
           template: program.template,
           capabilities: [program.capabilityId],
           context: program.context,
+          ...(program.semantics ? { semantics: program.semantics } : {}),
           familyId: `dialogue:${program.id}`,
           source: 'project-dialogue',
           teacherJobId: null,
@@ -1595,6 +2186,51 @@ async function buildDataset(
       rows.filter((row) => row.noise === noise).length
     ])
   )
+  const semanticCoverage = {
+    dialogueRelation: Object.fromEntries(
+      (['standalone', 'follow-up', 'new-topic'] as const).map((label) => [
+        label,
+        rows.filter((row) => row.semantics.dialogueRelation === label).length
+      ])
+    ),
+    requestedAttribute: Object.fromEntries(
+      (
+        [
+          'none',
+          'name',
+          'time',
+          'start',
+          'end',
+          'date',
+          'location',
+          'duration',
+          'notes',
+          'recurrence',
+          'details'
+        ] as const
+      ).map((label) => [
+        label,
+        rows.filter((row) => row.semantics.requestedAttribute === label).length
+      ])
+    ),
+    scope: Object.fromEntries(
+      (['none', 'singular', 'plural', 'all'] as const).map((label) => [
+        label,
+        rows.filter((row) => row.semantics.scope === label).length
+      ])
+    ),
+    selection: Object.fromEntries(
+      (['none', 'first', 'second', 'third', 'last', 'next', 'subset'] as const).map((label) => [
+        label,
+        rows.filter((row) => row.semantics.selection === label).length
+      ])
+    ),
+    turnKind: Object.fromEntries(
+      (['calendar-read', 'calendar-write', 'conversation', 'memory', 'unclear'] as const).map(
+        (label) => [label, rows.filter((row) => row.semantics.turnKind === label).length]
+      )
+    )
+  }
   const coverageBySplit = Object.fromEntries(
     (['train', 'development', 'challenge'] as const).map((split) => [
       split,
@@ -1612,7 +2248,7 @@ async function buildDataset(
     ])
   )
   const manifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     corpusVersion: config.corpusVersion,
     generator: 'scripts/build-assistant-corpus.ts curate',
     seed: config.seed,
@@ -1625,6 +2261,7 @@ async function buildDataset(
     countsBySplit,
     countsBySource,
     countsByNoise,
+    semanticCoverage,
     coverageBySplit,
     multiActionRows: rows.filter((row) => row.actions.length > 1).length,
     contextualRows: rows.filter((row) => row.context !== null).length,
@@ -1644,6 +2281,7 @@ async function buildDataset(
       teacherSha256: config.teacherSha256,
       teacherAuthoredLabels: 0,
       teacherAuthoredSlotValues: 0,
+      semanticTargetsProjectAuthored: true,
       pretrainedWeightsUsed: false,
       personalDataUsed: false
     },
@@ -1665,7 +2303,7 @@ async function writeCuratedArtifacts(config: CorpusConfig): Promise<Record<strin
 async function assertFileEquals(path: string, expected: string): Promise<void> {
   const actual = await readFile(path, 'utf8')
   if (actual !== expected) {
-    throw new Error(`${path.slice(WORKSPACE.length + 1)} is not the deterministic Phase 4 output`)
+    throw new Error(`${path.slice(WORKSPACE.length + 1)} is not the deterministic Phase 5 output`)
   }
 }
 

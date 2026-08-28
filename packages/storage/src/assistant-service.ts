@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { performance } from 'node:perf_hooks'
 import { Temporal } from '@js-temporal/polyfill'
 import {
   assistantPlanForCapability,
@@ -7,20 +8,32 @@ import {
   getActionDisposition,
   normalizeAssistantText,
   parseBulkClearIntent,
+  parseProposalReviewCorrection,
+  parseProposalReviewQuery,
   parseScopedBulkClearRequest,
   planCalendarTextHybrid,
   parseScheduleReplicationRequest,
   repairKnownMutationTargets,
+  resolveContextualRequest,
   routeAssistantRequest,
   splitCalendarRequests,
   typoPhraseSimilarity,
   type ConversationIntent,
+  type ContextualItemDescriptor,
+  type ContextualResolution,
   type BulkClearIntent,
   type MemoryIntent,
+  type ProposalReviewCorrection,
+  type ProposalReviewQuery,
   type ScheduleReplicationIntent,
   type SemanticPlannerPrediction
 } from '@remind-me/assistant-core'
-import { dryRunCalendarCommand, resolveCalendarIR } from '@remind-me/calendar-engine'
+import {
+  dryRunCalendarCommand,
+  expandEventOccurrences,
+  expandEventsInRange,
+  resolveCalendarIR
+} from '@remind-me/calendar-engine'
 import {
   unavailableRemindCoreInfo,
   type RemindCoreInfo,
@@ -44,6 +57,9 @@ import {
   calendarIRResolvedSchema,
   conversationTurnEntitySchema,
   eventFormSchema,
+  flexModelCalendarFactPacketSchema,
+  flexModelCalendarFallbackResultSchema,
+  flexModelGeneralFallbackResultSchema,
   reminderFormSchema,
   type AssistantConfirmRequest,
   type AssistantConversation,
@@ -55,6 +71,8 @@ import {
   type AssistantProposalPayload,
   type AssistantRejectRequest,
   type AssistantResponse,
+  type AssistantQueryFrameItem,
+  type AssistantRequestedField,
   type AssistantSendRequest,
   type CalendarIRDraft,
   type CalendarIRResolved,
@@ -65,21 +83,240 @@ import {
   type EventOccurrence,
   type EventForm,
   type FlexModelChatRequest,
+  type FlexModelCalendarFact,
+  type FlexModelCalendarFactPacket,
+  type FlexModelCalendarFallbackResult,
   type FlexModelAction,
+  type FlexModelFallbackFailureKind,
+  type FlexModelGeneralFallbackResult,
+  type FlexModelJobStatus,
   type FlexModelPlan,
   type FlexModelPlanContext,
+  type FlexModelStatus,
   type ReminderEntity,
   type ReminderForm,
   type ResponsePlan
 } from '@remind-me/contracts'
 import { PersistentCalendarService } from './calendar-service'
+import {
+  renderGroundedAnswer,
+  type GroundedAnswerItem,
+  type GroundedAttributeField
+} from './grounded-answer'
+import { groundFlexChatResponse, safeGeneralChatStreamPrefix } from './flex-chat-grounding'
 import type { SqliteCalendarRepository } from './sqlite-repository'
 
 const defaultConversationId = 'conversation:local'
 
 export interface FlexibleCalendarPlanner {
   plan(text: string, context: FlexModelPlanContext): Promise<FlexModelPlan | null>
-  chat?(input: FlexModelChatRequest): Promise<string | null>
+  chat?(input: FlexModelChatRequest, onChunk?: (text: string) => void): Promise<string | null>
+  getStatus?(): Promise<Pick<FlexModelStatus, 'state' | 'enabled' | 'error' | 'lastRequest'>>
+}
+
+export interface CalendarFallbackPlanner {
+  planCalendar(
+    text: string,
+    context: FlexModelPlanContext,
+    options?: FallbackInferenceOptions
+  ): Promise<FlexModelCalendarFallbackResult>
+  getStatus?(): Promise<Pick<FlexModelStatus, 'state' | 'enabled' | 'error' | 'lastRequest'>>
+}
+
+export interface GeneralFallbackResponder {
+  respondGeneral(
+    input: FlexModelChatRequest,
+    onChunk?: (text: string) => void,
+    options?: FallbackInferenceOptions
+  ): Promise<FlexModelGeneralFallbackResult>
+  getStatus?(): Promise<Pick<FlexModelStatus, 'state' | 'enabled' | 'error' | 'lastRequest'>>
+}
+
+export interface AssistantFallbackServices {
+  calendarPlanner: CalendarFallbackPlanner | null
+  generalResponder: GeneralFallbackResponder | null
+}
+
+export interface FallbackInferenceOptions {
+  cancellationId?: string
+  onStatus?: (status: FlexModelJobStatus) => void
+}
+
+export interface AssistantSendRuntimeOptions {
+  onFlexibleChatChunk?: (text: string) => void
+  onFlexibleModelStatus?: (status: FlexModelJobStatus) => void
+}
+
+export type AssistantContextFrame =
+  'none' | 'active-review' | 'pending-clarification' | 'last-query' | 'focused-items'
+
+export type AssistantFallbackReason =
+  | 'not-needed'
+  | 'not-configured'
+  | 'not-calendar'
+  | 'missing'
+  | 'disabled'
+  | 'timeout'
+  | 'cancelled'
+  | 'invalid-output'
+  | 'unavailable'
+  | 'answered'
+  | 'clarified'
+  | 'offline-limit'
+  | 'refused'
+  | 'plan-accepted'
+  | 'grounding-rejected'
+  | 'fact-rejected'
+  | 'write-claim-rejected'
+
+export interface AssistantExecutionTrace {
+  schemaVersion: 1
+  route: 'conversation' | 'memory' | 'calendar' | 'broad-chat'
+  contextFrame: AssistantContextFrame
+  fallbackWorkload: 'none' | 'plan' | 'chat'
+  fallbackReason: AssistantFallbackReason
+  truncated: boolean
+  latencyMs: number
+}
+
+interface MutableAssistantExecutionTrace {
+  route: AssistantExecutionTrace['route']
+  contextFrame: AssistantContextFrame
+  fallbackWorkload: AssistantExecutionTrace['fallbackWorkload']
+  fallbackReason: AssistantFallbackReason
+  truncated: boolean
+}
+
+function fallbackErrorReason(error: unknown): AssistantFallbackReason {
+  const message = error instanceof Error ? error.message : String(error)
+  return /tim(?:e|ed)[ -]?out/iu.test(message) ? 'timeout' : 'unavailable'
+}
+
+type FallbackStatus = Pick<FlexModelStatus, 'state' | 'enabled' | 'error' | 'lastRequest'>
+type FallbackStatusProvider = { getStatus?: () => Promise<FallbackStatus> }
+type TypedFallbackFailure = FlexModelFallbackFailureKind
+
+function typedFallbackFailureFromError(error: unknown): TypedFallbackFailure {
+  return fallbackErrorReason(error) === 'timeout' ? 'timeout' : 'unavailable'
+}
+
+async function typedFallbackFailureFromLegacyStatus(
+  provider: Pick<FlexibleCalendarPlanner, 'getStatus'>,
+  defaultKind: TypedFallbackFailure | 'not-calendar'
+): Promise<TypedFallbackFailure | 'not-calendar'> {
+  let status: FallbackStatus | null
+  try {
+    status = (await provider.getStatus?.()) ?? null
+  } catch {
+    return 'unavailable'
+  }
+  if (!status) return defaultKind
+  if (status.state === 'not-installed') return 'missing'
+  if (!status.enabled) return 'disabled'
+  if (/tim(?:e|ed)[ -]?out/iu.test(status.error ?? '')) return 'timeout'
+  if (status.state === 'error' || status.error) return 'unavailable'
+  return defaultKind
+}
+
+function adaptLegacyCalendarFallback(provider: FlexibleCalendarPlanner): CalendarFallbackPlanner {
+  return {
+    ...(provider.getStatus ? { getStatus: provider.getStatus.bind(provider) } : {}),
+    planCalendar: async (text, context) => {
+      let plan: FlexModelPlan | null
+      try {
+        plan = await provider.plan(text, context)
+      } catch (error) {
+        return flexModelCalendarFallbackResultSchema.parse({
+          kind: typedFallbackFailureFromError(error)
+        })
+      }
+      if (plan) return { kind: 'plan', plan }
+      return flexModelCalendarFallbackResultSchema.parse({
+        kind: await typedFallbackFailureFromLegacyStatus(provider, 'not-calendar')
+      })
+    }
+  }
+}
+
+function adaptLegacyGeneralFallback(
+  provider: FlexibleCalendarPlanner
+): GeneralFallbackResponder | null {
+  if (!provider.chat) return null
+  return {
+    ...(provider.getStatus ? { getStatus: provider.getStatus.bind(provider) } : {}),
+    respondGeneral: async (input, onChunk) => {
+      let text: string | null
+      try {
+        text = await provider.chat!(input, onChunk)
+      } catch (error) {
+        return flexModelGeneralFallbackResultSchema.parse({
+          kind: typedFallbackFailureFromError(error)
+        })
+      }
+      if (text?.trim()) {
+        return {
+          kind: 'answer',
+          text: text.trim(),
+          factRefs: [],
+          writeClaim: false
+        }
+      }
+      const kind = await typedFallbackFailureFromLegacyStatus(provider, 'invalid-output')
+      return flexModelGeneralFallbackResultSchema.parse({
+        kind: kind === 'not-calendar' ? 'invalid-output' : kind
+      })
+    }
+  }
+}
+
+function isAssistantFallbackServices(
+  value: AssistantFallbackServices | FlexibleCalendarPlanner
+): value is AssistantFallbackServices {
+  return 'calendarPlanner' in value || 'generalResponder' in value
+}
+
+function generalFallbackLimitation(reason: AssistantFallbackReason): string {
+  switch (reason) {
+    case 'missing':
+    case 'not-configured':
+      return 'The optional local language pack is not installed, so I cannot answer that open-ended request offline yet. Calendar and reminder features still work without it.'
+    case 'disabled':
+      return 'The optional local language pack is disabled. Enable it in Settings if you want an answer to that open-ended request.'
+    case 'timeout':
+      return 'The local language model took too long to answer. Please try once more or ask for a shorter response.'
+    case 'cancelled':
+      return 'I stopped that local response. Nothing was changed.'
+    case 'invalid-output':
+      return 'I could not finish that response with the local language model because its output was not usable. Please try rephrasing it.'
+    case 'unavailable':
+      return 'I could not finish that response with the local language model because it is unavailable right now. Please try again.'
+    case 'fact-rejected':
+      return 'I left out the local response because I could not verify every calendar detail it mentioned. Please ask again and name the event, reminder, or date you want checked.'
+    case 'write-claim-rejected':
+      return 'I left out the local response because it claimed a calendar change that did not occur. Nothing was changed.'
+    default:
+      return 'I could not finish that response with the local language model. Please try again.'
+  }
+}
+
+function calendarFallbackLimitation(reason: AssistantFallbackReason, mutation: boolean): string {
+  const outcome =
+    reason === 'missing' || reason === 'not-configured'
+      ? 'the optional calendar language planner is not installed'
+      : reason === 'disabled'
+        ? 'the optional calendar language planner is disabled'
+        : reason === 'timeout'
+          ? 'the local calendar planner timed out'
+          : reason === 'cancelled'
+            ? 'the local calendar request was stopped'
+            : reason === 'invalid-output'
+              ? 'the local calendar planner returned an unusable translation'
+              : reason === 'unavailable'
+                ? 'the local calendar planner is unavailable right now'
+                : 'I could not translate the request into a complete calendar plan'
+  return mutation
+    ? `I did not stage a change because ${outcome}. Nothing was changed. Please restate each event or reminder with its title and any date or time you know.`
+    : `I could not resolve that calendar question because ${outcome}. Please include the event, reminder, date, or range you want me to check.`
 }
 
 interface GroundedFlexibleAction {
@@ -94,6 +331,27 @@ type AssistantAtomicProposalPayload = Exclude<
   AssistantProposalPayload,
   { kind: 'batch' } | { kind: 'bulk-delete' }
 >
+
+interface ProposalReviewEntry {
+  payload: AssistantAtomicProposalPayload
+  summary: string
+  position: number
+}
+
+type ProposalItemRevision =
+  { ok: true; payload: AssistantAtomicProposalPayload } | { ok: false; message: string }
+
+interface ProposalReviewFacts {
+  title: string
+  kind: 'event' | 'reminder'
+  action: string
+  date: string
+  time: string
+  location: string
+  notes: string
+  recurrence: string
+  details: string
+}
 
 const flexibleAssistedOperations = new Set<FlexModelAction['operation']>([
   'event.create',
@@ -111,6 +369,19 @@ const flexibleAssistedOperations = new Set<FlexModelAction['operation']>([
   'calendar.conflicts'
 ])
 
+const flexibleTemporalOperations = new Set<FlexModelAction['operation']>([
+  'event.create',
+  'event.duplicate',
+  'event.update',
+  'event.move',
+  'reminder.create',
+  'reminder.update',
+  'calendar.list',
+  'calendar.search',
+  'calendar.availability',
+  'calendar.conflicts'
+])
+
 function exactExcerpt(source: string, excerpt: string): { text: string; start: number } | null {
   const start = source.toLocaleLowerCase().indexOf(excerpt.toLocaleLowerCase())
   if (start < 0) return null
@@ -119,9 +390,16 @@ function exactExcerpt(source: string, excerpt: string): { text: string; start: n
 
 function groundedActionSource(
   source: string,
-  action: FlexModelAction
+  action: FlexModelAction,
+  inferredSegment: { text: string; start: number } | null = null
 ): { text: string; start: number } | null {
   const exact = exactExcerpt(source, action.sourceText)
+  if (
+    inferredSegment &&
+    (!exact || inferredSegment.text.toLocaleLowerCase().includes(exact.text.toLocaleLowerCase()))
+  ) {
+    return inferredSegment
+  }
   if (exact) return exact
   const anchor = [action.targetText, action.titleText]
     .filter((value): value is string => Boolean(value))
@@ -143,6 +421,48 @@ function groundedActionSource(
     if (repaired) return repaired
   }
   return null
+}
+
+function inferredFlexibleActionSegments(
+  source: string,
+  actions: readonly FlexModelAction[]
+): Array<{ text: string; start: number } | null> {
+  if (actions.length < 2) return actions.map(() => null)
+  const anchors = actions.map((action) => {
+    const candidates =
+      action.operation === 'event.create' || action.operation === 'reminder.create'
+        ? [action.titleText, action.targetText]
+        : [action.targetText, action.titleText]
+    return candidates
+      .filter((value): value is string => Boolean(value?.trim()))
+      .map((value) => exactExcerpt(source, value))
+      .find((value): value is { text: string; start: number } => Boolean(value))
+  })
+  if (anchors.some((anchor) => !anchor)) return actions.map(() => null)
+  for (let index = 1; index < anchors.length; index += 1) {
+    const previous = anchors[index - 1]
+    const current = anchors[index]
+    if (!previous || !current || current.start <= previous.start) return actions.map(() => null)
+  }
+  const segments = anchors.map((anchor, index) => {
+    if (!anchor) return null
+    const next = anchors[index + 1]
+    let end = next?.start ?? source.length
+    if (next) {
+      const between = source.slice(anchor.start + anchor.text.length, next.start)
+      const separator =
+        /(?:\s*[,;]\s*|\s+\b(?:and\s+then|and\s+also|then|also|plus|and)\s+)(?:(?:please\s+)?(?:(?:can|could|would|will)\s+you\s+)?(?:add|create|schedule|book|put|block|make|remind(?:\s+me)?(?:\s+(?:to|about))?|remember(?:\s+to)?|set|move|reschedule|shift|rename|duplicate|copy|clone|delete|remove|cancel|mark|complete|finish|check|change|modify|update)\s+)?$/iu.exec(
+          between
+        )
+      if (separator?.index === undefined) return null
+      end = anchor.start + anchor.text.length + separator.index
+    }
+    const raw = source.slice(anchor.start, end)
+    const leading = raw.length - raw.trimStart().length
+    const text = raw.trim()
+    return text ? { text, start: anchor.start + leading } : null
+  })
+  return segments.some((segment) => !segment) ? actions.map(() => null) : segments
 }
 
 const canonicalDateSource = '\\d{4}-\\d{2}-\\d{2}'
@@ -209,17 +529,38 @@ function normalizeCanonicalRecurrence(value: string): string | null {
 
 const monthNumberByName: Record<string, number> = {
   january: 1,
+  jan: 1,
   february: 2,
+  feb: 2,
   march: 3,
+  mar: 3,
   april: 4,
+  apr: 4,
   may: 5,
   june: 6,
+  jun: 6,
   july: 7,
+  jul: 7,
   august: 8,
+  aug: 8,
   september: 9,
+  sep: 9,
+  sept: 9,
   october: 10,
+  oct: 10,
   november: 11,
-  december: 12
+  nov: 11,
+  december: 12,
+  dec: 12
+}
+const weekdayNumberByName: Record<string, number> = {
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+  sunday: 7
 }
 const ordinalNumberByName: Record<string, number> = {
   first: 1,
@@ -318,9 +659,12 @@ function sourceDateCandidates(
     .map((name) => name.replace('-', '[- ]'))
     .join('|')
   const daySource = `(?:\\d{1,2}(?:st|nd|rd|th)?|${ordinalNames})`
-  const monthFirst = new RegExp(`\\b(${monthNames})\\s+(${daySource})(?:,?\\s+(\\d{4}))?\\b`, 'giu')
+  const monthFirst = new RegExp(
+    `\\b(${monthNames})\\.?\\s+(${daySource})(?:,?\\s+(\\d{4}))?\\b`,
+    'giu'
+  )
   const dayFirst = new RegExp(
-    `\\b(?:the\\s+)?(${daySource})(?:\\s+day\\s+of|\\s+of)\\s+(${monthNames})(?:,?\\s+(\\d{4}))?\\b`,
+    `\\b(?:the\\s+)?(${daySource})(?:\\s+day\\s+of|\\s+of)\\s+(${monthNames})\\.?(?:,?\\s+(\\d{4}))?\\b`,
     'giu'
   )
   const dayValue = (raw: string): number => {
@@ -362,59 +706,181 @@ function sourceDateCandidates(
     ] as const) {
       if (pattern.test(source)) dates.add(current.add({ days }).toString())
     }
+    for (const match of source.matchAll(
+      /\\b(?:(last|next|this)\\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\\b/giu
+    )) {
+      const target = weekdayNumberByName[match[2]?.toLocaleLowerCase() ?? '']
+      if (!target) continue
+      const relation = match[1]?.toLocaleLowerCase()
+      let offset = (target - current.dayOfWeek + 7) % 7
+      if (relation === 'last') offset = offset === 0 ? -7 : offset - 7
+      else if (relation === 'next' && offset === 0) offset = 7
+      dates.add(current.add({ days: offset }).toString())
+    }
   }
   return dates
 }
 
 function sourceClockCandidates(source: string): Set<string> {
   const clocks = new Set<string>()
-  const add = (hour: number, minute: number): void => {
-    if (hour >= 1 && hour <= 12 && minute >= 0 && minute <= 59) {
-      clocks.add(`${hour}:${String(minute).padStart(2, '0')}`)
-    }
+  const add = (hour: number, minute: number, meridiem: 'am' | 'pm'): void => {
+    if (hour < 1 || hour > 12 || minute < 0 || minute > 59) return
+    const adjusted = meridiem === 'am' ? (hour === 12 ? 0 : hour) : hour === 12 ? 12 : hour + 12
+    clocks.add(`${String(adjusted).padStart(2, '0')}:${String(minute).padStart(2, '0')}`)
   }
-  for (const match of source.matchAll(/\b(\d{1,2})(?::(\d{2}))?\s*(?:a\.?m\.?|p\.?m\.?)\b/giu)) {
-    add(Number(match[1]), Number(match[2] ?? 0))
+  for (const match of source.matchAll(/\b(\d{1,2})(?::(\d{1,2}))?\s*(a\.?m\.?|p\.?m\.?)\b/giu)) {
+    add(
+      Number(match[1]),
+      Number(match[2] ?? 0),
+      match[3]?.toLocaleLowerCase().startsWith('p') ? 'pm' : 'am'
+    )
   }
-  if (/\bnoon\b/iu.test(source)) add(12, 0)
-  if (/\bmidnight\b/iu.test(source)) add(12, 0)
+  if (/\bnoon\b/iu.test(source)) add(12, 0, 'pm')
+  if (/\bmidnight\b/iu.test(source)) add(12, 0, 'am')
   for (const match of source.matchAll(
-    /\b(half|quarter)\s+(past|after|to)\s+(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/giu
+    /\b(half|quarter)\s+(past|after|to)\s+(\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)(?:\s*(a\.?m\.?|p\.?m\.?)|\s+in\s+the\s+(morning|afternoon|evening|night))?\b/giu
   )) {
     const rawHour = match[3]?.toLocaleLowerCase() ?? ''
     const hour = /^\d+$/u.test(rawHour) ? Number(rawHour) : (clockNumberByName[rawHour] ?? 0)
     const direction = match[2]?.toLocaleLowerCase()
     const quarter = match[1]?.toLocaleLowerCase() === 'quarter'
-    add(
-      direction === 'to' ? (hour === 1 ? 12 : hour - 1) : hour,
-      direction === 'to' ? 45 : quarter ? 15 : 30
-    )
+    const namedPeriod = match[5]?.toLocaleLowerCase()
+    const meridiem =
+      match[4]?.toLocaleLowerCase().startsWith('p') ||
+      namedPeriod === 'afternoon' ||
+      namedPeriod === 'evening' ||
+      namedPeriod === 'night'
+        ? 'pm'
+        : match[4] || namedPeriod === 'morning'
+          ? 'am'
+          : null
+    if (meridiem) {
+      add(
+        direction === 'to' ? (hour === 1 ? 12 : hour - 1) : hour,
+        direction === 'to' ? 45 : quarter ? 15 : 30,
+        meridiem
+      )
+    }
   }
   return clocks
 }
 
+function needsFlexibleTemporalRepair(source: string, draft: CalendarIRDraft): boolean {
+  if (
+    draft.operation === 'event.delete' ||
+    draft.operation === 'reminder.delete' ||
+    draft.operation === 'reminder.complete'
+  ) {
+    return false
+  }
+  const targetSpan = draft.selection?.query?.sourceSpan
+  const mutationWithDescriptiveTarget =
+    targetSpan &&
+    (draft.operation === 'event.move' ||
+      draft.operation === 'event.duplicate' ||
+      draft.operation === 'event.update' ||
+      draft.operation === 'reminder.update')
+  const temporalSource = mutationWithDescriptiveTarget
+    ? `${source.slice(0, targetSpan.start)}${' '.repeat(targetSpan.end - targetSpan.start)}${source.slice(targetSpan.end)}`
+    : source
+  const sourceClocks = sourceClockCandidates(temporalSource)
+  if (sourceClocks.size === 0) return false
+  const when = draft.fields.when?.value
+  const parsedClocks = new Set(
+    [when?.start?.time, when?.end?.time].filter((value): value is string => Boolean(value))
+  )
+  return [...sourceClocks].some((clock) => !parsedClocks.has(clock))
+}
+
+function needsFlexiblePlanRepair(
+  source: string,
+  parsed: { draft: CalendarIRDraft; matchedPattern: string }
+): boolean {
+  const disposition = getActionDisposition(parsed.draft)
+  return (
+    disposition === 'clarify' ||
+    disposition === 'reject' ||
+    parsed.matchedPattern === 'event-create-inferred' ||
+    needsFlexibleTemporalRepair(source, parsed.draft)
+  )
+}
+
+function canonicalClockLabel(value: string): string | null {
+  const match = /^(\d{2}):(\d{2})$/u.exec(value)
+  if (!match?.[1] || !match[2]) return null
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (hour > 23 || minute > 59) return null
+  const period = hour < 12 ? 'AM' : 'PM'
+  const displayHour = hour % 12 || 12
+  return `${displayHour}:${match[2]} ${period}`
+}
+
+function deterministicCanonicalWhen(
+  source: string,
+  context: FlexModelPlanContext | undefined
+): string | null {
+  if (!/\b(?:half|quarter)\s+(?:past|after|to)\b/iu.test(source)) return null
+  if (/\b(?:either|or)\b/iu.test(source) || /\b(?:from|between)\b/iu.test(source)) return null
+  const dates = [...sourceDateCandidates(source, context)]
+  const clocks = [...sourceClockCandidates(source)]
+  if (dates.length > 1 || clocks.length !== 1) return null
+  const clock = canonicalClockLabel(clocks[0] ?? '')
+  if (!clock) return null
+  return dates[0] ? `${dates[0]} at ${clock}` : `at ${clock}`
+}
+
 function canonicalClockCandidates(source: string): Set<string> {
   const clocks = new Set<string>()
-  for (const match of source.matchAll(/\b(1[0-2]|[1-9]):([0-5]\d)\s+(?:AM|PM)\b/giu)) {
-    clocks.add(`${Number(match[1])}:${match[2]}`)
+  for (const match of source.matchAll(/\b(1[0-2]|[1-9]):([0-5]\d)\s+(AM|PM)\b/giu)) {
+    const hour = Number(match[1])
+    const adjusted =
+      match[3]?.toLocaleUpperCase() === 'AM'
+        ? hour === 12
+          ? 0
+          : hour
+        : hour === 12
+          ? 12
+          : hour + 12
+    clocks.add(`${String(adjusted).padStart(2, '0')}:${match[2]}`)
   }
   return clocks
 }
 
 function canUseTemporalTranslation(
   fullSource: string,
+  actionSource: string,
   copiedWhen: { text: string; start: number } | null,
   suppliedWhen: string | null | undefined,
   normalizedWhen: string,
   context: FlexModelPlanContext | undefined
 ): boolean {
   if (!suppliedWhen) return false
-  if (copiedWhen) return true
+  if (/\b(?:either|or)\b/iu.test(copiedWhen?.text ?? actionSource)) return false
   const normalizedDates = normalizedWhen.match(/\b\d{4}-\d{2}-\d{2}\b/gu) ?? []
-  const availableDates = sourceDateCandidates(fullSource, context)
+  let availableDates = sourceDateCandidates(copiedWhen?.text ?? actionSource, context)
+  if (availableDates.size === 0) {
+    const fullSourceDates = sourceDateCandidates(fullSource, context)
+    if (fullSourceDates.size === 1) availableDates = fullSourceDates
+  }
+  if (!copiedWhen && normalizedDates.length > 0 && availableDates.size > 1) return false
   if (normalizedDates.some((date) => !availableDates.has(date))) return false
   const normalizedClocks = canonicalClockCandidates(normalizedWhen)
-  const availableClocks = sourceClockCandidates(fullSource)
+  let availableClocks = sourceClockCandidates(copiedWhen?.text ?? actionSource)
+  if ([...normalizedClocks].some((clock) => !availableClocks.has(clock))) {
+    const fullSourceClocks = sourceClockCandidates(fullSource)
+    const hasExplicitSharedClockCue =
+      /\b(?:both|all|each)\b.{0,40}\b(?:at|from|between)\b|\b(?:at|from|between)\b.{0,40}\b(?:for\s+)?(?:both|all|each)\b|\b(?:at|from|between)\s+the\s+same\s+time\b/iu.test(
+        fullSource
+      )
+    const exactSharedClockSet =
+      hasExplicitSharedClockCue &&
+      fullSourceClocks.size === normalizedClocks.size &&
+      [...normalizedClocks].every((clock) => fullSourceClocks.has(clock))
+    if (exactSharedClockSet || (!copiedWhen && fullSourceClocks.size === 1)) {
+      availableClocks = new Set([...availableClocks, ...fullSourceClocks])
+    }
+  }
   if ([...normalizedClocks].some((clock) => !availableClocks.has(clock))) return false
   return normalizedDates.length + normalizedClocks.size > 0
 }
@@ -492,11 +958,14 @@ function fieldHasCue(
 ): boolean {
   const prefix = source.slice(Math.max(0, match.start - 40), match.start)
   if (kind === 'DESCRIPTION') {
-    return /\b(?:note|notes|description|details?|with)\s*(?::|-)?\s*$/iu.test(prefix)
+    return /\b(?:note|notes|description|details?)\b.{0,24}(?:\b(?:as|to|with)\b\s*)?(?::|-)?\s*$|\bwith\s*(?::|-)?\s*$/iu.test(
+      prefix
+    )
   }
   if (kind === 'LOCATION') {
     return (
-      /\b(?:in|inside|location|room)\s+(?:the\s+)?$/iu.test(prefix) ||
+      /\b(?:in|inside)\s+(?:the\s+)?$/iu.test(prefix) ||
+      /\b(?:location|place|room)\b.{0,16}\b(?:as|at|is|to)\s+(?:the\s+)?$/iu.test(prefix) ||
       (/\bat\s+(?:the\s+)?$/iu.test(prefix) &&
         !/^\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)$/iu.test(match.text.trim()))
     )
@@ -625,9 +1094,10 @@ export function groundFlexiblePlan(
   context?: FlexModelPlanContext
 ): GroundedFlexibleAction[] | null {
   const grounded: GroundedFlexibleAction[] = []
-  for (const action of plan.actions) {
+  const inferredSegments = inferredFlexibleActionSegments(source, plan.actions)
+  for (const [actionIndex, action] of plan.actions.entries()) {
     if (!flexibleAssistedOperations.has(action.operation)) return null
-    const segment = groundedActionSource(source, action)
+    const segment = groundedActionSource(source, action, inferredSegments[actionIndex] ?? null)
     if (!segment) return null
     const spans: Array<SemanticPlannerPrediction['spans'][number]> = []
     const groundedFields: {
@@ -644,6 +1114,22 @@ export function groundFlexiblePlan(
     ] as const) {
       if (!excerpt) continue
       if (!fieldApplies(action.operation, kind)) continue
+      if (
+        kind === 'TITLE' &&
+        action.targetText &&
+        excerpt.toLocaleLowerCase() === action.targetText.toLocaleLowerCase() &&
+        (action.operation === 'event.update' || action.operation === 'reminder.update') &&
+        Boolean(
+          action.descriptionText ||
+          action.locationText ||
+          action.whenText ||
+          action.normalizedWhenText ||
+          action.recurrenceText ||
+          action.normalizedRecurrenceText
+        )
+      ) {
+        continue
+      }
       const match = exactExcerpt(segment.text, excerpt)
       if (!match) {
         if (kind === 'TITLE' || kind === 'TARGET') return null
@@ -669,17 +1155,24 @@ export function groundFlexiblePlan(
     const normalizedWhenCandidate = action.normalizedWhenText
       ? normalizeCanonicalWhen(action.normalizedWhenText)
       : null
+    const derivedWhen =
+      flexibleTemporalOperations.has(action.operation) &&
+      Boolean(action.whenText || action.normalizedWhenText)
+        ? deterministicCanonicalWhen(segment.text, context)
+        : null
     const normalizedWhen =
-      normalizedWhenCandidate &&
+      derivedWhen ??
+      (normalizedWhenCandidate &&
       canUseTemporalTranslation(
         source,
+        segment.text,
         whenExcerpt,
         action.whenText,
         normalizedWhenCandidate,
         context
       )
         ? normalizedWhenCandidate
-        : null
+        : null)
     const normalizedRecurrenceCandidate = action.normalizedRecurrenceText
       ? normalizeCanonicalRecurrence(action.normalizedRecurrenceText)
       : null
@@ -944,23 +1437,52 @@ function normalizedMemory(value: string): string {
 
 function looksLikeCalendarMutation(value: string): boolean {
   return (
-    /\b(?:add|book|cancel|change|complete|copy|create|delete|duplicate|mark|modify|move|postpone|push|remind|remove|rename|repeat|reschedule|save|schedule|set|shift|update)\b/iu.test(
+    /\b(?:add|block|book|bump|cancel|change|clone|complete|copy|create|delete|ditch|drop|duplicate|finish|mark|modify|move|postpone|push|put|remind|remove|rename|repeat|reschedule|save|schedule|scrap|set|shift|update)\b/iu.test(
       value
     ) ||
+    /\b(?:bring\s+forward|check\s+off|cross\s+off|take\s+off)\b/iu.test(value) ||
     /\bmake\s+(?:(?:an?|the|my)\s+)?(?:appointment|calendar item|event|plan|reminder|room\s+for)\b/iu.test(
       value
     )
   )
 }
 
-function claimsCalendarMutation(value: string): boolean {
-  return /\b(?:i(?:'ve| have)?|we(?:'ve| have)?)[ ]+(?:added|booked|cancelled|canceled|changed|completed|copied|created|deleted|duplicated|marked|moved|removed|renamed|rescheduled|saved|scheduled|set|shifted|updated)\b|\b(?:event|meeting|appointment|reminder|calendar item)\b.{0,60}\b(?:has been|is|was)\s+(?:added|booked|cancelled|canceled|changed|completed|created|deleted|moved|removed|renamed|rescheduled|saved|scheduled|set|updated)\b|^(?:done|all set)[.!—, ]/iu.test(
-    value.trim()
+function likelyRequestedItemCount(value: string): number {
+  if (
+    !/\b(?:add|book|create|make|put|remind|remember|schedule|set)\b/iu.test(value) ||
+    !/\b(?:and|also|plus|then)\b/iu.test(value)
+  ) {
+    return 1
+  }
+  const anchors = [
+    ...value.matchAll(
+      /\b(?:today|tomorrow|tmr|tmrw|tmw|monday|tuesday|wednesday|thursday|friday|saturday|sunday|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+\d{4})?|\d{1,2}[/-]\d{1,2}(?:[/-]\d{2,4})?)\b/giu
+    )
+  ].filter((match) => match.index !== undefined)
+  if (anchors.length < 2) return 1
+  const weekdayListSpans = [
+    ...value.matchAll(
+      /\bevery\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?:\s*,\s*(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday))*(?:\s*,?\s*and\s+(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday))?/giu
+    )
+  ].flatMap((match) =>
+    match.index === undefined ? [] : [{ start: match.index, end: match.index + match[0].length }]
   )
+  for (let index = 1; index < anchors.length; index += 1) {
+    const previous = anchors[index - 1]
+    const current = anchors[index]
+    if (previous?.index === undefined || current?.index === undefined) continue
+    const between = value.slice(previous.index + previous[0].length, current.index)
+    if (!/\b(?:and|also|plus|then)\b/iu.test(between)) continue
+    const belongsToOneWeekdayList = weekdayListSpans.some(
+      (span) => previous.index >= span.start && current.index < span.end
+    )
+    if (!belongsToOneWeekdayList) return anchors.length
+  }
+  return 1
 }
 
 function isRejectedFlexibleChatTurn(value: string): boolean {
-  return /could not finish that response with the local language model|could not map that request safely yet/iu.test(
+  return /could not finish that response with the local language model|could not map that request safely yet|left out the local response because/iu.test(
     value
   )
 }
@@ -975,7 +1497,7 @@ function looksLikeCalendarRequest(value: string): boolean {
 }
 
 type CalendarDetailRequest =
-  'details' | 'location' | 'time' | 'start' | 'end' | 'duration' | 'date' | 'notes'
+  'details' | 'location' | 'time' | 'start' | 'end' | 'duration' | 'date' | 'notes' | 'recurrence'
 
 function calendarDetailFollowUp(value: string): CalendarDetailRequest | null {
   const normalized = value
@@ -1018,6 +1540,18 @@ function calendarDetailFollowUp(value: string): CalendarDetailRequest | null {
   ) {
     return 'time'
   }
+  const referencesPriorResults =
+    /\b(?:they|them|their|these|those|these ones|those ones|the ones|these (?:classes|courses|lectures|labs|events|meetings|appointments|reminders|items)|those (?:classes|courses|lectures|labs|events|meetings|appointments|reminders|items))\b/iu.test(
+      normalized
+    )
+  const asksForTheirTimes =
+    /\b(?:when|times?\s+(?:for|of))\b|\b(?:what|which)\b.{0,48}\btimes?\b/iu.test(normalized)
+  if (
+    /^(?:at\s+)?(?:what|which) times?$/iu.test(normalized) ||
+    (referencesPriorResults && asksForTheirTimes)
+  ) {
+    return 'time'
+  }
   if (
     /^(?:(?:what|which) (?:day|date)(?:\s+(?:is|was)\s+(?:it|that|this|that one|the (?:class|course|lecture|lab|event|meeting|appointment)))?|date)$/iu.test(
       normalized
@@ -1033,6 +1567,13 @@ function calendarDetailFollowUp(value: string): CalendarDetailRequest | null {
     return 'notes'
   }
   if (
+    /^(?:how often(?: does)? (?:it|that|this|the (?:class|course|lecture|lab|event|meeting|appointment))? ?(?:repeat)?|(?:what|which) days?(?: of the week)?(?: does)? (?:it|that|this)? ?(?:repeat|happen|meet)?|recurrence|repeat pattern)$/iu.test(
+      normalized
+    )
+  ) {
+    return 'recurrence'
+  }
+  if (
     /^(?:more|more please|details?|show (?:me )?(?:more|details?)|tell me more|go (?:deeper|on)|expand(?: on that)?|what about the (?:times?|locations?|details?))$/iu.test(
       normalized
     )
@@ -1042,33 +1583,295 @@ function calendarDetailFollowUp(value: string): CalendarDetailRequest | null {
   return null
 }
 
-function focusedItemTitles(
+interface FocusedDialogueItem {
+  id: string
+  kind: 'event' | 'reminder'
+  title: string
+  at: string
+  timezone: string
+  location: string
+  stableIndex: number
+}
+
+function focusedDialogueItems(
   state: AssistantDialogueState,
   events: readonly EventEntity[],
   reminders: readonly ReminderEntity[]
-): string[] {
-  const focusedEvents = new Set(state.focusedEventIds)
-  const focusedReminders = new Set(state.focusedReminderIds)
-  return [
-    ...events
-      .filter((event) => event.status === 'active' && focusedEvents.has(event.id))
-      .map((event) => event.title),
-    ...reminders
-      .filter((reminder) => reminder.status === 'active' && focusedReminders.has(reminder.id))
-      .map((reminder) => reminder.title)
-  ]
+): FocusedDialogueItem[] {
+  const eventById = new Map(events.map((event) => [event.id, event]))
+  const reminderById = new Map(reminders.map((reminder) => [reminder.id, reminder]))
+  const activeFrame = state.queryFrames.find((frame) => frame.frameId === state.activeQueryFrameId)
+  if (activeFrame) {
+    return activeFrame.orderedItems.flatMap<FocusedDialogueItem>((item, index) => {
+      if (item.kind === 'event') {
+        const event = eventById.get(item.id)
+        return event?.status === 'active'
+          ? [
+              {
+                id: item.id,
+                kind: 'event' as const,
+                title: event.title,
+                at: item.occurrenceStart ?? event.startUtc,
+                timezone: event.timezone,
+                location: event.location,
+                stableIndex: index
+              }
+            ]
+          : []
+      }
+      const reminder = reminderById.get(item.id)
+      return reminder?.status === 'active'
+        ? [
+            {
+              id: item.id,
+              kind: 'reminder' as const,
+              title: reminder.title,
+              at: item.occurrenceStart ?? reminder.dueAtUtc,
+              timezone: reminder.timezone,
+              location: '',
+              stableIndex: index
+            }
+          ]
+        : []
+    })
+  }
+  const focusedEvents = state.focusedEventIds.flatMap((id, index) => {
+    const event = eventById.get(id)
+    return event?.status === 'active'
+      ? [
+          {
+            id,
+            kind: 'event' as const,
+            title: event.title,
+            at: event.startUtc,
+            timezone: event.timezone,
+            location: event.location,
+            stableIndex: index
+          }
+        ]
+      : []
+  })
+  const focusedReminders = state.focusedReminderIds.flatMap((id, index) => {
+    const reminder = reminderById.get(id)
+    return reminder?.status === 'active'
+      ? [
+          {
+            id,
+            kind: 'reminder' as const,
+            title: reminder.title,
+            at: reminder.dueAtUtc,
+            timezone: reminder.timezone,
+            location: '',
+            stableIndex: focusedEvents.length + index
+          }
+        ]
+      : []
+  })
+  const focusedItems = [...focusedEvents, ...focusedReminders]
+  if (focusedEvents.length === 0 || focusedReminders.length === 0) return focusedItems
+  return focusedItems.sort(
+    (left, right) =>
+      Date.parse(left.at) - Date.parse(right.at) || left.stableIndex - right.stableIndex
+  )
 }
 
-function expandPluralDialogueReference(
+function dialogueFrameItemKey(item: AssistantQueryFrameItem): string {
+  return `${item.kind}:${item.id}:${item.occurrenceStart ?? ''}`
+}
+
+function contextualItemDescriptors(
+  state: AssistantDialogueState,
+  events: readonly EventEntity[],
+  reminders: readonly ReminderEntity[]
+): ContextualItemDescriptor[] {
+  const eventById = new Map(events.map((event) => [event.id, event]))
+  const reminderById = new Map(reminders.map((reminder) => [reminder.id, reminder]))
+  const seen = new Set<string>()
+  return state.queryFrames.flatMap<ContextualItemDescriptor>((frame) =>
+    frame.orderedItems.flatMap<ContextualItemDescriptor>((item) => {
+      const key = dialogueFrameItemKey(item)
+      if (seen.has(key)) return []
+      seen.add(key)
+      if (item.kind === 'reminder') {
+        const reminder = reminderById.get(item.id)
+        return reminder ? [{ item, title: reminder.title, categories: ['reminder'] }] : []
+      }
+      const event = eventById.get(item.id)
+      if (!event) return []
+      const text = `${event.title} ${event.description}`
+      const categories: ContextualItemDescriptor['categories'][number][] = ['event']
+      if (/\b(?:lab|laboratory|practicum)\b/iu.test(text)) categories.push('lab')
+      if (/\blecture\b/iu.test(text)) categories.push('lecture')
+      const academic =
+        /\b(?:class|course|lecture|laboratory|lab|discussion|seminar|practicum|recitation|tutorial|calculus|algebra|geometry|statistics|physics|chemistry|biology|anatomy|economics|psychology|sociology|history|literature|composition|programming|computer science|data structures|engineering)\b|\b[A-Z]{2,6}\s*[- ]?\d{2,4}[A-Z]?\b/iu.test(
+          text
+        ) || event.provenance === 'import'
+      if (academic) categories.push('class')
+      return [{ item, title: event.title, categories }]
+    })
+  )
+}
+
+function expandContextualMutationReference(
+  value: string,
+  resolution: ContextualResolution | null,
+  descriptors: readonly ContextualItemDescriptor[]
+): string {
+  if (
+    resolution?.kind !== 'resolved' ||
+    (resolution.intent !== 'modify' && resolution.intent !== 'delete')
+  ) {
+    return value
+  }
+  const descriptorByKey = new Map(
+    descriptors.map((descriptor) => [dialogueFrameItemKey(descriptor.item), descriptor])
+  )
+  const titles = resolution.selectedItems.flatMap((item) => {
+    const title = descriptorByKey.get(dialogueFrameItemKey(item))?.title.trim()
+    return title ? [title] : []
+  })
+  if (titles.length === 0 || titles.length > 50 || new Set(titles).size !== titles.length) {
+    return value
+  }
+  const target = resolution.selectedItems.length === 1 ? 'it' : titles.join(' and ')
+  const referencePatterns = [
+    /\b(?:the\s+)?(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last|final)(?:\s+(?:ones?|items?|events?|classes?|courses?|labs?|lectures?|reminders?))?(?:\s*(?:,\s*(?:and\s+)?|\band\s+)(?:the\s+)?(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last|final)(?:\s+(?:ones?|items?|events?|classes?|courses?|labs?|lectures?|reminders?))?)+\b/iu,
+    /\b(?:all(?:\s+\d+)?\s+of\s+(?:them|these|those)|every\s+one\s+of\s+(?:them|these|those)|both\s+of\s+(?:them|these|those)|both|them|these\s+ones|those\s+ones|these|those|it|that one|this one)\b/iu,
+    /\b(?:(?:all|both|the)\s+)?(?:classes?|courses?|labs?|laborator(?:y|ies)|lectures?|reminders?|tasks?|events?|meetings?|appointments?)\b/iu,
+    /\b(?:the\s+)?(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last|final)(?:\s+(?:one|item|event|class|course|lab|lecture|reminder))?\b/iu
+  ]
+  const pattern = referencePatterns.find((candidate) => candidate.test(value))
+  return pattern ? value.replace(pattern, target) : value
+}
+
+const dialogueOrdinalSource = '(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|last|final)'
+const dialogueOrdinalNounSource =
+  '(?:\\s+(?:ones?|items?|events?|meetings?|appointments?|classes?|courses?|reminders?|tasks?))?'
+const dialogueOrdinalList = new RegExp(
+  `\\b(?:the\\s+)?${dialogueOrdinalSource}${dialogueOrdinalNounSource}(?:\\s*(?:,\\s*(?:and\\s+)?|\\band\\s+)(?:the\\s+)?${dialogueOrdinalSource}${dialogueOrdinalNounSource})+\\b`,
+  'iu'
+)
+const dialogueOrdinalToken = new RegExp(`\\b(${dialogueOrdinalSource})\\b`, 'giu')
+
+function focusedPeriodItems(
+  items: readonly FocusedDialogueItem[],
+  period: string,
+  noun: string
+): FocusedDialogueItem[] {
+  const ranges: Readonly<Record<string, readonly [number, number]>> = {
+    morning: [9, 12],
+    afternoon: [12, 17],
+    evening: [17, 21],
+    night: [19, 22]
+  }
+  const range = ranges[period.toLocaleLowerCase()]
+  if (!range) return []
+  const [startHour, endHour] = range
+  const requestedKind = /^(?:reminder|task)/iu.test(noun)
+    ? 'reminder'
+    : /^(?:event|class|course|meeting|appointment)/iu.test(noun)
+      ? 'event'
+      : null
+  return items.filter((item) => {
+    if (requestedKind && item.kind !== requestedKind) return false
+    const hour = Temporal.Instant.from(item.at).toZonedDateTimeISO(item.timezone).hour
+    return hour >= startHour && hour < endHour
+  })
+}
+
+function expandDescriptivePluralReference(
+  value: string,
+  items: readonly FocusedDialogueItem[]
+): string | null {
+  const periodReference =
+    /\b(?:the\s+)?(morning|afternoon|evening|night)\s+(ones?|items?|events?|meetings?|appointments?|classes?|courses?|reminders?|tasks?)\b/iu.exec(
+      value
+    )
+  if (periodReference?.[0] && periodReference[1] && periodReference[2]) {
+    const selected = focusedPeriodItems(items, periodReference[1], periodReference[2])
+    const titles = selected.map((item) => item.title)
+    if (titles.length >= 2 && titles.length <= 50 && new Set(titles).size === titles.length) {
+      return value.replace(periodReference[0], titles.join(' and '))
+    }
+    return null
+  }
+  const locationReference =
+    /\b(?:the\s+)?(?:ones?|items?|events?|meetings?|appointments?|classes?|courses?)\s+(?:in|at)\s+(.+?)[.!?]*$/iu.exec(
+      value
+    )
+  if (locationReference?.[0] && locationReference[1]) {
+    const selected = items.filter(
+      (item) =>
+        item.kind === 'event' &&
+        item.location.trim().length > 0 &&
+        typoPhraseSimilarity(locationReference[1] ?? '', item.location) >= 0.78
+    )
+    const titles = selected.map((item) => item.title)
+    if (titles.length >= 2 && titles.length <= 50 && new Set(titles).size === titles.length) {
+      return value.replace(locationReference[0], titles.join(' and '))
+    }
+  }
+  return null
+}
+
+function dialogueOrdinalIndex(value: string, itemCount: number): number | null {
+  const normalized = value.toLocaleLowerCase()
+  if (normalized === 'last' || normalized === 'final') return itemCount - 1
+  const index = {
+    first: 0,
+    '1st': 0,
+    second: 1,
+    '2nd': 1,
+    third: 2,
+    '3rd': 2,
+    fourth: 3,
+    '4th': 3,
+    fifth: 4,
+    '5th': 4
+  }[normalized]
+  return index ?? null
+}
+
+function expandDialogueMutationReferences(
   value: string,
   state: AssistantDialogueState,
   events: readonly EventEntity[],
   reminders: readonly ReminderEntity[]
 ): string {
   if (!looksLikeCalendarMutation(value)) return value
-  const reference = /\b(?:all\s+of\s+them|both|them|these|those|these\s+ones|those\s+ones)\b/iu
+  const items = focusedDialogueItems(state, events, reminders)
+  const descriptivePlural = expandDescriptivePluralReference(value, items)
+  if (descriptivePlural) return descriptivePlural
+  const ordinalList = dialogueOrdinalList.exec(value)
+  if (ordinalList?.[0]) {
+    const positions = [...ordinalList[0].matchAll(dialogueOrdinalToken)].map((match) =>
+      dialogueOrdinalIndex(match[1] ?? '', items.length)
+    )
+    const selectedPositions = positions.filter((position): position is number => position !== null)
+    const validSelection =
+      selectedPositions.length >= 2 &&
+      selectedPositions.length <= 50 &&
+      selectedPositions.length === positions.length &&
+      new Set(selectedPositions).size === selectedPositions.length &&
+      selectedPositions.every((position) => position >= 0 && position < items.length)
+    if (validSelection) {
+      const selectedTitles = selectedPositions.flatMap((position) => {
+        const item = items[position]
+        return item ? [item.title] : []
+      })
+      if (
+        selectedTitles.length === selectedPositions.length &&
+        new Set(selectedTitles).size === selectedTitles.length
+      ) {
+        return value.replace(dialogueOrdinalList, selectedTitles.join(' and '))
+      }
+    }
+    return value
+  }
+  const reference =
+    /\b(?:all(?:\s+\d+)?\s+of\s+(?:them|these|those)|every\s+one\s+of\s+(?:them|these|those)|both\s+of\s+(?:them|these|those)|both|them|these\s+ones|those\s+ones|these|those)\b/iu
   if (!reference.test(value)) return value
-  const titles = focusedItemTitles(state, events, reminders)
+  const titles = items.map((item) => item.title)
   const uniqueTitles = [...new Set(titles)]
   if (
     uniqueTitles.length < 2 ||
@@ -1140,12 +1943,35 @@ function isClarificationContinuation(
   }
 }
 
+function reminderRequestsAsEvents(value: string): string {
+  const reminderPrefix =
+    /^(\s*(?:please\s+)?(?:(?:can|could|would|will)\s+you\s+|i(?:'d| would)\s+like\s+(?:you\s+)?to\s+)?)(?:(?:add|create|set)\s+(?:a\s+)?reminder(?:\s+(?:to|for|about))?|remind\s+me(?:\s+(?:to|about))?|remember\s+to)\s+/iu
+  return splitCalendarRequests(value)
+    .map((part) => part.replace(reminderPrefix, '$1add '))
+    .join('; ')
+}
+
 function mergeClarificationAnswer(
   clarification: AssistantPendingClarification,
   answer: string
 ): string {
   const source = clarification.sourceText.trim().replace(/[.!?]+$/gu, '')
   const option = selectedClarificationOption(answer, clarification.options)
+  if (
+    clarification.code === 'unsupported-expression' &&
+    option &&
+    normalizedChoice(option) === 'create calendar events'
+  ) {
+    return reminderRequestsAsEvents(source)
+  }
+  if (
+    clarification.code === 'missing-time' &&
+    /^(?:am|pm)$/iu.test(normalizedChoice(option ?? answer))
+  ) {
+    const period = normalizedChoice(option ?? answer).toLocaleUpperCase()
+    const parts = splitCalendarRequests(source)
+    if (parts.length > 1) return parts.map((part) => `${part} ${period}`).join('; ')
+  }
   if (
     option &&
     (clarification.code === 'multiple-targets' || clarification.code === 'unclear-reference')
@@ -1259,15 +2085,6 @@ function isLikelyClassOccurrence(event: EventOccurrence, entity: EventEntity | n
   return !explicitNonClassSignal && (event.recurring || entity?.provenance === 'import')
 }
 
-function compactNameAnswer(titles: readonly string[], locale: string, emptyText: string): string {
-  const unique = [...new Set(titles.map((title) => clippedDetail(title, 120)).filter(Boolean))]
-  if (unique.length === 0) return emptyText
-  const maximumVisible = 8
-  const visible = unique.slice(0, maximumVisible)
-  if (unique.length > maximumVisible) visible.push(`${unique.length - maximumVisible} more`)
-  return `${new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(visible)}.`
-}
-
 function eventAnswerFact(
   event: EventOccurrence,
   locale: string,
@@ -1301,7 +2118,8 @@ function formatDurationMinutes(minutes: number): string {
 function eventAttributeValue(
   event: EventOccurrence,
   detail: Exclude<CalendarDetailRequest, 'details'>,
-  locale: string
+  locale: string,
+  recurrence: EventForm['recurrence'] = null
 ): string {
   switch (detail) {
     case 'location':
@@ -1322,39 +2140,119 @@ function eventAttributeValue(
       return formatDate(event.startUtc, locale, event.timezone)
     case 'notes':
       return event.description.trim() ? clippedDetail(event.description) : 'no notes saved'
+    case 'recurrence':
+      return recurrenceDetail(recurrence, locale)
   }
 }
 
-function calendarAttributeAnswer(
-  events: readonly EventOccurrence[],
-  reminders: readonly ReminderEntity[],
+function reminderAttributeValue(
+  reminder: ReminderEntity,
   detail: Exclude<CalendarDetailRequest, 'details'>,
   locale: string
 ): string {
-  const eventFacts = events.map((event) => ({
+  switch (detail) {
+    case 'location':
+      return 'reminders do not have rooms or locations'
+    case 'date':
+      return formatDate(reminder.dueAtUtc, locale, reminder.timezone)
+    case 'notes':
+      return reminder.notes.trim() ? clippedDetail(reminder.notes) : 'no notes saved'
+    case 'duration':
+      return 'reminders do not have a duration'
+    case 'end':
+      return 'reminders have a due time, not an end time'
+    case 'recurrence':
+      return recurrenceDetail(reminder.recurrence, locale)
+    case 'time':
+    case 'start':
+      return formatTime(reminder.dueAtUtc, locale, reminder.timezone)
+  }
+}
+
+function groundedEventAnswerItem(
+  event: EventOccurrence,
+  locale: string,
+  recurrence: EventForm['recurrence'] = null
+): GroundedAnswerItem {
+  const frameItem: AssistantQueryFrameItem = {
+    kind: 'event',
+    id: event.eventId,
+    occurrenceStart: event.startUtc
+  }
+  const attributes: Record<GroundedAttributeField, string> = {
+    time: eventAttributeValue(event, 'time', locale, recurrence),
+    start: eventAttributeValue(event, 'start', locale, recurrence),
+    end: eventAttributeValue(event, 'end', locale, recurrence),
+    date: eventAttributeValue(event, 'date', locale, recurrence),
+    location: eventAttributeValue(event, 'location', locale, recurrence),
+    duration: eventAttributeValue(event, 'duration', locale, recurrence),
+    notes: eventAttributeValue(event, 'notes', locale, recurrence),
+    recurrence: eventAttributeValue(event, 'recurrence', locale, recurrence)
+  }
+  return {
+    key: dialogueFrameItemKey(frameItem),
+    kind: 'event',
     title: event.title,
-    value: eventAttributeValue(event, detail, locale)
-  }))
-  const reminderFacts = reminders.map((reminder) => ({
+    dateLabel: formatDate(event.startUtc, locale, event.timezone),
+    timeLabel: event.allDay ? 'all day' : formatTime(event.startUtc, locale, event.timezone),
+    detail: eventAnswerFact(event, locale, { includeDate: true, includeDescription: true }),
+    attributes
+  }
+}
+
+function eventEntityOccurrence(event: EventEntity, startUtc = event.startUtc): EventOccurrence {
+  return {
+    occurrenceId: `context:${event.id}:${startUtc}`,
+    eventId: event.id,
+    calendarId: event.calendarId,
+    title: event.title,
+    description: event.description,
+    location: event.location,
+    startUtc,
+    endUtc: new Date(
+      Date.parse(startUtc) + Date.parse(event.endUtc) - Date.parse(event.startUtc)
+    ).toISOString(),
+    timezone: event.timezone,
+    allDay: event.allDay,
+    originalDate: Temporal.Instant.from(startUtc)
+      .toZonedDateTimeISO(event.timezone)
+      .toPlainDate()
+      .toString(),
+    recurring: event.recurrence !== null
+  }
+}
+
+function groundedReminderAnswerItem(reminder: ReminderEntity, locale: string): GroundedAnswerItem {
+  const frameItem: AssistantQueryFrameItem = {
+    kind: 'reminder',
+    id: reminder.id,
+    occurrenceStart: reminder.dueAtUtc
+  }
+  const attributes: Record<GroundedAttributeField, string> = {
+    time: reminderAttributeValue(reminder, 'time', locale),
+    start: reminderAttributeValue(reminder, 'start', locale),
+    end: reminderAttributeValue(reminder, 'end', locale),
+    date: reminderAttributeValue(reminder, 'date', locale),
+    location: reminderAttributeValue(reminder, 'location', locale),
+    duration: reminderAttributeValue(reminder, 'duration', locale),
+    notes: reminderAttributeValue(reminder, 'notes', locale),
+    recurrence: reminderAttributeValue(reminder, 'recurrence', locale)
+  }
+  return {
+    key: dialogueFrameItemKey(frameItem),
+    kind: 'reminder',
     title: reminder.title,
-    value:
-      detail === 'location'
-        ? 'reminders do not have rooms or locations'
-        : detail === 'date'
-          ? formatDate(reminder.dueAtUtc, locale, reminder.timezone)
-          : detail === 'notes'
-            ? reminder.notes.trim()
-              ? clippedDetail(reminder.notes)
-              : 'no notes saved'
-            : detail === 'duration'
-              ? 'reminders do not have a duration'
-              : formatTime(reminder.dueAtUtc, locale, reminder.timezone)
-  }))
-  const facts = [...eventFacts, ...reminderFacts]
-  if (facts.length === 0) return 'I could not find a matching calendar item.'
-  const cleanValue = (value: string): string => value.trim().replace(/[.!?]+$/gu, '')
-  if (facts.length === 1) return `${facts[0]?.title} — ${cleanValue(facts[0]?.value ?? '')}.`
-  return `${facts.map((fact) => `“${fact.title}” — ${cleanValue(fact.value)}`).join('; ')}.`
+    dateLabel: formatDate(reminder.dueAtUtc, locale, reminder.timezone),
+    timeLabel: formatTime(reminder.dueAtUtc, locale, reminder.timezone),
+    detail: `${formatDateTime(
+      reminder.dueAtUtc,
+      locale,
+      reminder.timezone
+    )}, reminder: “${reminder.title}”${
+      reminder.notes.trim() ? ` — ${clippedDetail(reminder.notes)}` : ''
+    }`,
+    attributes
+  }
 }
 
 function commandQuestion(command: CalendarIRResolved): string {
@@ -1409,10 +2307,53 @@ function recurrenceLabel(recurrence: EventForm['recurrence']): string {
   return `, repeating every${interval} ${unit}${recurrence.interval === 1 ? '' : 's'}${ending}`
 }
 
+function recurrenceDetail(recurrence: EventForm['recurrence'], locale: string): string {
+  if (!recurrence) return 'does not repeat'
+  const unit = {
+    daily: 'day',
+    weekly: 'week',
+    monthly: 'month',
+    yearly: 'year'
+  }[recurrence.frequency]
+  const cadence =
+    recurrence.interval === 1
+      ? recurrence.frequency === 'daily'
+        ? 'daily'
+        : recurrence.frequency === 'weekly'
+          ? 'weekly'
+          : recurrence.frequency === 'monthly'
+            ? 'monthly'
+            : 'yearly'
+      : `every ${recurrence.interval} ${unit}s`
+  const weekdays = recurrence.byWeekday.map(
+    (weekday) => `${weekday.slice(0, 1).toLocaleUpperCase()}${weekday.slice(1)}`
+  )
+  const days =
+    weekdays.length > 0
+      ? ` on ${new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(weekdays)}`
+      : recurrence.byMonthDay.length > 0
+        ? ` on day ${recurrence.byMonthDay.join(', ')}`
+        : ''
+  const ending =
+    recurrence.end.kind === 'count'
+      ? ` for ${recurrence.end.count} occurrences`
+      : recurrence.end.kind === 'until'
+        ? ` until ${recurrence.end.date}`
+        : ''
+  return `${cadence}${days}${ending}`
+}
+
 export class PersistentAssistantService {
   private readonly calendar: PersistentCalendarService
   private readonly plannerInfo: RemindCoreInfo
   private readonly speakerInfo: RemindSpeakInfo
+  private readonly calendarFallbackPlanner: CalendarFallbackPlanner | null
+  private readonly generalFallbackResponder: GeneralFallbackResponder | null
+  /**
+   * Bounded, process-local diagnostics. These records intentionally contain no
+   * prompt text, calendar facts, stable item IDs, or conversation identifiers.
+   */
+  private readonly executionTraces: AssistantExecutionTrace[] = []
   private readonly responseTraces = new Map<
     string,
     {
@@ -1429,12 +2370,22 @@ export class PersistentAssistantService {
     plannerInfo: RemindCoreInfo | null = null,
     private readonly speaker: RemindSpeakPlanner | null = null,
     speakerInfo: RemindSpeakInfo | null = null,
-    private readonly flexiblePlanner: FlexibleCalendarPlanner | null = null
+    fallbackServices: AssistantFallbackServices | FlexibleCalendarPlanner | null = null
   ) {
     this.calendar = new PersistentCalendarService(repository)
     this.plannerInfo = plannerInfo ?? planner?.info ?? unavailableRemindCoreInfo('Rules-only mode')
     this.speakerInfo =
       speakerInfo ?? speaker?.info ?? unavailableRemindSpeakInfo('Template response mode')
+    if (!fallbackServices) {
+      this.calendarFallbackPlanner = null
+      this.generalFallbackResponder = null
+    } else if (isAssistantFallbackServices(fallbackServices)) {
+      this.calendarFallbackPlanner = fallbackServices.calendarPlanner
+      this.generalFallbackResponder = fallbackServices.generalResponder
+    } else {
+      this.calendarFallbackPlanner = adaptLegacyCalendarFallback(fallbackServices)
+      this.generalFallbackResponder = adaptLegacyGeneralFallback(fallbackServices)
+    }
   }
 
   getPlannerInfo(): RemindCoreInfo {
@@ -1443,6 +2394,15 @@ export class PersistentAssistantService {
 
   getSpeakerInfo(): RemindSpeakInfo {
     return this.speakerInfo
+  }
+
+  getExecutionTraces(): readonly AssistantExecutionTrace[] {
+    return this.executionTraces.map((trace) => ({ ...trace }))
+  }
+
+  getLastExecutionTrace(): AssistantExecutionTrace | null {
+    const trace = this.executionTraces.at(-1)
+    return trace ? { ...trace } : null
   }
 
   getConversation(conversationId: string | null = null): AssistantConversation {
@@ -1527,14 +2487,44 @@ export class PersistentAssistantService {
     })
   }
 
-  async send(input: AssistantSendRequest): Promise<AssistantExchange> {
+  async send(
+    input: AssistantSendRequest,
+    runtime: AssistantSendRuntimeOptions = {}
+  ): Promise<AssistantExchange> {
+    const started = performance.now()
+    const trace: MutableAssistantExecutionTrace = {
+      route: 'broad-chat',
+      contextFrame: 'none',
+      fallbackWorkload: 'none',
+      fallbackReason: 'not-needed',
+      truncated: false
+    }
+    try {
+      return await this.sendWithTrace(input, runtime, trace)
+    } finally {
+      this.executionTraces.push({
+        schemaVersion: 1,
+        ...trace,
+        latencyMs: Math.max(0, performance.now() - started)
+      })
+      if (this.executionTraces.length > 200) this.executionTraces.shift()
+    }
+  }
+
+  private async sendWithTrace(
+    input: AssistantSendRequest,
+    runtime: AssistantSendRuntimeOptions,
+    trace: MutableAssistantExecutionTrace
+  ): Promise<AssistantExchange> {
     const request = assistantSendRequestSchema.parse(input)
     const conversation = this.getConversation(request.conversationId)
+    trace.contextFrame = this.executionContextFrame(conversation)
     const id = requestId()
     const earlierTurns = conversation.turns
     this.appendTurn(conversation.id, 'user', 'text', request.text, id)
 
     let requestRoute = routeAssistantRequest(request.text)
+    trace.route = requestRoute.route
     let prefetchedEvents: EventEntity[] | null = null
     let prefetchedReminders: ReminderEntity[] | null = null
     if (/\b(?:get\s+rid\s+of|push)\b/iu.test(requestRoute.originalText)) {
@@ -1547,6 +2537,122 @@ export class PersistentAssistantService {
         ]
       })
     }
+    trace.route = requestRoute.route
+    const normalizedInput = requestRoute.normalizedText
+    const previousUser = [...earlierTurns].reverse().find((turn) => turn.role === 'user')
+    const normalizedPreviousUser = previousUser ? normalizeAssistantText(previousUser.text) : null
+
+    if (/^(?:undo|undo that|take that back|revert that)[.!]*$/iu.test(normalizedInput)) {
+      trace.route = 'calendar'
+      return this.undo(conversation.id, id, request.range)
+    }
+
+    const activeProposal = conversation.activeProposal
+    if (
+      activeProposal &&
+      /^(?:actually[, ]+)?(?:yes|confirm|do it|save it|looks good)[.!]*$/iu.test(normalizedInput)
+    ) {
+      trace.route = 'calendar'
+      return this.applyProposal(activeProposal, request.range, id)
+    }
+    if (
+      activeProposal &&
+      /^(?:actually[, ]+)?(?:no|cancel|never mind|reject it)[.!]*$/iu.test(normalizedInput)
+    ) {
+      trace.route = 'calendar'
+      return this.rejectExistingProposal(activeProposal, request.range, id)
+    }
+    if (activeProposal) {
+      const revisedReview = this.reviseActiveProposal(
+        activeProposal,
+        normalizedInput,
+        request.text,
+        request.range,
+        id
+      )
+      if (revisedReview) {
+        trace.route = 'calendar'
+        return revisedReview
+      }
+
+      const reviewAnswer = this.answerActiveProposalQuestion(
+        activeProposal,
+        normalizedInput,
+        request.range,
+        id
+      )
+      if (reviewAnswer) {
+        trace.route = 'calendar'
+        return reviewAnswer
+      }
+    }
+
+    const currentEvents = prefetchedEvents ?? this.repository.listEvents()
+    const currentReminders = prefetchedReminders ?? this.repository.listReminders()
+    const contextualDescriptors = contextualItemDescriptors(
+      conversation.dialogueState,
+      currentEvents,
+      currentReminders
+    )
+    const contextualResolution = resolveContextualRequest({
+      text: normalizedInput,
+      state: conversation.dialogueState,
+      items: contextualDescriptors
+    })
+    if (contextualResolution?.kind === 'clarification') {
+      trace.route = 'calendar'
+      return this.respond(conversation.id, id, request.range, {
+        kind: 'clarification',
+        text: contextualResolution.message,
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
+      })
+    }
+    if (
+      contextualResolution?.kind === 'resolved' &&
+      contextualResolution.intent !== 'modify' &&
+      contextualResolution.intent !== 'delete'
+    ) {
+      trace.route = 'calendar'
+      return this.answerContextualRequest(conversation.id, id, contextualResolution, request.range)
+    }
+    if (contextualResolution?.kind === 'resolved') {
+      const selectedEventIds = [
+        ...new Set(
+          contextualResolution.selectedItems
+            .filter((item) => item.kind === 'event')
+            .map((item) => item.id)
+        )
+      ]
+      const selectedReminderIds = [
+        ...new Set(
+          contextualResolution.selectedItems
+            .filter((item) => item.kind === 'reminder')
+            .map((item) => item.id)
+        )
+      ]
+      const updatedAt = new Date().toISOString()
+      this.repository.saveAssistantDialogueState(conversation.id, {
+        ...conversation.dialogueState,
+        focusedEventIds: selectedEventIds,
+        focusedReminderIds: selectedReminderIds,
+        queryFrames: conversation.dialogueState.queryFrames.map((frame) =>
+          frame.frameId === contextualResolution.frameId
+            ? {
+                ...frame,
+                selectedItems: contextualResolution.selectedItems,
+                requestedFields: contextualResolution.fields,
+                resultCursor: contextualResolution.resultCursor,
+                continuationCursor: null
+              }
+            : frame
+        ),
+        activeQueryFrameId: contextualResolution.frameId,
+        updatedAt
+      })
+    }
+
     let nativeAssistantPrediction: RemindCoreAssistantPrediction | null
     try {
       nativeAssistantPrediction =
@@ -1557,32 +2663,14 @@ export class PersistentAssistantService {
     } catch {
       nativeAssistantPrediction = null
     }
-    const normalizedInput = requestRoute.normalizedText
-    const previousUser = [...earlierTurns].reverse().find((turn) => turn.role === 'user')
-    const normalizedPreviousUser = previousUser ? normalizeAssistantText(previousUser.text) : null
-
-    if (/^(?:undo|undo that|take that back|revert that)[.!]*$/iu.test(normalizedInput)) {
-      return this.undo(conversation.id, id, request.range)
-    }
-
-    const activeProposal = conversation.activeProposal
-    if (
-      activeProposal &&
-      /^(?:yes|confirm|do it|save it|looks good)[.!]*$/iu.test(normalizedInput)
-    ) {
-      return this.applyProposal(activeProposal, request.range, id)
-    }
-    if (activeProposal && /^(?:no|cancel|never mind|reject it)[.!]*$/iu.test(normalizedInput)) {
-      return this.rejectExistingProposal(activeProposal, request.range, id)
-    }
 
     const memoryIntent = requestRoute.memoryIntent
-    if (memoryIntent) {
+    if (memoryIntent && contextualResolution === null) {
       return this.answerMemory(conversation.id, id, memoryIntent, request.range)
     }
 
     const conversationIntent = requestRoute.conversationIntent
-    if (conversationIntent) {
+    if (conversationIntent && contextualResolution === null) {
       return this.answerConversation(conversation.id, id, conversationIntent, request.range)
     }
 
@@ -1615,9 +2703,6 @@ export class PersistentAssistantService {
       return this.stageBulkClear(conversation.id, id, request.text, bulkClearIntent, request.range)
     }
 
-    let attemptedBroadChat = false
-    const currentEvents = prefetchedEvents ?? this.repository.listEvents()
-    const currentReminders = prefetchedReminders ?? this.repository.listReminders()
     const pendingClarification = conversation.dialogueState.pendingClarification
     const clarificationContinuation =
       pendingClarification !== null &&
@@ -1625,7 +2710,7 @@ export class PersistentAssistantService {
     if (pendingClarification && !clarificationContinuation) {
       const clearedAt = new Date().toISOString()
       this.repository.saveAssistantDialogueState(conversation.id, {
-        ...conversation.dialogueState,
+        ...this.repository.getAssistantDialogueState(conversation.id),
         pendingClarification: null,
         updatedAt: clearedAt
       })
@@ -1640,6 +2725,7 @@ export class PersistentAssistantService {
         : null)
     const requestedDetailFollowUp = calendarDetailFollowUp(normalizedInput)
     if (requestedDetailFollowUp && previousReadText === null) {
+      trace.route = 'calendar'
       return this.respond(conversation.id, id, request.range, {
         kind: 'clarification',
         text: 'Which event, class, or reminder do you mean?',
@@ -1650,54 +2736,111 @@ export class PersistentAssistantService {
     }
     const detailFollowUp = previousReadText === null ? null : requestedDetailFollowUp
     const interpretedText = detailFollowUp ? (previousReadText ?? contextualInput) : contextualInput
-    const referenceExpandedText = expandPluralDialogueReference(
+    const contextualReferenceExpandedText = expandContextualMutationReference(
       interpretedText,
-      conversation.dialogueState,
-      currentEvents,
-      currentReminders
+      contextualResolution,
+      contextualDescriptors
     )
+    const referenceExpandedText =
+      contextualResolution?.kind === 'resolved'
+        ? contextualReferenceExpandedText
+        : expandDialogueMutationReferences(
+            contextualReferenceExpandedText,
+            conversation.dialogueState,
+            currentEvents,
+            currentReminders
+          )
     const knownTitles = [
       ...currentEvents.map((event) => event.title),
       ...currentReminders.map((reminder) => reminder.title)
     ]
-    const routedText = repairKnownMutationTargets(referenceExpandedText, knownTitles)
+    const contextRoutedText = routeAssistantRequest(referenceExpandedText, {
+      knownTitles
+    }).normalizedText
+    const targetRepairedText = repairKnownMutationTargets(contextRoutedText, knownTitles)
+    const routedText = routeAssistantRequest(targetRepairedText, { knownTitles }).normalizedText
+    const effectiveSourceText = clarificationContinuation ? routedText : request.text
     const normalizedRequest = routedText.toLocaleLowerCase()
     const mentionsKnownItem = knownTitles.some(
       (title) => title.trim().length >= 2 && normalizedRequest.includes(title.toLocaleLowerCase())
     )
     const routedAsCalendar =
+      contextualResolution?.kind === 'resolved' ||
       requestRoute.route === 'calendar' ||
+      requestRoute.rewrites.some((rewrite) => rewrite.kind === 'calendar-reflection') ||
       looksLikeCalendarRequest(routedText) ||
       mentionsKnownItem ||
       (requestRoute.route === 'broad-chat' &&
         nativeAssistantPrediction?.route === 'calendar' &&
         nativeAssistantPrediction.eligibleForRoutingAssistance &&
+        nativeAssistantPrediction.dialogueRelation !== 'new-topic' &&
+        (nativeAssistantPrediction.turnKind === 'calendar-read' ||
+          nativeAssistantPrediction.turnKind === 'calendar-write') &&
         nativeAssistantPrediction.capabilities.every((capability) =>
           capability.startsWith('calendar.')
         ))
+    if (routedAsCalendar) trace.route = 'calendar'
     if (!routedAsCalendar) {
-      attemptedBroadChat = true
-      const conversational = await this.flexibleChatAnswer(
+      const conversational = await this.generalFallbackAnswer(
         conversation.id,
         id,
         normalizedInput,
         earlierTurns,
-        request.range
+        request.range,
+        runtime.onFlexibleChatChunk,
+        request.streamId ?? undefined,
+        runtime.onFlexibleModelStatus,
+        trace
       )
       if (conversational) return conversational
+      const detail = generalFallbackLimitation(trace.fallbackReason)
+      return this.respond(conversation.id, id, request.range, {
+        kind: 'unsupported',
+        text: this.groundedReply(
+          conversation.id,
+          id,
+          'runtime-unavailable',
+          [{ key: 'DETAIL', kind: 'text', value: detail }],
+          ['<DETAIL>', 'The optional local responder is unavailable: <DETAIL>']
+        ),
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
+      })
     }
 
     const preferences = this.repository.getPreferences()
     const now = new Date().toISOString()
     const zonedNow = Temporal.Instant.from(now).toZonedDateTimeISO(preferences.timezone)
+    const dialogueContext = this.dialogueContextForPlanner(conversation.id, trace)
     const flexiblePlanContext: FlexModelPlanContext = {
       currentLocalDateTime: zonedNow.toPlainDateTime().toString({ smallestUnit: 'minute' }),
       timezone: preferences.timezone,
       locale: preferences.locale,
-      dialogueContext: this.dialogueContextForPlanner(conversation.id)
+      dialogueContext
     }
     const lastAssistant = [...earlierTurns].reverse().find((turn) => turn.role === 'assistant')
     const contextualFollowUp = /^(?:and\b|what about\b|how about\b)/iu.test(normalizedInput)
+    const contextualFocusedEventIds =
+      contextualResolution?.kind === 'resolved'
+        ? [
+            ...new Set(
+              contextualResolution.selectedItems
+                .filter((item) => item.kind === 'event')
+                .map((item) => item.id)
+            )
+          ]
+        : conversation.dialogueState.focusedEventIds
+    const contextualFocusedReminderIds =
+      contextualResolution?.kind === 'resolved'
+        ? [
+            ...new Set(
+              contextualResolution.selectedItems
+                .filter((item) => item.kind === 'reminder')
+                .map((item) => item.id)
+            )
+          ]
+        : conversation.dialogueState.focusedReminderIds
     const parserContext = {
       requestId: id,
       text: routedText,
@@ -1713,8 +2856,8 @@ export class PersistentAssistantService {
       locale: preferences.locale,
       events: currentEvents,
       reminders: currentReminders,
-      focusedEventIds: conversation.dialogueState.focusedEventIds,
-      focusedReminderIds: conversation.dialogueState.focusedReminderIds
+      focusedEventIds: contextualFocusedEventIds,
+      focusedReminderIds: contextualFocusedReminderIds
     }
     const scheduleReplication = parseScheduleReplicationRequest(
       routedText,
@@ -1739,7 +2882,7 @@ export class PersistentAssistantService {
       return this.stageScheduleReplication(
         conversation.id,
         id,
-        request.text,
+        effectiveSourceText,
         scheduleReplication,
         request.range,
         now
@@ -1750,13 +2893,19 @@ export class PersistentAssistantService {
       return this.stageBatchRequest(
         conversation.id,
         id,
-        request.text,
+        effectiveSourceText,
         requestParts,
         request.range,
         now,
-        zonedNow.toPlainDate().toString()
+        zonedNow.toPlainDate().toString(),
+        null,
+        trace,
+        request.streamId ?? undefined,
+        runtime.onFlexibleModelStatus
       )
     }
+    const expectedActionCount = likelyRequestedItemCount(routedText)
+    const requiresMultipleActionCoverage = expectedActionCount > 1
     let semanticPrediction: RemindCorePrediction | null
     try {
       semanticPrediction = this.planner?.predict(routedText) ?? null
@@ -1766,44 +2915,107 @@ export class PersistentAssistantService {
     let parseResult = planCalendarTextHybrid(parserContext, semanticPrediction)
     let disposition = getActionDisposition(parseResult.draft)
     let usedFlexibleFallback = false
+    let calendarFallbackResult: FlexModelCalendarFallbackResult | null = null
+    const needsCalendarFallback =
+      needsFlexiblePlanRepair(routedText, parseResult) || requiresMultipleActionCoverage
 
-    if (
-      (disposition === 'clarify' ||
-        disposition === 'reject' ||
-        parseResult.matchedPattern === 'event-create-inferred') &&
-      this.flexiblePlanner &&
-      !attemptedBroadChat
-    ) {
-      let flexiblePlan: FlexModelPlan | null
+    if (needsCalendarFallback && this.calendarFallbackPlanner) {
+      trace.fallbackWorkload = 'plan'
+      let fallbackResult: FlexModelCalendarFallbackResult
       try {
-        flexiblePlan = await this.flexiblePlanner.plan(routedText, flexiblePlanContext)
-      } catch {
-        flexiblePlan = null
+        fallbackResult = await this.calendarFallbackPlanner.planCalendar(
+          routedText,
+          flexiblePlanContext,
+          {
+            ...(request.streamId ? { cancellationId: request.streamId } : {}),
+            ...(runtime.onFlexibleModelStatus ? { onStatus: runtime.onFlexibleModelStatus } : {})
+          }
+        )
+      } catch (error) {
+        fallbackResult = flexModelCalendarFallbackResultSchema.parse({
+          kind: typedFallbackFailureFromError(error)
+        })
       }
+      calendarFallbackResult = fallbackResult
+      await this.recordFallbackTruncation(trace, this.calendarFallbackPlanner)
+      if (fallbackResult.kind === 'cancelled') {
+        trace.fallbackReason = 'cancelled'
+        return this.respond(conversation.id, id, request.range, {
+          kind: 'answer',
+          text: 'Stopped that local request. Nothing was changed.',
+          relatedEventIds: [],
+          relatedReminderIds: [],
+          receipt: null
+        })
+      }
+      const flexiblePlan = fallbackResult.kind === 'plan' ? fallbackResult.plan : null
+      if (fallbackResult.kind !== 'plan') trace.fallbackReason = fallbackResult.kind
       const grounded = flexiblePlan
         ? groundFlexiblePlan(routedText, flexiblePlan, flexiblePlanContext)
         : null
       if (grounded && grounded.length > 1) {
+        trace.fallbackReason = 'plan-accepted'
         return this.stageBatchRequest(
           conversation.id,
           id,
-          request.text,
+          effectiveSourceText,
           grounded.map((action) => action.parserText),
           request.range,
           now,
           zonedNow.toPlainDate().toString(),
-          grounded.map((action) => action.prediction)
+          grounded.map((action) => action.prediction),
+          trace,
+          request.streamId ?? undefined,
+          runtime.onFlexibleModelStatus
         )
       }
       const action = grounded?.[0]
       if (action) {
+        trace.fallbackReason = 'plan-accepted'
         usedFlexibleFallback = true
         parseResult = planCalendarTextHybrid(
           { ...parserContext, text: action.parserText, previousUserText: null },
           action.prediction
         )
         disposition = getActionDisposition(parseResult.draft)
+      } else if (flexiblePlan) {
+        trace.fallbackReason = 'grounding-rejected'
       }
+    } else if (needsCalendarFallback && !this.calendarFallbackPlanner) {
+      trace.fallbackWorkload = 'plan'
+      trace.fallbackReason = 'not-configured'
+    }
+
+    if (requiresMultipleActionCoverage) {
+      return this.respond(conversation.id, id, request.range, {
+        kind: 'clarification',
+        text: `I found ${expectedActionCount} possible calendar items, but I could not safely separate every one. Nothing was staged. Please confirm them as a short list or give each item its own date and time.`,
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
+      })
+    }
+
+    if (
+      disposition !== 'clarify' &&
+      disposition !== 'reject' &&
+      needsFlexibleTemporalRepair(routedText, parseResult.draft)
+    ) {
+      const detail =
+        'I found a precise time phrase, but I could not translate it without changing its meaning. Please restate that time with AM or PM; nothing was staged.'
+      return this.respond(conversation.id, id, request.range, {
+        kind: 'clarification',
+        text: this.groundedReply(
+          conversation.id,
+          id,
+          'clarification',
+          [{ key: 'DETAIL', kind: 'text', value: detail }],
+          ['<DETAIL>', 'I paused on the time: <DETAIL>', 'One time detail needs care: <DETAIL>']
+        ),
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
+      })
     }
 
     if (disposition === 'clarify') {
@@ -1830,25 +3042,42 @@ export class PersistentAssistantService {
 
     if (disposition === 'reject') {
       const unsupported = parseResult.draft.operation === 'assistant.unsupported'
-      if (unsupported && !attemptedBroadChat) {
-        const conversational = await this.flexibleChatAnswer(
+      const mutation = looksLikeCalendarMutation(routedText)
+      if (unsupported && !mutation && calendarFallbackResult?.kind === 'not-calendar') {
+        const conversational = await this.generalFallbackAnswer(
           conversation.id,
           id,
           request.text,
           earlierTurns,
-          request.range
+          request.range,
+          runtime.onFlexibleChatChunk,
+          request.streamId ?? undefined,
+          runtime.onFlexibleModelStatus,
+          trace
         )
         if (conversational) return conversational
+        const detail = generalFallbackLimitation(trace.fallbackReason)
+        return this.respond(conversation.id, id, request.range, {
+          kind: 'unsupported',
+          text: this.groundedReply(
+            conversation.id,
+            id,
+            'runtime-unavailable',
+            [{ key: 'DETAIL', kind: 'text', value: detail }],
+            ['<DETAIL>', 'The optional local responder is unavailable: <DETAIL>']
+          ),
+          relatedEventIds: [],
+          relatedReminderIds: [],
+          receipt: null
+        })
       }
       const detail = unsupported
-        ? this.flexiblePlanner
-          ? 'I could not finish that response with the local language model. I’m still here: if it concerns your calendar, include the event or reminder and any date or time you know; for live information, I need a connected source to verify it.'
-          : 'The original RemindCore and RemindSpeak models could not answer that open-ended request on their own. Install or enable the optional broad language pack in Settings for general conversation; the native calendar and reminder intelligence still works without it.'
+        ? calendarFallbackLimitation(trace.fallbackReason, mutation)
         : 'I did not make a change because that request did not pass the local safety checks.'
       const text = this.groundedReply(
         conversation.id,
         id,
-        unsupported ? 'unsupported' : 'error',
+        unsupported ? (mutation ? 'clarification' : 'runtime-unavailable') : 'policy-boundary',
         [{ key: 'DETAIL', kind: 'text', value: detail }],
         unsupported
           ? [
@@ -1859,7 +3088,7 @@ export class PersistentAssistantService {
           : ['<DETAIL>', 'The safe result is: <DETAIL>', 'I stopped there. <DETAIL>']
       )
       return this.respond(conversation.id, id, request.range, {
-        kind: unsupported ? 'unsupported' : 'rejected',
+        kind: unsupported ? (mutation ? 'clarification' : 'unsupported') : 'rejected',
         text,
         relatedEventIds: [],
         relatedReminderIds: [],
@@ -1991,7 +3220,7 @@ export class PersistentAssistantService {
       resolvedCommand: resolved,
       summary,
       requiresConfirmation: resolved.requiresConfirmation,
-      sourceText: request.text,
+      sourceText: effectiveSourceText,
       createdAt,
       updatedAt: createdAt
     })
@@ -2523,6 +3752,16 @@ export class PersistentAssistantService {
           'You’ve got room to begin small. <DETAIL>'
         ]
       },
+      joke: {
+        detail:
+          'Why did the homework bring a calendar? It wanted all its problems to have due dates.',
+        templates: [
+          '<DETAIL>',
+          'A tiny one: <DETAIL>',
+          'Here’s a study-break joke: <DETAIL>',
+          'One quick bit of calendar humor: <DETAIL>'
+        ]
+      },
       thanks: {
         detail: 'You’re welcome. I’ll be here when the next plan needs a home.',
         templates: [
@@ -2559,65 +3798,352 @@ export class PersistentAssistantService {
     })
   }
 
-  private calendarContextForChat(): string {
+  private eventFactForChat(
+    event: EventEntity,
+    occurrenceStartUtc: string,
+    priority: FlexModelCalendarFact['priority'],
+    provenance: FlexModelCalendarFact['provenance'] = event.provenance
+  ): Omit<FlexModelCalendarFact, 'ref'> {
     const preferences = this.repository.getPreferences()
-    const now = Date.now()
-    const events = this.repository
-      .listEvents()
-      .filter((event) => event.status === 'active')
-      .sort((left, right) => {
-        const leftDistance = Math.abs(Date.parse(left.startUtc) - now)
-        const rightDistance = Math.abs(Date.parse(right.startUtc) - now)
-        return leftDistance - rightDistance
-      })
-      .slice(0, 48)
-      .sort((left, right) => Date.parse(left.startUtc) - Date.parse(right.startUtc))
-      .map((event) => ({
-        type: 'event',
-        id: event.id,
-        title: event.title,
-        start: formatDateTime(event.startUtc, preferences.locale, event.timezone),
-        end: formatDateTime(event.endUtc, preferences.locale, event.timezone),
-        timezone: event.timezone,
-        allDay: event.allDay,
-        location: event.location.trim() || null,
-        details: event.description.trim() ? clippedDetail(event.description, 240) : null,
-        recurrence: event.recurrence
-      }))
+    const occurrence = eventEntityOccurrence(event, occurrenceStartUtc)
+    const grounded = groundedEventAnswerItem(occurrence, preferences.locale, event.recurrence)
+    return {
+      factId: `${event.id}:${occurrenceStartUtc}`,
+      entityId: event.id,
+      kind: 'event',
+      priority,
+      provenance,
+      occurrenceStartUtc,
+      fields: {
+        title: grounded.title,
+        date: grounded.attributes.date ?? null,
+        time: grounded.attributes.time ?? null,
+        start: grounded.attributes.start ?? null,
+        end: grounded.attributes.end ?? null,
+        duration: grounded.attributes.duration ?? null,
+        location: grounded.attributes.location ?? null,
+        notes: grounded.attributes.notes ?? null,
+        recurrence: grounded.attributes.recurrence ?? null,
+        details: grounded.detail,
+        action: null,
+        status: event.status
+      }
+    }
+  }
+
+  private reminderFactForChat(
+    reminder: ReminderEntity,
+    priority: FlexModelCalendarFact['priority'],
+    provenance: FlexModelCalendarFact['provenance'] = reminder.provenance
+  ): Omit<FlexModelCalendarFact, 'ref'> {
+    const preferences = this.repository.getPreferences()
+    const grounded = groundedReminderAnswerItem(reminder, preferences.locale)
+    return {
+      factId: `${reminder.id}:${reminder.dueAtUtc}`,
+      entityId: reminder.id,
+      kind: 'reminder',
+      priority,
+      provenance,
+      occurrenceStartUtc: reminder.dueAtUtc,
+      fields: {
+        title: grounded.title,
+        date: grounded.attributes.date ?? null,
+        time: grounded.attributes.time ?? null,
+        start: grounded.attributes.start ?? null,
+        end: grounded.attributes.end ?? null,
+        duration: grounded.attributes.duration ?? null,
+        location: grounded.attributes.location ?? null,
+        notes: grounded.attributes.notes ?? null,
+        recurrence: grounded.attributes.recurrence ?? null,
+        details: grounded.detail,
+        action: null,
+        status: reminder.status
+      }
+    }
+  }
+
+  private calendarFactPacketForChat(
+    conversationId: string,
+    sourceText: string,
+    trace?: MutableAssistantExecutionTrace
+  ): FlexModelCalendarFactPacket {
+    const state = this.repository.getAssistantDialogueState(conversationId)
+    const preferences = this.repository.getPreferences()
+    const candidates: Array<Omit<FlexModelCalendarFact, 'ref'>> = []
+    const seen = new Set<string>()
+    const add = (fact: Omit<FlexModelCalendarFact, 'ref'>): void => {
+      const key = `${fact.kind}:${fact.factId}:${fact.occurrenceStartUtc ?? ''}`
+      if (seen.has(key)) return
+      seen.add(key)
+      candidates.push(fact)
+    }
+
+    const activeProposal = this.repository.getActiveAssistantProposal(conversationId)
+    if (activeProposal) {
+      if (activeProposal.payload.kind === 'bulk-delete') {
+        for (const eventId of activeProposal.payload.eventIds) {
+          const event = this.repository.getEvent(eventId)
+          if (!event) continue
+          const fact = this.eventFactForChat(event, event.startUtc, 'review', 'review')
+          fact.fields.action = activeProposal.summary
+          fact.fields.status = 'pending removal review'
+          add(fact)
+        }
+        for (const reminderId of activeProposal.payload.reminderIds) {
+          const reminder = this.repository.getReminder(reminderId)
+          if (!reminder) continue
+          const fact = this.reminderFactForChat(reminder, 'review', 'review')
+          fact.fields.action = activeProposal.summary
+          fact.fields.status = 'pending removal review'
+          add(fact)
+        }
+      }
+      const entries = this.proposalReviewEntries(activeProposal)
+      for (const entry of entries) {
+        const facts = this.proposalReviewFacts(entry, preferences.locale)
+        const entityId =
+          entry.payload.kind === 'event-delete' ||
+          entry.payload.kind === 'reminder-complete' ||
+          entry.payload.kind === 'reminder-delete'
+            ? entry.payload.id
+            : entry.payload.form.id
+        add({
+          factId: `review:${activeProposal.id}:${entry.position + 1}`,
+          entityId,
+          kind: 'review',
+          priority: 'review',
+          provenance: 'review',
+          occurrenceStartUtc: null,
+          fields: {
+            title: facts.title,
+            date: facts.date,
+            time: facts.time,
+            start: null,
+            end: null,
+            duration: null,
+            location: facts.location,
+            notes: facts.notes,
+            recurrence: facts.recurrence,
+            details: facts.details,
+            action: facts.action,
+            status: 'pending review'
+          }
+        })
+      }
+    }
+
+    const activeFrame =
+      state.queryFrames.find((frame) => frame.frameId === state.activeQueryFrameId) ?? null
+    const addFrameItem = (
+      item: AssistantQueryFrameItem,
+      priority: FlexModelCalendarFact['priority']
+    ): void => {
+      if (item.kind === 'event') {
+        const event = this.repository.getEvent(item.id)
+        if (event?.status === 'active') {
+          add(this.eventFactForChat(event, item.occurrenceStart ?? event.startUtc, priority))
+        }
+        return
+      }
+      const reminder = this.repository.getReminder(item.id)
+      if (reminder && reminder.status !== 'cancelled') {
+        add(this.reminderFactForChat(reminder, priority))
+      }
+    }
+    for (const item of activeFrame?.selectedItems ?? []) addFrameItem(item, 'focused')
+    for (const item of activeFrame?.orderedItems ?? []) addFrameItem(item, 'range')
+
+    const activeRange = activeFrame?.range ?? state.activeRange
+    const events = this.repository.listEvents().filter((event) => event.status === 'active')
     const reminders = this.repository
       .listReminders()
       .filter((reminder) => reminder.status !== 'cancelled')
+    if (activeRange) {
+      const occurrences = expandEventsInRange(
+        events,
+        activeRange.rangeStartUtc,
+        activeRange.rangeEndUtc,
+        this.repository.listRecurrenceExceptions()
+      )
+      for (const occurrence of occurrences) {
+        const event = this.repository.getEvent(occurrence.eventId)
+        if (event) add(this.eventFactForChat(event, occurrence.startUtc, 'range'))
+      }
+      for (const reminder of reminders) {
+        if (
+          Date.parse(reminder.dueAtUtc) >= Date.parse(activeRange.rangeStartUtc) &&
+          Date.parse(reminder.dueAtUtc) < Date.parse(activeRange.rangeEndUtc)
+        ) {
+          add(this.reminderFactForChat(reminder, 'range'))
+        }
+      }
+    }
+
+    const now = Date.now()
+    const nearbyEnd = new Date(now + 45 * 24 * 60 * 60 * 1_000).toISOString()
+    const nearbyStart = new Date(now - 24 * 60 * 60 * 1_000).toISOString()
+    const nearbyOccurrences = expandEventsInRange(
+      events,
+      nearbyStart,
+      nearbyEnd,
+      this.repository.listRecurrenceExceptions()
+    )
+      .sort(
+        (left, right) =>
+          Math.abs(Date.parse(left.startUtc) - now) - Math.abs(Date.parse(right.startUtc) - now)
+      )
+      .slice(0, 36)
+    for (const occurrence of nearbyOccurrences) {
+      const event = this.repository.getEvent(occurrence.eventId)
+      if (event) add(this.eventFactForChat(event, occurrence.startUtc, 'nearby'))
+    }
+    for (const reminder of reminders
+      .slice()
       .sort(
         (left, right) =>
           Math.abs(Date.parse(left.dueAtUtc) - now) - Math.abs(Date.parse(right.dueAtUtc) - now)
       )
-      .slice(0, 32)
-      .sort((left, right) => Date.parse(left.dueAtUtc) - Date.parse(right.dueAtUtc))
-      .map((reminder) => ({
-        type: 'reminder',
-        id: reminder.id,
-        title: reminder.title,
-        due: formatDateTime(reminder.dueAtUtc, preferences.locale, reminder.timezone),
-        timezone: reminder.timezone,
-        status: reminder.status,
-        notes: reminder.notes.trim() ? clippedDetail(reminder.notes, 240) : null,
-        recurrence: reminder.recurrence
-      }))
-    const payload = { events, reminders, truncated: false }
-    let context = JSON.stringify(payload)
-    while (context.length > 8_000 && (payload.events.length || payload.reminders.length)) {
-      payload.truncated = true
-      if (payload.events.length >= payload.reminders.length) payload.events.pop()
-      else payload.reminders.pop()
-      context = JSON.stringify(payload)
+      .slice(0, 24)) {
+      add(this.reminderFactForChat(reminder, 'nearby'))
     }
-    return context
+
+    const normalizedRequest = sourceText.normalize('NFKC').trim()
+    const pluralRequest =
+      /\b(?:all|both|each|every|multiple|they|them|their|those|these|agenda|schedule|classes|courses|events|meetings|appointments|reminders|times|locations|rooms|summari[sz]e|summary|recap)\b/iu.test(
+        normalizedRequest
+      )
+    const singularRequest = /\b(?:first|last|next|one|which|where|room|location)\b/iu.test(
+      normalizedRequest
+    )
+    const factLimit = pluralRequest ? 12 : singularRequest ? 3 : 6
+    const requestedFields = new Set<keyof FlexModelCalendarFact['fields']>(['title'])
+    const includeTemporal =
+      /\b(?:what|when|time|times|timing|start|end|finish|date|day|today|tomorrow|yesterday|agenda|schedule|calendar|free|busy)\b/iu.test(
+        normalizedRequest
+      )
+    if (includeTemporal) {
+      requestedFields.add('date')
+      requestedFields.add('time')
+      requestedFields.add('start')
+      requestedFields.add('end')
+      requestedFields.add('duration')
+    }
+    if (/\b(?:where|room|rooms|location|locations|place)\b/iu.test(normalizedRequest)) {
+      requestedFields.add('location')
+    }
+    if (/\b(?:note|notes|instruction|instructions)\b/iu.test(normalizedRequest)) {
+      requestedFields.add('notes')
+    }
+    if (/\b(?:detail|details|why|explain|summari[sz]e|summary|recap)\b/iu.test(normalizedRequest)) {
+      requestedFields.add('details')
+    }
+    if (/\b(?:repeat|repeats|recurrence|often|weekdays?|which days)\b/iu.test(normalizedRequest)) {
+      requestedFields.add('recurrence')
+    }
+    if (activeProposal) {
+      requestedFields.add('action')
+      requestedFields.add('status')
+    }
+    const facts = candidates.slice(0, factLimit).map((fact, index) => ({
+      ref: `F${index + 1}`,
+      ...fact,
+      fields: {
+        title: fact.fields.title,
+        date: requestedFields.has('date') ? fact.fields.date : null,
+        time: requestedFields.has('time') ? fact.fields.time : null,
+        start: requestedFields.has('start') ? fact.fields.start : null,
+        end: requestedFields.has('end') ? fact.fields.end : null,
+        duration: requestedFields.has('duration') ? fact.fields.duration : null,
+        location: requestedFields.has('location') ? fact.fields.location : null,
+        notes: requestedFields.has('notes') ? fact.fields.notes : null,
+        recurrence: requestedFields.has('recurrence') ? fact.fields.recurrence : null,
+        details: requestedFields.has('details') ? fact.fields.details : null,
+        action: requestedFields.has('action') ? fact.fields.action : null,
+        status: requestedFields.has('status') ? fact.fields.status : null
+      }
+    }))
+    const packet: FlexModelCalendarFactPacket = {
+      schemaVersion: 1,
+      range: activeRange
+        ? {
+            startUtc: activeRange.rangeStartUtc,
+            endUtc: activeRange.rangeEndUtc,
+            timezone: activeRange.timezone
+          }
+        : null,
+      facts,
+      truncated: candidates.length > facts.length
+    }
+    while (JSON.stringify(packet).length > 5_800 && packet.facts.length > 0) {
+      packet.facts.pop()
+      packet.truncated = true
+    }
+    if (packet.truncated && trace) trace.truncated = true
+    return flexModelCalendarFactPacketSchema.parse(packet)
   }
 
-  private dialogueContextForPlanner(conversationId: string): string {
+  private executionContextFrame(conversation: AssistantConversation): AssistantContextFrame {
+    if (conversation.activeProposal) return 'active-review'
+    if (conversation.dialogueState.pendingClarification) return 'pending-clarification'
+    if (conversation.dialogueState.lastQuery) return 'last-query'
+    if (
+      conversation.dialogueState.focusedEventIds.length > 0 ||
+      conversation.dialogueState.focusedReminderIds.length > 0
+    ) {
+      return 'focused-items'
+    }
+    return 'none'
+  }
+
+  private async recordFallbackTruncation(
+    trace: MutableAssistantExecutionTrace,
+    provider: FallbackStatusProvider
+  ): Promise<void> {
+    let status: FallbackStatus | null
+    try {
+      status = (await provider.getStatus?.()) ?? null
+    } catch {
+      if (trace.fallbackReason === 'not-needed') trace.fallbackReason = 'unavailable'
+      return
+    }
+    if (status?.lastRequest?.inputTruncated) trace.truncated = true
+  }
+
+  private dialogueContextForPlanner(
+    conversationId: string,
+    trace?: MutableAssistantExecutionTrace
+  ): string {
     const state = this.repository.getAssistantDialogueState(conversationId)
     const focusedEvents = new Set(state.focusedEventIds)
     const focusedReminders = new Set(state.focusedReminderIds)
+    const activeProposal = this.repository.getActiveAssistantProposal(conversationId)
+    const locale = this.repository.getPreferences().locale
+    const activeReview = activeProposal
+      ? activeProposal.payload.kind === 'bulk-delete'
+        ? {
+            operation: activeProposal.operation,
+            summary: activeProposal.summary,
+            itemCount:
+              activeProposal.payload.eventIds.length + activeProposal.payload.reminderIds.length,
+            exactBulkSelection: true,
+            items: [] as Array<Record<string, unknown>>,
+            truncated: false
+          }
+        : (() => {
+            const entries = this.proposalReviewEntries(activeProposal)
+            return {
+              operation: activeProposal.operation,
+              summary: activeProposal.summary,
+              itemCount: entries.length,
+              exactBulkSelection: false,
+              items: entries.slice(0, 10).map((entry) => ({
+                position: entry.position + 1,
+                ...this.proposalReviewFacts(entry, locale)
+              })),
+              truncated: entries.length > 10
+            }
+          })()
+      : null
     const payload = {
       focusedItems: [
         ...this.repository
@@ -2644,25 +4170,76 @@ export class PersistentAssistantService {
             message: state.pendingClarification.message,
             options: state.pendingClarification.options
           }
-        : null
+        : null,
+      activeReview
     }
-    return JSON.stringify(payload).slice(0, 6_000)
+    if (focusedEvents.size + focusedReminders.size > 20 && trace) trace.truncated = true
+    let context = JSON.stringify(payload)
+    while (context.length > 4_000 && payload.activeReview?.items.length) {
+      if (trace) trace.truncated = true
+      payload.activeReview.items.pop()
+      payload.activeReview.truncated = true
+      context = JSON.stringify(payload)
+    }
+    if (context.length > 4_000 && trace) trace.truncated = true
+    return context.slice(0, 4_000)
   }
 
-  private contextualCalendarDataForChat(conversationId: string): string {
-    const dialogue = this.dialogueContextForPlanner(conversationId)
-    const calendar = this.calendarContextForChat()
-    return `DIALOGUE_FOCUS=${dialogue}\nCALENDAR=${calendar}`.slice(0, 8_000)
+  private derivedConversationSummary(
+    usableTurns: readonly ConversationTurnEntity[],
+    trace?: MutableAssistantExecutionTrace
+  ): string {
+    const olderTurns = usableTurns.slice(0, Math.max(0, usableTurns.length - 8)).slice(-12)
+    const lines = olderTurns.map((turn) => {
+      const role = turn.role === 'user' ? 'USER' : 'REMIND ME'
+      return `${role}: ${clippedDetail(turn.text, 180)}`
+    })
+    let summary = lines.join('\n')
+    if (summary.length > 2_000) {
+      summary = `[…] ${summary.slice(-(2_000 - 4))}`
+      if (trace) trace.truncated = true
+    }
+    if (olderTurns.length < Math.max(0, usableTurns.length - 8) && trace) trace.truncated = true
+    return summary
   }
 
-  private async flexibleChatAnswer(
+  private async streamValidatedFallbackAnswer(
+    text: string,
+    onChunk?: (text: string) => void
+  ): Promise<void> {
+    if (!onChunk) return
+    const tokens = text.match(/\S+\s*/gu) ?? [text]
+    const groupSize = Math.max(1, Math.ceil(tokens.length / 24))
+    let visible = ''
+    for (let index = 0; index < tokens.length; index += groupSize) {
+      visible += tokens.slice(index, index + groupSize).join('')
+      onChunk(visible.trimEnd())
+      if (index + groupSize < tokens.length) {
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, 8))
+      }
+    }
+  }
+
+  private async generalFallbackAnswer(
     conversationId: string,
     id: string,
     sourceText: string,
     earlierTurns: readonly ConversationTurnEntity[],
-    range: CalendarSnapshotRequest
+    range: CalendarSnapshotRequest,
+    onChunk?: (text: string) => void,
+    cancellationId?: string,
+    onStatus?: (status: FlexModelJobStatus) => void,
+    trace?: MutableAssistantExecutionTrace
   ): Promise<AssistantExchange | null> {
-    if (!this.flexiblePlanner?.chat) return null
+    if (trace) trace.fallbackWorkload = 'chat'
+    if (!this.generalFallbackResponder) {
+      if (trace) trace.fallbackReason = 'not-configured'
+      return null
+    }
+    if (looksLikeCalendarMutation(routeAssistantRequest(sourceText).normalizedText)) {
+      if (trace) trace.fallbackReason = 'write-claim-rejected'
+      return null
+    }
     const preferences = this.repository.getPreferences()
     const now = Temporal.Now.instant().toZonedDateTimeISO(preferences.timezone)
     const profile = preferences.assistantProfile.memoryEnabled
@@ -2683,34 +4260,1112 @@ export class PersistentAssistantService {
       if (turns.length >= 8 || turnBudget <= 0) break
       if ((turn.role !== 'user' && turn.role !== 'assistant') || !turn.text.trim()) continue
       const text = turn.text.trim().slice(0, Math.min(2_000, turnBudget))
+      if (text.length < turn.text.trim().length && trace) trace.truncated = true
       if (!text) continue
       turns.unshift({ role: turn.role, text })
       turnBudget -= text.length
     }
-    let text: string | null
+    if (turns.length < usableTurns.length && trace) trace.truncated = true
+    const hasActiveReview = this.repository.getActiveAssistantProposal(conversationId) !== null
+    const includeCalendarFacts = looksLikeCalendarRequest(sourceText) || hasActiveReview
+    const factPacket = includeCalendarFacts
+      ? this.calendarFactPacketForChat(conversationId, sourceText, trace)
+      : flexModelCalendarFactPacketSchema.parse({
+          schemaVersion: 1,
+          range: null,
+          facts: [],
+          truncated: false
+        })
+    let result: FlexModelGeneralFallbackResult
+    let lastLiveText = ''
+    const liveChunk =
+      factPacket.facts.length === 0 && onChunk
+        ? (text: string): void => {
+            const safeText = safeGeneralChatStreamPrefix(text, sourceText)
+            if (!safeText || safeText === lastLiveText) return
+            lastLiveText = safeText
+            onChunk(safeText)
+          }
+        : undefined
     try {
-      text = await this.flexiblePlanner.chat({
-        text: sourceText,
-        turns,
-        calendarContext: looksLikeCalendarRequest(sourceText)
-          ? this.contextualCalendarDataForChat(conversationId)
-          : '',
-        currentLocalDateTime: now.toString({ smallestUnit: 'minute' }),
-        timezone: preferences.timezone,
-        profile,
-        style: preferences.responseStyle
+      result = await this.generalFallbackResponder.respondGeneral(
+        {
+          text: sourceText,
+          turns,
+          conversationSummary: this.derivedConversationSummary(usableTurns, trace),
+          calendarContext: includeCalendarFacts ? JSON.stringify(factPacket) : '',
+          currentLocalDateTime: now.toString({ smallestUnit: 'minute' }),
+          timezone: preferences.timezone,
+          profile,
+          style: preferences.responseStyle
+        },
+        liveChunk,
+        {
+          ...(cancellationId ? { cancellationId } : {}),
+          ...(onStatus ? { onStatus } : {})
+        }
+      )
+    } catch (error) {
+      result = flexModelGeneralFallbackResultSchema.parse({
+        kind: typedFallbackFailureFromError(error)
       })
-    } catch {
-      text = null
     }
-    if (!text?.trim()) return null
-    if (looksLikeCalendarMutation(sourceText) && claimsCalendarMutation(text)) return null
+    if (trace) await this.recordFallbackTruncation(trace, this.generalFallbackResponder)
+    switch (result.kind) {
+      case 'missing':
+      case 'disabled':
+      case 'timeout':
+      case 'unavailable':
+      case 'invalid-output':
+        if (trace) trace.fallbackReason = result.kind
+        return null
+      case 'cancelled':
+        if (trace) trace.fallbackReason = 'cancelled'
+        return this.respond(conversationId, id, range, {
+          kind: 'answer',
+          text: 'Stopped that local response. Nothing was changed.',
+          relatedEventIds: [],
+          relatedReminderIds: [],
+          receipt: null
+        })
+    }
+    const grounded = groundFlexChatResponse(result, factPacket, sourceText)
+    if (!grounded.ok) {
+      if (trace) trace.fallbackReason = grounded.reason
+      return null
+    }
+    const responseKind =
+      grounded.response.kind === 'answer'
+        ? 'answer'
+        : grounded.response.kind === 'clarification'
+          ? 'clarification'
+          : grounded.response.kind === 'offline-limit'
+            ? 'answer'
+            : 'rejected'
+    if (trace) {
+      trace.fallbackReason =
+        grounded.response.kind === 'answer'
+          ? 'answered'
+          : grounded.response.kind === 'clarification'
+            ? 'clarified'
+            : grounded.response.kind === 'offline-limit'
+              ? 'offline-limit'
+              : 'refused'
+    }
+    if (onChunk && lastLiveText) onChunk(grounded.response.text)
+    else await this.streamValidatedFallbackAnswer(grounded.response.text, onChunk)
     return this.respond(conversationId, id, range, {
-      kind: 'answer',
-      text: text.trim(),
+      kind: responseKind,
+      text: grounded.response.text,
+      relatedEventIds: grounded.response.relatedEventIds,
+      relatedReminderIds: grounded.response.relatedReminderIds,
+      receipt: null
+    })
+  }
+
+  private proposalReviewEntries(proposal: AssistantProposal): ProposalReviewEntry[] {
+    if (proposal.payload.kind === 'bulk-delete') return []
+    if (proposal.payload.kind !== 'batch') {
+      return [{ payload: proposal.payload, summary: proposal.summary, position: 0 }]
+    }
+    return proposal.payload.items.map((payload, position) => ({
+      payload,
+      summary:
+        proposal.payload.kind === 'batch' ? (proposal.payload.itemSummaries[position] ?? '') : '',
+      position
+    }))
+  }
+
+  private proposalReviewLabel(entry: ProposalReviewEntry): string {
+    switch (entry.payload.kind) {
+      case 'event-save':
+        return entry.payload.form.title
+      case 'event-delete':
+        return this.repository.getEvent(entry.payload.id)?.title ?? `Event ${entry.position + 1}`
+      case 'reminder-save':
+        return entry.payload.form.title
+      case 'reminder-complete':
+      case 'reminder-delete':
+        return (
+          this.repository.getReminder(entry.payload.id)?.title ?? `Reminder ${entry.position + 1}`
+        )
+    }
+  }
+
+  private proposalCorrectionClarification(
+    proposal: AssistantProposal,
+    id: string,
+    range: CalendarSnapshotRequest,
+    message: string
+  ): AssistantExchange {
+    return this.respond(proposal.conversationId, id, range, {
+      kind: 'clarification',
+      text: message,
       relatedEventIds: [],
       relatedReminderIds: [],
       receipt: null
+    })
+  }
+
+  private proposalReviewFacts(entry: ProposalReviewEntry, locale: string): ProposalReviewFacts {
+    const action = entry.summary.replace(/[.!?]+$/gu, '')
+    if (entry.payload.kind === 'event-save') {
+      const form = entry.payload.form
+      const startUtc = localInstant(form.startDate, form.startTime ?? '00:00', form.timezone)
+      const endUtc = form.allDay
+        ? localInstant(
+            Temporal.PlainDate.from(form.endDate).add({ days: 1 }).toString(),
+            '00:00',
+            form.timezone
+          )
+        : localInstant(form.endDate, form.endTime ?? form.startTime ?? '00:00', form.timezone)
+      const date =
+        form.startDate === form.endDate
+          ? formatDate(startUtc, locale, form.timezone)
+          : `${formatDate(startUtc, locale, form.timezone)} through ${formatDate(
+              Temporal.Instant.from(endUtc).subtract({ nanoseconds: 1 }).toString(),
+              locale,
+              form.timezone
+            )}`
+      const time = form.allDay
+        ? 'all day'
+        : `${formatTime(startUtc, locale, form.timezone)}–${formatTime(
+            endUtc,
+            locale,
+            form.timezone
+          )}`
+      const location = form.location.trim() || 'no location saved'
+      const notes = form.description.trim() ? clippedDetail(form.description) : 'no notes saved'
+      const recurrence = recurrenceDetail(form.recurrence, locale)
+      return {
+        title: form.title,
+        kind: 'event',
+        action,
+        date,
+        time,
+        location,
+        notes,
+        recurrence,
+        details: `${date}, ${time}${form.location.trim() ? ` at ${form.location.trim()}` : ''}; ${recurrence}`
+      }
+    }
+    if (entry.payload.kind === 'reminder-save') {
+      const form = entry.payload.form
+      const dueAtUtc = localInstant(form.dueDate, form.dueTime, form.timezone)
+      const date = formatDate(dueAtUtc, locale, form.timezone)
+      const time = formatTime(dueAtUtc, locale, form.timezone)
+      const notes = form.notes.trim() ? clippedDetail(form.notes) : 'no notes saved'
+      const recurrence = recurrenceDetail(form.recurrence, locale)
+      return {
+        title: form.title,
+        kind: 'reminder',
+        action,
+        date,
+        time,
+        location: 'reminders do not have a location',
+        notes,
+        recurrence,
+        details: `${date} at ${time}; ${recurrence}`
+      }
+    }
+    if (entry.payload.kind === 'event-delete') {
+      const event = this.repository.getEvent(entry.payload.id)
+      if (!event) {
+        return {
+          title: this.proposalReviewLabel(entry),
+          kind: 'event',
+          action,
+          date: 'the saved event is no longer available',
+          time: 'the saved event is no longer available',
+          location: 'the saved event is no longer available',
+          notes: 'the saved event is no longer available',
+          recurrence: 'the saved event is no longer available',
+          details: 'the saved event is no longer available'
+        }
+      }
+      const date = formatDate(event.startUtc, locale, event.timezone)
+      const time = event.allDay
+        ? 'all day'
+        : `${formatTime(event.startUtc, locale, event.timezone)}–${formatTime(
+            event.endUtc,
+            locale,
+            event.timezone
+          )}`
+      const recurrence = recurrenceDetail(event.recurrence, locale)
+      return {
+        title: event.title,
+        kind: 'event',
+        action,
+        date,
+        time,
+        location: event.location.trim() || 'no location saved',
+        notes: event.description.trim() ? clippedDetail(event.description) : 'no notes saved',
+        recurrence,
+        details: `${date}, ${time}${event.location.trim() ? ` at ${event.location.trim()}` : ''}; ${recurrence}`
+      }
+    }
+
+    const reminder = this.repository.getReminder(entry.payload.id)
+    if (!reminder) {
+      return {
+        title: this.proposalReviewLabel(entry),
+        kind: 'reminder',
+        action,
+        date: 'the saved reminder is no longer available',
+        time: 'the saved reminder is no longer available',
+        location: 'reminders do not have a location',
+        notes: 'the saved reminder is no longer available',
+        recurrence: 'the saved reminder is no longer available',
+        details: 'the saved reminder is no longer available'
+      }
+    }
+    const date = formatDate(reminder.dueAtUtc, locale, reminder.timezone)
+    const time = formatTime(reminder.dueAtUtc, locale, reminder.timezone)
+    const recurrence = recurrenceDetail(reminder.recurrence, locale)
+    return {
+      title: reminder.title,
+      kind: 'reminder',
+      action,
+      date,
+      time,
+      location: 'reminders do not have a location',
+      notes: reminder.notes.trim() ? clippedDetail(reminder.notes) : 'no notes saved',
+      recurrence,
+      details: `${date} at ${time}; ${recurrence}`
+    }
+  }
+
+  private proposalReviewAttribute(
+    facts: ProposalReviewFacts,
+    attribute: Extract<ProposalReviewQuery, { kind: 'detail' }>['attribute']
+  ): string {
+    switch (attribute) {
+      case 'details':
+        return facts.details
+      case 'title':
+        return facts.title
+      case 'kind':
+        return facts.kind
+      case 'action':
+        return facts.action
+      case 'date':
+        return facts.date
+      case 'time':
+        return facts.time
+      case 'location':
+        return facts.location
+      case 'notes':
+        return facts.notes
+      case 'recurrence':
+        return facts.recurrence
+    }
+  }
+
+  private reviewEventEntity(entry: ProposalReviewEntry, now: string): EventEntity | null {
+    if (entry.payload.kind !== 'event-save') return null
+    const form = entry.payload.form
+    const calendarId = form.calendarId ?? this.repository.listCalendars()[0]?.id ?? 'calendar:local'
+    const startUtc = localInstant(form.startDate, form.startTime ?? '00:00', form.timezone)
+    const endUtc = form.allDay
+      ? localInstant(
+          Temporal.PlainDate.from(form.endDate).add({ days: 1 }).toString(),
+          '00:00',
+          form.timezone
+        )
+      : localInstant(form.endDate, form.endTime ?? form.startTime ?? '00:00', form.timezone)
+    return {
+      id: `review:event:${entry.position + 1}`,
+      calendarId,
+      title: form.title,
+      description: form.description,
+      location: form.location,
+      startUtc,
+      endUtc,
+      timezone: form.timezone,
+      allDay: form.allDay,
+      recurrence: form.recurrence,
+      status: 'active',
+      provenance: 'assistant',
+      createdAt: now,
+      updatedAt: now
+    }
+  }
+
+  private proposalConflictAnswer(
+    entries: readonly ProposalReviewEntry[],
+    selectedIndexes: readonly number[] | null,
+    locale: string
+  ): { detail: string; hasConflicts: boolean } {
+    const now = new Date().toISOString()
+    const proposed = entries
+      .map((entry) => ({ entry, event: this.reviewEventEntity(entry, now) }))
+      .filter(
+        (candidate): candidate is { entry: ProposalReviewEntry; event: EventEntity } =>
+          candidate.event !== null
+      )
+    const selected = new Set(selectedIndexes ?? entries.map((entry) => entry.position))
+    const selectedProposed = proposed.filter((candidate) => selected.has(candidate.entry.position))
+    if (selectedProposed.length === 0) {
+      return {
+        detail:
+          'The selected review rows do not add or move an event time, so there is no proposed time window to compare.',
+        hasConflicts: false
+      }
+    }
+    const recurring = selectedProposed.some((candidate) => candidate.event.recurrence !== null)
+    const deletedEventIds = new Set(
+      entries
+        .filter((entry) => entry.payload.kind === 'event-delete')
+        .map((entry) => (entry.payload.kind === 'event-delete' ? entry.payload.id : ''))
+    )
+    const replacedEventIds = new Set(
+      entries
+        .filter((entry) => entry.payload.kind === 'event-save' && entry.payload.form.id !== null)
+        .map((entry) => (entry.payload.kind === 'event-save' ? (entry.payload.form.id ?? '') : ''))
+    )
+    const savedEvents = this.repository
+      .listEvents()
+      .filter((event) => !deletedEventIds.has(event.id) && !replacedEventIds.has(event.id))
+    const recurrenceExceptions = this.repository.listRecurrenceExceptions()
+    const seen = new Set<string>()
+    const conflicts: Array<{
+      left: EventOccurrence
+      right: EventOccurrence
+    }> = []
+
+    for (const candidate of selectedProposed) {
+      const checkStartUtc = candidate.event.startUtc
+      const checkEndUtc = candidate.event.recurrence
+        ? Temporal.Instant.from(checkStartUtc)
+            .toZonedDateTimeISO(candidate.event.timezone)
+            .add({ days: 90 })
+            .toInstant()
+            .toString({ fractionalSecondDigits: 3 })
+        : candidate.event.endUtc
+      const selectedOccurrences = expandEventOccurrences(
+        candidate.event,
+        checkStartUtc,
+        checkEndUtc
+      )
+      const comparisonOccurrences = [
+        ...expandEventsInRange(savedEvents, checkStartUtc, checkEndUtc, recurrenceExceptions),
+        ...proposed
+          .filter((other) => other.event.id !== candidate.event.id)
+          .flatMap((other) => expandEventOccurrences(other.event, checkStartUtc, checkEndUtc))
+      ]
+      for (const left of selectedOccurrences) {
+        for (const right of comparisonOccurrences) {
+          if (!overlaps(left.startUtc, left.endUtc, right.startUtc, right.endUtc)) continue
+          const key = [left.occurrenceId, right.occurrenceId].sort().join('|')
+          if (seen.has(key)) continue
+          seen.add(key)
+          conflicts.push({ left, right })
+        }
+      }
+    }
+    conflicts.sort(
+      (left, right) => Date.parse(left.left.startUtc) - Date.parse(right.left.startUtc)
+    )
+    const horizonDetail = recurring ? ' within the first 90 days of the proposed repeat' : ''
+    if (conflicts.length === 0) {
+      return {
+        detail: `I found no overlap with your saved calendar or another reviewed event${horizonDetail}`,
+        hasConflicts: false
+      }
+    }
+    const visible = conflicts.slice(0, 5).map(({ left, right }) => {
+      const when = left.allDay
+        ? `${formatDate(left.startUtc, locale, left.timezone)}, all day`
+        : formatDateTime(left.startUtc, locale, left.timezone)
+      return `“${left.title}” overlaps “${right.title}” at ${when}`
+    })
+    const more =
+      conflicts.length > visible.length ? `; ${conflicts.length - visible.length} more` : ''
+    return {
+      detail: `${visible.join('; ')}${more}${horizonDetail}`,
+      hasConflicts: true
+    }
+  }
+
+  private answerActiveProposalQuestion(
+    proposal: AssistantProposal,
+    normalizedInput: string,
+    range: CalendarSnapshotRequest,
+    id: string
+  ): AssistantExchange | null {
+    const entries = this.proposalReviewEntries(proposal)
+    const labels = entries.map((entry) => this.proposalReviewLabel(entry))
+    const query = parseProposalReviewQuery(normalizedInput, labels)
+    if (!query) return null
+    if (query.kind === 'clarify') {
+      return this.proposalCorrectionClarification(proposal, id, range, query.message)
+    }
+
+    const preferences = this.repository.getPreferences()
+    const respondWithFact = (
+      detail: string,
+      speechAct: ResponsePlan['speechAct'],
+      templates: readonly string[]
+    ): AssistantExchange =>
+      this.respond(proposal.conversationId, id, range, {
+        kind: 'answer',
+        text: this.groundedReply(
+          proposal.conversationId,
+          id,
+          speechAct,
+          [{ key: 'DETAIL', kind: 'text', value: detail.slice(0, 2_000) }],
+          templates
+        ),
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
+      })
+
+    if (proposal.payload.kind === 'bulk-delete') {
+      const count = proposal.payload.eventIds.length + proposal.payload.reminderIds.length
+      if (query.kind === 'count') {
+        return respondWithFact(
+          `${count} item${count === 1 ? '' : 's'} in the bulk-clear review`,
+          'item-details-answer',
+          ['<DETAIL>. Nothing is saved yet.', 'The current preview has <DETAIL>.']
+        )
+      }
+      if (query.kind === 'overview') {
+        return respondWithFact(proposal.summary, 'schedule-summary', [
+          '<DETAIL> Nothing is saved yet.',
+          'The current review would <DETAIL> It still needs confirmation.'
+        ])
+      }
+      return this.proposalCorrectionClarification(
+        proposal,
+        id,
+        range,
+        'This bulk-clear preview captures an exact set rather than individually editable rows. Cancel it and ask for a narrower clear if you want item-level details.'
+      )
+    }
+
+    if (query.kind === 'count') {
+      const count = entries.length
+      return respondWithFact(
+        `${count} change${count === 1 ? '' : 's'} in the current review`,
+        'item-details-answer',
+        ['<DETAIL>. Nothing is saved yet.', 'The preview has <DETAIL>. It still needs approval.']
+      )
+    }
+    if (query.kind === 'overview') {
+      const visible = entries.slice(0, 10)
+      const detail =
+        query.mode === 'actions'
+          ? visible.map((entry) => entry.summary).join(' ')
+          : query.mode === 'details'
+            ? visible
+                .map((entry) => {
+                  const facts = this.proposalReviewFacts(entry, preferences.locale)
+                  return `${entry.position + 1}. ${facts.title} — ${facts.details}`
+                })
+                .join('; ')
+            : visible
+                .map(
+                  (entry) =>
+                    `${entries.length > 1 ? `${entry.position + 1}. ` : ''}${this.proposalReviewLabel(entry)}`
+                )
+                .join('; ')
+      const more =
+        entries.length > visible.length ? `; ${entries.length - visible.length} more` : ''
+      return respondWithFact(`${detail}${more}`, 'schedule-summary', [
+        '<DETAIL>. Nothing is saved yet.',
+        'Here’s the current review: <DETAIL>. It still needs approval.',
+        'The unsaved preview contains <DETAIL>.'
+      ])
+    }
+    if (query.kind === 'conflicts') {
+      const result = this.proposalConflictAnswer(entries, query.indexes, preferences.locale)
+      return respondWithFact(
+        result.detail,
+        result.hasConflicts ? 'conflict-warning' : 'availability-answer',
+        result.hasConflicts
+          ? [
+              '<DETAIL>. Nothing has been saved yet.',
+              'I found a collision in the current review: <DETAIL>.',
+              'Before you approve it: <DETAIL>.'
+            ]
+          : [
+              '<DETAIL>. Nothing has been saved yet.',
+              'The current review is clear: <DETAIL>.',
+              '<DETAIL>. The preview still needs approval.'
+            ]
+      )
+    }
+
+    const selectedEntries = query.indexes
+      .map((index) => entries[index])
+      .filter((entry): entry is ProposalReviewEntry => Boolean(entry))
+    if (selectedEntries.length !== query.indexes.length) {
+      return this.proposalCorrectionClarification(
+        proposal,
+        id,
+        range,
+        'That position is outside the current review. Nothing was changed.'
+      )
+    }
+    const detail = selectedEntries
+      .map((entry) => {
+        const facts = this.proposalReviewFacts(entry, preferences.locale)
+        const value = this.proposalReviewAttribute(facts, query.attribute)
+        return `${selectedEntries.length > 1 ? `${entry.position + 1}. ` : ''}${facts.title} — ${value}`
+      })
+      .join('; ')
+    return respondWithFact(detail, 'item-details-answer', [
+      '<DETAIL>.',
+      'In the current review, <DETAIL>.',
+      '<DETAIL>. It is still only a preview.'
+    ])
+  }
+
+  private reviseActiveProposal(
+    proposal: AssistantProposal,
+    normalizedInput: string,
+    sourceText: string,
+    range: CalendarSnapshotRequest,
+    id: string
+  ): AssistantExchange | null {
+    const entries = this.proposalReviewEntries(proposal)
+    if (entries.length === 0) {
+      if (
+        /\b(?:review|proposal|preview|batch)\b/iu.test(normalizedInput) &&
+        /\b(?:change|drop|edit|exclude|keep|make|remove|update)\b/iu.test(normalizedInput)
+      ) {
+        return this.proposalCorrectionClarification(
+          proposal,
+          id,
+          range,
+          'This is an exact bulk-clear review, so its captured item set cannot be edited in place. Cancel it and ask for the narrower clear you want.'
+        )
+      }
+      return null
+    }
+    const correction = parseProposalReviewCorrection(
+      normalizedInput,
+      entries.map((entry) => this.proposalReviewLabel(entry))
+    )
+    if (!correction) return null
+    if (correction.kind === 'clarify') {
+      return this.proposalCorrectionClarification(proposal, id, range, correction.message)
+    }
+
+    let nextEntries: ProposalReviewEntry[]
+    if (correction.kind === 'keep' || correction.kind === 'remove') {
+      const selected = new Set(correction.indexes)
+      nextEntries = entries.filter((entry) =>
+        correction.kind === 'keep' ? selected.has(entry.position) : !selected.has(entry.position)
+      )
+    } else {
+      const revisions = new Map<number, AssistantAtomicProposalPayload>()
+      for (const index of correction.indexes) {
+        const entry = entries[index]
+        if (!entry) {
+          return this.proposalCorrectionClarification(
+            proposal,
+            id,
+            range,
+            `That position is outside this ${entries.length}-item review. Nothing in the current review changed.`
+          )
+        }
+        const revision = this.reviseProposalItem(entry.payload, correction, id, index)
+        if (!revision.ok) {
+          return this.proposalCorrectionClarification(proposal, id, range, revision.message)
+        }
+        revisions.set(index, revision.payload)
+      }
+      nextEntries = entries.map((entry) => ({
+        ...entry,
+        payload: revisions.get(entry.position) ?? entry.payload
+      }))
+    }
+
+    if (nextEntries.length === 0) {
+      this.repository.setAssistantProposalStatus(proposal.id, 'rejected')
+      return this.respond(proposal.conversationId, id, range, {
+        kind: 'rejected',
+        text: 'I removed every item from that review. Nothing was saved to your calendar.',
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
+      })
+    }
+
+    const correctionLine = `Review correction: ${sourceText}`.slice(0, 10_000)
+    const priorBudget = Math.max(0, 50_000 - correctionLine.length - 1)
+    const revisionSourceText =
+      `${correctionLine}\n${proposal.sourceText.slice(0, priorBudget)}`.trim()
+    const now = new Date().toISOString()
+    const commands = nextEntries.map((entry, index) =>
+      this.commandForProposalItem(
+        entry.payload,
+        `${id}:review:${index + 1}`,
+        revisionSourceText,
+        now
+      )
+    )
+    const preferences = this.repository.getPreferences()
+    const localDate = Temporal.Instant.from(now)
+      .toZonedDateTimeISO(preferences.timezone)
+      .toPlainDate()
+      .toString()
+    const validationContext = {
+      nowUtc: now,
+      localDate,
+      timezone: preferences.timezone,
+      utcOffsetMinutes: Math.round(
+        Temporal.Instant.from(now).toZonedDateTimeISO(preferences.timezone).offsetNanoseconds /
+          60_000_000_000
+      ),
+      defaultCalendarId: this.repository.listCalendars()[0]?.id ?? 'calendar:local',
+      defaultEventDurationMinutes: 60
+    }
+    let validationState = {
+      events: this.repository.listEvents(),
+      reminders: this.repository.listReminders()
+    }
+    try {
+      for (const command of commands) {
+        const validation = dryRunCalendarCommand(command, validationState, validationContext)
+        if (!validation.accepted || validation.mutationCount < 1) {
+          return this.proposalCorrectionClarification(
+            proposal,
+            id,
+            range,
+            'I could not validate every revised row, so the current review is untouched.'
+          )
+        }
+        validationState = validation.state
+      }
+    } catch (error) {
+      return this.proposalCorrectionClarification(
+        proposal,
+        id,
+        range,
+        error instanceof Error
+          ? `I could not validate the revised review: ${error.message}. The current review is untouched.`
+          : 'I could not validate the revised review, so the current review is untouched.'
+      )
+    }
+    const summaries = nextEntries.map((entry, index) =>
+      this.proposalSummary(entry.payload, commands[index] ?? commands[0]!)
+    )
+    return this.stagePreparedChanges(
+      proposal.conversationId,
+      id,
+      revisionSourceText,
+      range,
+      commands,
+      nextEntries.map((entry) => entry.payload),
+      summaries,
+      false,
+      true
+    )
+  }
+
+  private reviseProposalItem(
+    payload: AssistantAtomicProposalPayload,
+    correction: Extract<ProposalReviewCorrection, { kind: 'edit' }>,
+    id: string,
+    position: number
+  ): ProposalItemRevision {
+    if (payload.kind !== 'event-save' && payload.kind !== 'reminder-save') {
+      return {
+        ok: false,
+        message:
+          'That reviewed row is an action on an existing item, not an editable event form. You can remove it from this review or cancel the review and make a new request.'
+      }
+    }
+
+    const instruction = normalizeAssistantText(correction.instruction)
+      .replace(/^(?:be\s+)?/iu, '')
+      .trim()
+    const noLongerRepeats =
+      /(?:\b(?:stop|remove|clear)\b.*\b(?:repeat|recurrence|recurring)\b|\b(?:do not|don't|does not|doesn't|no longer|never|not)\s+repeat(?:ing)?\b)/iu.test(
+        instruction
+      )
+    if (noLongerRepeats) {
+      if (payload.kind === 'event-save') {
+        return {
+          ok: true,
+          payload: { kind: 'event-save', form: { ...payload.form, recurrence: null } }
+        }
+      }
+      return {
+        ok: true,
+        payload: { kind: 'reminder-save', form: { ...payload.form, recurrence: null } }
+      }
+    }
+
+    const temporal =
+      /\b(?:today|tomorrow|tmr|tmrw|tmw|morning|afternoon|evening|night|noon|midnight|all[- ]day|monday|tuesday|wednesday|thursday|friday|saturday|sunday|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|am|pm|daily|weekly|monthly|yearly|every|repeat|recur)\b|\b\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)\b|\b\d{1,4}[/-]\d{1,2}(?:[/-]\d{1,4})?\b/iu.test(
+        instruction
+      )
+    const titleMatch = /^(?:called|named|title(?:d)?(?:\s+to)?)\s+(.+)$/iu.exec(instruction)
+    const locationMatch = /^(?:(?:in|inside|location(?:\s+to)?|room(?:\s+to)?)\s+)(.+)$/iu.exec(
+      instruction
+    )
+    const notesMatch =
+      /^(?:(?:notes?|description)(?:\s+to)?|with\s+(?:the\s+)?notes?)\s+(.+)$/iu.exec(instruction)
+    const editKind =
+      correction.verb === 'rename' || titleMatch
+        ? 'title'
+        : locationMatch
+          ? 'location'
+          : notesMatch
+            ? 'description'
+            : temporal
+              ? 'temporal'
+              : null
+    if (!editKind) {
+      return {
+        ok: false,
+        message:
+          'What should change in that reviewed item: its name, notes, location, day, time, or repeat pattern? I left the current review untouched.'
+      }
+    }
+    if (payload.kind === 'reminder-save' && editKind === 'location') {
+      return {
+        ok: false,
+        message:
+          'Reminders do not have a location field. I left the current review untouched; you can turn it into an event or change its name, notes, or due time.'
+      }
+    }
+
+    const target = 'that one'
+    const value =
+      editKind === 'title'
+        ? (titleMatch?.[1] ?? instruction).trim()
+        : editKind === 'location'
+          ? (locationMatch?.[1] ?? instruction).trim()
+          : editKind === 'description'
+            ? (notesMatch?.[1] ?? instruction).trim()
+            : instruction
+    if (!value) {
+      return { ok: false, message: 'What should I change it to? The current review is untouched.' }
+    }
+    const fieldLead =
+      editKind === 'title'
+        ? 'title '
+        : editKind === 'location'
+          ? 'location '
+          : editKind === 'description'
+            ? 'notes '
+            : 'to '
+    const parserText = `Update ${target} ${fieldLead}${value}`
+    const targetStart = parserText.indexOf(target)
+    const valueStart = parserText.lastIndexOf(value)
+    const operation = payload.kind === 'event-save' ? 'event.update' : 'reminder.update'
+    const spans: SemanticPlannerPrediction['spans'] = [
+      { kind: 'TARGET', start: targetStart, end: targetStart + target.length },
+      ...(editKind === 'title'
+        ? [{ kind: 'TITLE' as const, start: valueStart, end: valueStart + value.length }]
+        : editKind === 'location'
+          ? [{ kind: 'LOCATION' as const, start: valueStart, end: valueStart + value.length }]
+          : editKind === 'description'
+            ? [{ kind: 'DESCRIPTION' as const, start: valueStart, end: valueStart + value.length }]
+            : [])
+    ]
+    const prediction: SemanticPlannerPrediction = {
+      operation,
+      operationConfidence: 0.99,
+      ambiguityProbability: 0.01,
+      oodProbability: 0,
+      spans,
+      eligibleForAssistance: true
+    }
+    const now = new Date().toISOString()
+    const preferences = this.repository.getPreferences()
+    const localDate = Temporal.Instant.from(now)
+      .toZonedDateTimeISO(preferences.timezone)
+      .toPlainDate()
+      .toString()
+    const calendarId = this.repository.listCalendars()[0]?.id ?? 'calendar:local'
+    const transientId = `review:item:${position + 1}`
+    const events: EventEntity[] = []
+    const reminders: ReminderEntity[] = []
+    let defaultDuration = 60
+    if (payload.kind === 'event-save') {
+      const startUtc = localInstant(
+        payload.form.startDate,
+        payload.form.startTime ?? '00:00',
+        payload.form.timezone
+      )
+      const endUtc = payload.form.allDay
+        ? localInstant(
+            Temporal.PlainDate.from(payload.form.endDate).add({ days: 1 }).toString(),
+            '00:00',
+            payload.form.timezone
+          )
+        : localInstant(
+            payload.form.endDate,
+            payload.form.endTime ?? payload.form.startTime ?? '00:00',
+            payload.form.timezone
+          )
+      defaultDuration = Math.max(
+        1,
+        Math.round((Date.parse(endUtc) - Date.parse(startUtc)) / 60_000)
+      )
+      events.push({
+        id: transientId,
+        calendarId: payload.form.calendarId ?? calendarId,
+        title: payload.form.title,
+        description: payload.form.description,
+        location: payload.form.location,
+        startUtc,
+        endUtc,
+        timezone: payload.form.timezone,
+        allDay: payload.form.allDay,
+        recurrence: null,
+        status: 'active',
+        provenance: 'assistant',
+        createdAt: now,
+        updatedAt: now
+      })
+    } else {
+      reminders.push({
+        id: transientId,
+        calendarId: payload.form.calendarId ?? calendarId,
+        title: payload.form.title,
+        notes: payload.form.notes,
+        dueAtUtc: localInstant(payload.form.dueDate, payload.form.dueTime, payload.form.timezone),
+        timezone: payload.form.timezone,
+        recurrence: null,
+        status: 'active',
+        completedAt: null,
+        provenance: 'assistant',
+        createdAt: now,
+        updatedAt: now
+      })
+    }
+
+    const parsed = planCalendarTextHybrid(
+      {
+        requestId: `${id}:review-edit:${position + 1}`,
+        text: parserText,
+        previousUserText: null,
+        nowUtc: now,
+        localDate,
+        timezone: preferences.timezone,
+        locale: preferences.locale,
+        events,
+        reminders,
+        focusedEventIds: events.map((event) => event.id),
+        focusedReminderIds: reminders.map((reminder) => reminder.id)
+      },
+      prediction
+    )
+    const disposition = getActionDisposition(parsed.draft)
+    if (disposition !== 'preview' && disposition !== 'confirm') {
+      return {
+        ok: false,
+        message:
+          parsed.draft.ambiguities[0]?.message ??
+          'I could not validate that correction, so the current review is untouched.'
+      }
+    }
+
+    let resolved: CalendarIRResolved
+    try {
+      resolved = resolveCalendarIR(parsed.draft, {
+        nowUtc: now,
+        localDate,
+        timezone: preferences.timezone,
+        utcOffsetMinutes: Math.round(
+          Temporal.Instant.from(now).toZonedDateTimeISO(preferences.timezone).offsetNanoseconds /
+            60_000_000_000
+        ),
+        defaultCalendarId: calendarId,
+        defaultEventDurationMinutes: defaultDuration
+      })
+    } catch (error) {
+      return {
+        ok: false,
+        message:
+          error instanceof Error
+            ? `I could not validate that correction: ${error.message}. The current review is untouched.`
+            : 'I could not validate that correction, so the current review is untouched.'
+      }
+    }
+
+    if (payload.kind === 'event-save') {
+      const form = { ...payload.form }
+      if (resolved.fields.title !== null) form.title = resolved.fields.title
+      if (resolved.fields.description !== null) form.description = resolved.fields.description
+      if (resolved.fields.location !== null) form.location = resolved.fields.location
+      if (resolved.fields.startUtc && resolved.fields.endUtc) {
+        const timezone = resolved.fields.timezone ?? form.timezone
+        const allDay = resolved.fields.allDay ?? form.allDay
+        const start = localParts(resolved.fields.startUtc, timezone)
+        const endInstant = allDay
+          ? Temporal.Instant.from(resolved.fields.endUtc).subtract({ nanoseconds: 1 }).toString()
+          : resolved.fields.endUtc
+        const end = localParts(endInstant, timezone)
+        form.startDate = start.date
+        form.startTime = allDay ? null : start.time
+        form.endDate = end.date
+        form.endTime = allDay ? null : end.time
+        form.timezone = timezone
+        form.allDay = allDay
+      }
+      if (resolved.recurrence !== null) form.recurrence = resolved.recurrence
+      try {
+        return { ok: true, payload: { kind: 'event-save', form: eventFormSchema.parse(form) } }
+      } catch {
+        return {
+          ok: false,
+          message:
+            'That correction would make the event timing invalid, so the current review is untouched.'
+        }
+      }
+    }
+
+    const form = { ...payload.form }
+    if (resolved.fields.title !== null) form.title = resolved.fields.title
+    if (resolved.fields.description !== null) form.notes = resolved.fields.description
+    if (resolved.fields.dueAtUtc) {
+      const timezone = resolved.fields.timezone ?? form.timezone
+      const due = localParts(resolved.fields.dueAtUtc, timezone)
+      form.dueDate = due.date
+      form.dueTime = due.time
+      form.timezone = timezone
+    }
+    if (resolved.recurrence !== null) form.recurrence = resolved.recurrence
+    try {
+      return {
+        ok: true,
+        payload: { kind: 'reminder-save', form: reminderFormSchema.parse(form) }
+      }
+    } catch {
+      return {
+        ok: false,
+        message:
+          'That correction would make the reminder invalid, so the current review is untouched.'
+      }
+    }
+  }
+
+  private commandForProposalItem(
+    payload: AssistantAtomicProposalPayload,
+    requestId: string,
+    sourceText: string,
+    now: string
+  ): CalendarIRResolved {
+    const evidenceText = sourceText.slice(0, 2_000)
+    const evidence = [
+      {
+        id: `evidence:${requestId.replace(/[^a-zA-Z0-9._:-]/gu, '-')}`,
+        sourceKind: 'text' as const,
+        sourceId: null,
+        page: null,
+        boundingBox: null,
+        text: evidenceText,
+        sourceSpan: evidenceText ? { start: 0, end: evidenceText.length } : null
+      }
+    ]
+    const emptyFields = {
+      title: null,
+      description: null,
+      location: null,
+      startUtc: null,
+      endUtc: null,
+      dueAtUtc: null,
+      rangeStartUtc: null,
+      rangeEndUtc: null,
+      timezone: null,
+      allDay: null,
+      reminderOffsetMinutes: null,
+      status: null
+    }
+    if (payload.kind === 'event-save') {
+      const form = payload.form
+      const startUtc = localInstant(form.startDate, form.startTime ?? '00:00', form.timezone)
+      const endUtc = form.allDay
+        ? localInstant(
+            Temporal.PlainDate.from(form.endDate).add({ days: 1 }).toString(),
+            '00:00',
+            form.timezone
+          )
+        : localInstant(form.endDate, form.endTime ?? form.startTime ?? '00:00', form.timezone)
+      return calendarIRResolvedSchema.parse({
+        version: '0.1',
+        requestId,
+        operation: form.id ? 'event.update' : 'event.create',
+        selection: form.id ? { eventIds: [form.id], reminderIds: [], query: null } : null,
+        fields: {
+          ...emptyFields,
+          title: form.title,
+          description: form.description,
+          location: form.location,
+          startUtc,
+          endUtc,
+          timezone: form.timezone,
+          allDay: form.allDay
+        },
+        recurrence: form.recurrence,
+        scope: form.recurrence ? 'series' : 'single',
+        risk: form.id ? 'medium' : 'low',
+        confidence: 0.99,
+        requiresConfirmation: true,
+        evidence,
+        resolvedAt: now
+      })
+    }
+    if (payload.kind === 'reminder-save') {
+      const form = payload.form
+      return calendarIRResolvedSchema.parse({
+        version: '0.1',
+        requestId,
+        operation: form.id ? 'reminder.update' : 'reminder.create',
+        selection: form.id ? { eventIds: [], reminderIds: [form.id], query: null } : null,
+        fields: {
+          ...emptyFields,
+          title: form.title,
+          description: form.notes,
+          dueAtUtc: localInstant(form.dueDate, form.dueTime, form.timezone),
+          timezone: form.timezone,
+          allDay: false
+        },
+        recurrence: form.recurrence,
+        scope: form.recurrence ? 'series' : 'single',
+        risk: form.id ? 'medium' : 'low',
+        confidence: 0.99,
+        requiresConfirmation: true,
+        evidence,
+        resolvedAt: now
+      })
+    }
+    const eventId = payload.kind === 'event-delete' ? payload.id : null
+    const reminderId = eventId === null ? payload.id : null
+    const operation =
+      payload.kind === 'event-delete'
+        ? 'event.delete'
+        : payload.kind === 'reminder-complete'
+          ? 'reminder.complete'
+          : 'reminder.delete'
+    return calendarIRResolvedSchema.parse({
+      version: '0.1',
+      requestId,
+      operation,
+      selection: {
+        eventIds: eventId ? [eventId] : [],
+        reminderIds: reminderId ? [reminderId] : [],
+        query: null
+      },
+      fields: {
+        ...emptyFields,
+        status: payload.kind === 'reminder-complete' ? 'completed' : null
+      },
+      recurrence: null,
+      scope: 'single',
+      risk: operation.endsWith('.delete') ? 'destructive' : 'low',
+      confidence: 0.99,
+      requiresConfirmation: true,
+      evidence,
+      resolvedAt: now
     })
   }
 
@@ -2722,7 +5377,10 @@ export class PersistentAssistantService {
     range: CalendarSnapshotRequest,
     now: string,
     localDate: string,
-    semanticPredictions: readonly SemanticPlannerPrediction[] | null = null
+    semanticPredictions: readonly SemanticPlannerPrediction[] | null = null,
+    trace: MutableAssistantExecutionTrace | null = null,
+    cancellationId?: string,
+    onStatus?: (status: FlexModelJobStatus) => void
   ): Promise<AssistantExchange> {
     const preferences = this.repository.getPreferences()
     const zonedNow = Temporal.Instant.from(now).toZonedDateTimeISO(preferences.timezone)
@@ -2731,7 +5389,7 @@ export class PersistentAssistantService {
       currentLocalDateTime: zonedNow.toPlainDateTime().toString({ smallestUnit: 'minute' }),
       timezone: preferences.timezone,
       locale: preferences.locale,
-      dialogueContext: this.dialogueContextForPlanner(conversationId)
+      dialogueContext: this.dialogueContextForPlanner(conversationId, trace ?? undefined)
     }
     const events = this.repository.listEvents()
     const reminders = this.repository.listReminders()
@@ -2742,21 +5400,11 @@ export class PersistentAssistantService {
     const itemSummaries: string[] = []
     let usedFlexibleFallback = Boolean(semanticPredictions?.length)
 
-    for (let index = 0; index < requestParts.length; index += 1) {
-      const part = requestParts[index]
-      if (!part) continue
-      let prediction: SemanticPlannerPrediction | null = semanticPredictions?.[index] ?? null
-      if (!prediction) {
-        try {
-          prediction = this.planner?.predict(part) ?? null
-        } catch {
-          prediction = null
-        }
-      }
-      let parsed = planCalendarTextHybrid(
+    const parsePart = (text: string, index: number, prediction: SemanticPlannerPrediction | null) =>
+      planCalendarTextHybrid(
         {
           requestId: `${id}:${index + 1}`,
-          text: part,
+          text,
           previousUserText: null,
           nowUtc: now,
           localDate,
@@ -2769,50 +5417,117 @@ export class PersistentAssistantService {
         },
         prediction
       )
-      let disposition = getActionDisposition(parsed.draft)
-      if (
-        (disposition === 'clarify' ||
-          disposition === 'reject' ||
-          parsed.matchedPattern === 'event-create-inferred') &&
-        this.flexiblePlanner
-      ) {
-        let flexiblePlan: FlexModelPlan | null
+
+    const nativeBatch = requestParts.map((part, index) => {
+      let prediction: SemanticPlannerPrediction | null = semanticPredictions?.[index] ?? null
+      if (!prediction) {
         try {
-          flexiblePlan = await this.flexiblePlanner.plan(part, flexiblePlanContext)
+          prediction = this.planner?.predict(part) ?? null
         } catch {
-          flexiblePlan = null
-        }
-        const grounded = flexiblePlan
-          ? groundFlexiblePlan(part, flexiblePlan, flexiblePlanContext)
-          : null
-        const action = grounded?.length === 1 ? grounded[0] : null
-        if (action) {
-          usedFlexibleFallback = true
-          parsed = planCalendarTextHybrid(
-            {
-              requestId: `${id}:${index + 1}`,
-              text: action.parserText,
-              previousUserText: null,
-              nowUtc: now,
-              localDate,
-              timezone: preferences.timezone,
-              locale: preferences.locale,
-              events,
-              reminders,
-              focusedEventIds: dialogueState.focusedEventIds,
-              focusedReminderIds: dialogueState.focusedReminderIds
-            },
-            action.prediction
-          )
-          disposition = getActionDisposition(parsed.draft)
+          prediction = null
         }
       }
-      if (disposition === 'clarify' || disposition === 'reject' || disposition === 'answer') {
-        const detail =
-          parsed.draft.ambiguities[0]?.message ??
-          (disposition === 'answer'
-            ? 'Questions and calendar changes need separate messages.'
-            : `I could not safely understand item ${index + 1}: “${part}”.`)
+      return { part, parsed: parsePart(part, index, prediction) }
+    })
+    const batchNeedsFallback = nativeBatch.some(({ part, parsed }) =>
+      needsFlexiblePlanRepair(part, parsed)
+    )
+    let groundedBatchFallback: GroundedFlexibleAction[] | null = null
+    let fallbackFailureDetail: string | null = null
+
+    if (batchNeedsFallback && this.calendarFallbackPlanner && !semanticPredictions?.length) {
+      if (trace) trace.fallbackWorkload = 'plan'
+      const fallbackSource = requestParts.join('; ')
+      let fallbackResult: FlexModelCalendarFallbackResult
+      try {
+        fallbackResult = await this.calendarFallbackPlanner.planCalendar(
+          fallbackSource,
+          flexiblePlanContext,
+          {
+            ...(cancellationId ? { cancellationId } : {}),
+            ...(onStatus ? { onStatus } : {})
+          }
+        )
+      } catch (error) {
+        fallbackResult = flexModelCalendarFallbackResultSchema.parse({
+          kind: typedFallbackFailureFromError(error)
+        })
+      }
+      if (trace) await this.recordFallbackTruncation(trace, this.calendarFallbackPlanner)
+      if (fallbackResult.kind === 'cancelled') {
+        if (trace) trace.fallbackReason = 'cancelled'
+        return this.respond(conversationId, id, range, {
+          kind: 'answer',
+          text: 'Stopped that local request. Nothing was changed.',
+          relatedEventIds: [],
+          relatedReminderIds: [],
+          receipt: null
+        })
+      }
+      if (fallbackResult.kind !== 'plan') {
+        if (trace) trace.fallbackReason = fallbackResult.kind
+        fallbackFailureDetail = `The local fallback did not return a translation for all ${requestParts.length} requested items.`
+      } else {
+        const flexiblePlan = fallbackResult.plan
+        if (flexiblePlan.actions.length !== requestParts.length) {
+          if (trace) trace.fallbackReason = 'grounding-rejected'
+          fallbackFailureDetail = `The local fallback returned ${flexiblePlan.actions.length} of ${requestParts.length} requested items.`
+        } else {
+          const grounded = groundFlexiblePlan(fallbackSource, flexiblePlan, flexiblePlanContext)
+          if (grounded?.length === requestParts.length) {
+            if (trace) trace.fallbackReason = 'plan-accepted'
+            groundedBatchFallback = grounded
+            usedFlexibleFallback = true
+          } else {
+            if (trace) trace.fallbackReason = 'grounding-rejected'
+            fallbackFailureDetail = `The local fallback could not ground all ${requestParts.length} requested items in your message.`
+          }
+        }
+      }
+    } else if (
+      batchNeedsFallback &&
+      !this.calendarFallbackPlanner &&
+      !semanticPredictions?.length
+    ) {
+      if (trace) {
+        trace.fallbackWorkload = 'plan'
+        trace.fallbackReason = 'not-configured'
+      }
+      fallbackFailureDetail = `The optional local calendar planner is not installed, so I could not translate all ${requestParts.length} requested items.`
+    }
+
+    for (let index = 0; index < requestParts.length; index += 1) {
+      const part = requestParts[index]
+      if (!part) continue
+      const native = nativeBatch[index]
+      if (!native) continue
+      let parsed = native.parsed
+      let disposition = getActionDisposition(parsed.draft)
+      const fallbackAction = groundedBatchFallback?.[index]
+      if (fallbackAction && needsFlexiblePlanRepair(part, parsed)) {
+        parsed = parsePart(fallbackAction.parserText, index, fallbackAction.prediction)
+        disposition = getActionDisposition(parsed.draft)
+      }
+      const unresolvedPreciseTime = needsFlexibleTemporalRepair(part, parsed.draft)
+      if (
+        disposition === 'clarify' ||
+        disposition === 'reject' ||
+        disposition === 'answer' ||
+        unresolvedPreciseTime
+      ) {
+        const ambiguity = parsed.draft.ambiguities[0]
+        const itemDetail =
+          ambiguity?.message ??
+          fallbackFailureDetail ??
+          (unresolvedPreciseTime
+            ? `I could not safely translate the precise time in item ${index + 1}: “${part}”.`
+            : disposition === 'answer'
+              ? 'Questions and calendar changes need separate messages.'
+              : `I could not safely understand item ${index + 1}: “${part}”.`)
+        if (ambiguity) {
+          this.rememberClarification(conversationId, id, requestParts.join('; '), ambiguity)
+        }
+        const detail = `I found ${requestParts.length} requested items. Item ${index + 1} needs one detail: ${itemDetail} I kept the full group together and staged nothing.`
         return this.respond(conversationId, id, range, {
           kind: 'clarification',
           text: this.groundedReply(
@@ -2929,7 +5644,8 @@ export class PersistentAssistantService {
     resolvedCommands: readonly CalendarIRResolved[],
     items: readonly AssistantAtomicProposalPayload[],
     itemSummaries: readonly string[],
-    usedFlexibleFallback = false
+    usedFlexibleFallback = false,
+    reviewRevision = false
   ): AssistantExchange {
     const first = resolvedCommands[0]
     const firstSummary = itemSummaries[0]
@@ -2967,34 +5683,52 @@ export class PersistentAssistantService {
       updatedAt: createdAt
     })
     this.repository.saveAssistantProposal(proposal)
-    const reply = multiple
+    const reply = reviewRevision
       ? this.groundedReply(
           conversationId,
           id,
           'proposal',
           [{ key: 'SUMMARY', kind: 'text', value: summary }],
-          usedFlexibleFallback
+          multiple
             ? [
-                'I grouped those changes into one local review: <SUMMARY>',
-                'Here’s how I translated the requested actions: <SUMMARY>',
-                'I understood the changes and prepared one undoable review: <SUMMARY>'
+                'I updated the review without saving anything yet: <SUMMARY>',
+                'Here’s the revised group to approve: <SUMMARY>',
+                'I replaced the earlier preview with this one: <SUMMARY>'
               ]
             : [
-                'I grouped the changes into one local review: <SUMMARY>',
-                'Here are the changes to approve together: <SUMMARY>',
-                'I prepared one undoable batch: <SUMMARY>'
+                'I narrowed the review to this change without saving it yet: <SUMMARY>',
+                'Here’s the revised item to approve: <SUMMARY>',
+                'I replaced the earlier preview with this change: <SUMMARY>'
               ]
         )
-      : this.groundedReply(
-          conversationId,
-          id,
-          'proposal',
-          [{ key: 'SUMMARY', kind: 'text', value: summary }],
-          [
-            'Here’s the schedule copy for review: <SUMMARY>',
-            'I prepared this repeated plan locally: <SUMMARY>'
-          ]
-        )
+      : multiple
+        ? this.groundedReply(
+            conversationId,
+            id,
+            'proposal',
+            [{ key: 'SUMMARY', kind: 'text', value: summary }],
+            usedFlexibleFallback
+              ? [
+                  'I grouped those changes into one local review: <SUMMARY>',
+                  'Here’s how I translated the requested actions: <SUMMARY>',
+                  'I understood the changes and prepared one undoable review: <SUMMARY>'
+                ]
+              : [
+                  'I grouped the changes into one local review: <SUMMARY>',
+                  'Here are the changes to approve together: <SUMMARY>',
+                  'I prepared one undoable batch: <SUMMARY>'
+                ]
+          )
+        : this.groundedReply(
+            conversationId,
+            id,
+            'proposal',
+            [{ key: 'SUMMARY', kind: 'text', value: summary }],
+            [
+              'Here’s the schedule copy for review: <SUMMARY>',
+              'I prepared this repeated plan locally: <SUMMARY>'
+            ]
+          )
     return this.respond(conversationId, id, range, {
       kind: 'preview',
       text: reply,
@@ -3068,13 +5802,170 @@ export class PersistentAssistantService {
     })
   }
 
+  private answerContextualRequest(
+    conversationId: string,
+    id: string,
+    resolution: Extract<ContextualResolution, { kind: 'resolved' }>,
+    range: CalendarSnapshotRequest
+  ): AssistantExchange {
+    const state = this.repository.getAssistantDialogueState(conversationId)
+    const frame = state.queryFrames.find((item) => item.frameId === resolution.frameId)
+    if (!frame) {
+      return this.respond(conversationId, id, range, {
+        kind: 'clarification',
+        text: 'Which earlier calendar result do you mean?',
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
+      })
+    }
+    const preferences = this.repository.getPreferences()
+    const snapshot = this.calendar.getSnapshot({
+      rangeStartUtc: frame.range.rangeStartUtc,
+      rangeEndUtc: frame.range.rangeEndUtc
+    })
+    type MaterializedContextualItem =
+      | {
+          kind: 'event'
+          frameItem: AssistantQueryFrameItem
+          occurrence: EventOccurrence
+          entity: EventEntity
+        }
+      | { kind: 'reminder'; frameItem: AssistantQueryFrameItem; reminder: ReminderEntity }
+    const selected = resolution.selectedItems.flatMap<MaterializedContextualItem>((item) => {
+      if (item.kind === 'event') {
+        const matchedOccurrence = snapshot.occurrences.find(
+          (candidate) =>
+            candidate.eventId === item.id &&
+            (item.occurrenceStart === null || candidate.startUtc === item.occurrenceStart)
+        )
+        const entity = this.repository.getEvent(item.id)
+        if (!entity || entity.status !== 'active') return []
+        const startUtc = item.occurrenceStart ?? entity.startUtc
+        const occurrence: EventOccurrence =
+          matchedOccurrence ??
+          ({
+            occurrenceId: `context:${entity.id}`,
+            eventId: entity.id,
+            calendarId: entity.calendarId,
+            title: entity.title,
+            description: entity.description,
+            location: entity.location,
+            startUtc,
+            endUtc: new Date(
+              Date.parse(startUtc) + Date.parse(entity.endUtc) - Date.parse(entity.startUtc)
+            ).toISOString(),
+            timezone: entity.timezone,
+            allDay: entity.allDay,
+            originalDate: Temporal.Instant.from(startUtc)
+              .toZonedDateTimeISO(entity.timezone)
+              .toPlainDate()
+              .toString(),
+            recurring: entity.recurrence !== null
+          } satisfies EventOccurrence)
+        return [{ kind: 'event' as const, frameItem: item, occurrence, entity }]
+      }
+      const reminder = this.repository.getReminder(item.id)
+      return reminder?.status === 'active'
+        ? [{ kind: 'reminder' as const, frameItem: item, reminder }]
+        : []
+    })
+    if (selected.length === 0) {
+      return this.respond(conversationId, id, range, {
+        kind: 'clarification',
+        text: 'Those calendar results are no longer available. Ask for the day again and I’ll refresh them.',
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
+      })
+    }
+
+    const requestedFields = [...new Set(resolution.fields)]
+    const attributeFields = requestedFields.filter(
+      (field): field is GroundedAttributeField => field !== 'name' && field !== 'details'
+    )
+    const groundedItems = selected.map((item) =>
+      item.kind === 'event'
+        ? groundedEventAnswerItem(item.occurrence, preferences.locale, item.entity.recurrence)
+        : groundedReminderAnswerItem(item.reminder, preferences.locale)
+    )
+    const availableKeys = new Set(selected.map((item) => dialogueFrameItemKey(item.frameItem)))
+    const rawStart = resolution.intent === 'continue' ? (frame.continuationCursor ?? 0) : 0
+    const startIndex = resolution.selectedItems
+      .slice(0, rawStart)
+      .filter((item) => availableKeys.has(dialogueFrameItemKey(item))).length
+    const mode =
+      requestedFields.includes('details') || resolution.intent === 'explain'
+        ? ('details' as const)
+        : attributeFields.length > 0
+          ? ('attributes' as const)
+          : resolution.intent === 'summarize' || resolution.intent === 'compare'
+            ? ('summary' as const)
+            : ('names' as const)
+    const answerPage = renderGroundedAnswer({
+      items: groundedItems,
+      locale: preferences.locale,
+      mode,
+      fields: attributeFields,
+      startIndex,
+      staleCount: resolution.selectedItems.length - selected.length,
+      emptyText: 'I could not find a matching calendar item.'
+    })
+    const text = answerPage.text
+
+    const relatedEventIds = [
+      ...new Set(selected.filter((item) => item.kind === 'event').map((item) => item.entity.id))
+    ]
+    const relatedReminderIds = [
+      ...new Set(
+        selected.filter((item) => item.kind === 'reminder').map((item) => item.reminder.id)
+      )
+    ]
+    const retainedSelectedItems = selected.map((item) => item.frameItem)
+    const now = new Date().toISOString()
+    this.repository.saveAssistantDialogueState(conversationId, {
+      ...state,
+      focusedEventIds: relatedEventIds,
+      focusedReminderIds: relatedReminderIds,
+      lastResultEventIds: relatedEventIds,
+      lastResultReminderIds: relatedReminderIds,
+      queryFrames: state.queryFrames.map((item) =>
+        item.frameId === frame.frameId
+          ? {
+              ...item,
+              selectedItems: retainedSelectedItems,
+              requestedFields,
+              resultCursor: resolution.resultCursor,
+              continuationCursor: answerPage.nextCursor
+            }
+          : item
+      ),
+      activeQueryFrameId: frame.frameId,
+      activeRange: frame.range,
+      pendingClarification: null,
+      updatedAt: now
+    })
+    return this.respond(conversationId, id, range, {
+      kind: 'answer',
+      text,
+      relatedEventIds,
+      relatedReminderIds,
+      receipt: null
+    })
+  }
+
   private recordQueryState(
     conversationId: string,
     command: CalendarIRResolved,
     queryStart: string,
     queryEnd: string,
     eventIds: readonly string[],
-    reminderIds: readonly string[]
+    reminderIds: readonly string[],
+    orderedItems: readonly AssistantQueryFrameItem[],
+    selectedItems: readonly AssistantQueryFrameItem[],
+    requestedFields: readonly AssistantRequestedField[],
+    resultCursor: number | null,
+    continuationCursor: number | null
   ): void {
     if (
       command.operation !== 'calendar.list' &&
@@ -3089,6 +5980,52 @@ export class PersistentAssistantService {
     const preferences = this.repository.getPreferences()
     const uniqueEventIds = [...new Set(eventIds)].slice(0, 100)
     const uniqueReminderIds = [...new Set(reminderIds)].slice(0, 100)
+    const retainedKeys = new Set<string>()
+    const retainedItems = orderedItems
+      .filter((item) => {
+        const key = dialogueFrameItemKey(item)
+        if (retainedKeys.has(key)) return false
+        retainedKeys.add(key)
+        return true
+      })
+      .slice(0, 200)
+    const retainedSelectedKeys = new Set<string>()
+    const retainedSelectedItems = selectedItems
+      .filter((item) => {
+        const key = dialogueFrameItemKey(item)
+        if (!retainedKeys.has(key) || retainedSelectedKeys.has(key)) return false
+        retainedSelectedKeys.add(key)
+        return true
+      })
+      .slice(0, 200)
+    const frameId = `frame:${command.requestId}`
+    const frame = {
+      frameId,
+      operation: command.operation,
+      range: {
+        rangeStartUtc: queryStart,
+        rangeEndUtc: queryEnd,
+        timezone: command.fields.timezone ?? preferences.timezone
+      },
+      orderedItems: retainedItems,
+      selectedItems: retainedSelectedItems,
+      requestedFields: [...new Set(requestedFields)].slice(0, 10),
+      resultCursor:
+        resultCursor !== null && resultCursor >= 0 && resultCursor < retainedItems.length
+          ? resultCursor
+          : null,
+      continuationCursor:
+        continuationCursor !== null &&
+        continuationCursor > 0 &&
+        continuationCursor < retainedSelectedItems.length
+          ? continuationCursor
+          : null,
+      createdAt: now
+    }
+    const queryFrames = [
+      ...current.queryFrames.filter((item) => item.frameId !== frameId),
+      frame
+    ].slice(-12)
     this.repository.saveAssistantDialogueState(conversationId, {
       ...current,
       focusedEventIds: uniqueEventIds,
@@ -3109,6 +6046,8 @@ export class PersistentAssistantService {
         rangeEndUtc: queryEnd,
         timezone: command.fields.timezone ?? preferences.timezone
       },
+      queryFrames,
+      activeQueryFrameId: frameId,
       pendingClarification: null,
       updatedAt: now
     })
@@ -3622,11 +6561,13 @@ export class PersistentAssistantService {
       rangeEndUtc: queryEnd
     })
     const question = commandQuestion(command)
-    const asksForDetails =
-      followUpDetail === 'details' ||
-      /\b(?:summari[sz]e|details?|more about|walk me through|tell me about|what(?:'s| is) happening|explain)\b/iu.test(
+    const asksForSummary =
+      /\b(?:summari[sz]e|summary|recap|overview|run[- ]?down|walk me through|what(?:'s| is) happening)\b/iu.test(
         question
       )
+    const asksForDetails =
+      followUpDetail === 'details' ||
+      /\b(?:details?|more about|tell me about|explain)\b/iu.test(question)
     const asksForLocation =
       followUpDetail === 'location' ||
       /\b(?:where|location|(?:what|which) (?:room|building|place)|how do i get)\b/iu.test(question)
@@ -3645,6 +6586,11 @@ export class PersistentAssistantService {
       /\b(?:what (?:should|do) i (?:bring|prepare|need)|notes?|instructions?|what(?:'s| is) .{0,40} about)\b/iu.test(
         question
       )
+    const asksForRecurrence =
+      followUpDetail === 'recurrence' ||
+      /\b(?:how often|recurrence|repeats?|repeating|which days|what days|days of (?:the )?week)\b/iu.test(
+        question
+      )
     const asksForTime =
       followUpDetail === 'time' ||
       asksForStart ||
@@ -3656,23 +6602,29 @@ export class PersistentAssistantService {
         ? followUpDetail
         : asksForLocation
           ? 'location'
-          : asksForDuration
-            ? 'duration'
-            : asksForEnd
-              ? 'end'
-              : asksForStart
-                ? 'start'
-                : asksForDate
-                  ? 'date'
-                  : asksForNotes
-                    ? 'notes'
-                    : asksForTime
-                      ? 'time'
-                      : null
-    const expandedAnswer = asksForDetails || requestedAttribute !== null
+          : asksForRecurrence
+            ? 'recurrence'
+            : asksForDuration
+              ? 'duration'
+              : asksForEnd
+                ? 'end'
+                : asksForStart
+                  ? 'start'
+                  : asksForDate
+                    ? 'date'
+                    : asksForNotes
+                      ? 'notes'
+                      : asksForTime
+                        ? 'time'
+                        : null
+    const expandedAnswer = asksForSummary || asksForDetails || requestedAttribute !== null
     let text: string
     let relatedEventIds: string[] = []
     let relatedReminderIds: string[] = []
+    let orderedResultItems: AssistantQueryFrameItem[] = []
+    let selectedResultItems: AssistantQueryFrameItem[] = []
+    let resultCursor: number | null = null
+    let continuationCursor: number | null = null
 
     switch (command.operation) {
       case 'calendar.availability': {
@@ -3682,6 +6634,15 @@ export class PersistentAssistantService {
           excludeEventId: null
         })
         relatedEventIds = result.conflicts.map((conflict) => conflict.eventId)
+        orderedResultItems = result.conflicts
+          .slice()
+          .sort((left, right) => Date.parse(left.startUtc) - Date.parse(right.startUtc))
+          .map((conflict) => ({
+            kind: 'event',
+            id: conflict.eventId,
+            occurrenceStart: conflict.startUtc
+          }))
+        selectedResultItems = orderedResultItems
         const hasExplicitTime =
           /\b(?:at\s+\d{1,2}|from\s+\d{1,2}|between\s+\d{1,2}|noon|midnight|morning|afternoon|evening|night|\d{1,2}:\d{2}\s*(?:a\.?m\.?|p\.?m\.?)?)\b/iu.test(
             question
@@ -3758,6 +6719,20 @@ export class PersistentAssistantService {
         } else if (requestedSelection?.itemKind === 'reminder') {
           occurrences = []
         }
+        orderedResultItems = [
+          ...occurrences.map((occurrence) => ({
+            kind: 'event' as const,
+            id: occurrence.eventId,
+            occurrenceStart: occurrence.startUtc
+          })),
+          ...reminders.map((reminder) => ({
+            kind: 'reminder' as const,
+            id: reminder.id,
+            occurrenceStart: reminder.dueAtUtc
+          }))
+        ].sort(
+          (left, right) => Date.parse(left.occurrenceStart) - Date.parse(right.occurrenceStart)
+        )
         if (requestedSelection) {
           const ordered = [
             ...occurrences.map((occurrence) => ({
@@ -3784,6 +6759,27 @@ export class PersistentAssistantService {
           occurrences = selected?.kind === 'event' ? [selected.occurrence] : []
           reminders = selected?.kind === 'reminder' ? [selected.reminder] : []
         }
+        selectedResultItems = [
+          ...occurrences.map((occurrence) => ({
+            kind: 'event' as const,
+            id: occurrence.eventId,
+            occurrenceStart: occurrence.startUtc
+          })),
+          ...reminders.map((reminder) => ({
+            kind: 'reminder' as const,
+            id: reminder.id,
+            occurrenceStart: reminder.dueAtUtc
+          }))
+        ].sort(
+          (left, right) => Date.parse(left.occurrenceStart) - Date.parse(right.occurrenceStart)
+        )
+        if (selectedResultItems.length === 1) {
+          const selectedKey = dialogueFrameItemKey(selectedResultItems[0]!)
+          const selectedIndex = orderedResultItems.findIndex(
+            (item) => dialogueFrameItemKey(item) === selectedKey
+          )
+          resultCursor = selectedIndex >= 0 ? selectedIndex : null
+        }
         relatedEventIds = [...new Set(occurrences.map((item) => item.eventId))]
         relatedReminderIds = reminders.map((reminder) => reminder.id)
         const nextOnly = requestedSelection?.position.kind === 'next'
@@ -3799,85 +6795,58 @@ export class PersistentAssistantService {
               : nextOnly
                 ? 'Nothing coming up.'
                 : 'Nothing scheduled.'
-        if (requestedAttribute) {
+        const groundedItems = [
+          ...occurrences.map((occurrence) => ({
+            at: occurrence.startUtc,
+            item: groundedEventAnswerItem(
+              occurrence,
+              preferences.locale,
+              this.repository.getEvent(occurrence.eventId)?.recurrence ?? null
+            )
+          })),
+          ...reminders.map((reminder) => ({
+            at: reminder.dueAtUtc,
+            item: groundedReminderAnswerItem(reminder, preferences.locale)
+          }))
+        ]
+          .sort((left, right) => Date.parse(left.at) - Date.parse(right.at))
+          .map((entry) => entry.item)
+        if (groundedItems.length === 0) {
           text =
-            occurrences.length + reminders.length > 0
-              ? calendarAttributeAnswer(
-                  occurrences,
-                  reminders,
-                  requestedAttribute,
-                  preferences.locale
+            requestedAttribute || expandedAnswer
+              ? emptyText
+              : this.groundedReply(
+                  conversationId,
+                  id,
+                  'empty-schedule-answer',
+                  [],
+                  nextOnly
+                    ? ['Nothing coming up.', 'There’s nothing coming up.', 'Nothing is coming up.']
+                    : requestedSelection?.itemKind === 'class'
+                      ? ['No classes scheduled.', 'There are no classes scheduled.']
+                      : [
+                          'Nothing scheduled.',
+                          'There’s nothing scheduled.',
+                          'I found nothing scheduled.'
+                        ]
                 )
-              : emptyText
           break
         }
-        if (!expandedAnswer) {
-          const orderedNames = [
-            ...occurrences.map((occurrence) => ({
-              at: occurrence.startUtc,
-              title: occurrence.title
-            })),
-            ...reminders.map((reminder) => ({ at: reminder.dueAtUtc, title: reminder.title }))
-          ]
-            .sort((left, right) => Date.parse(left.at) - Date.parse(right.at))
-            .map((item) => item.title)
-          text = orderedNames.length
-            ? compactNameAnswer(orderedNames, preferences.locale, emptyText)
-            : this.groundedReply(
-                conversationId,
-                id,
-                'empty-schedule-answer',
-                [],
-                nextOnly
-                  ? ['Nothing coming up.', 'There’s nothing coming up.', 'Nothing is coming up.']
-                  : requestedSelection?.itemKind === 'class'
-                    ? ['No classes scheduled.', 'There are no classes scheduled.']
-                    : [
-                        'Nothing scheduled.',
-                        'There’s nothing scheduled.',
-                        'I found nothing scheduled.'
-                      ]
-              )
-          break
-        }
-        const includeDate =
-          new Set(occurrences.map((item) => item.originalDate)).size > 1 ||
-          Date.parse(queryEnd) - Date.parse(queryStart) > 26 * 60 * 60 * 1_000
-        const eventItems = occurrences.map((item) =>
-          eventAnswerFact(item, preferences.locale, {
-            includeDate,
-            includeDescription: asksForDetails
-          })
-        )
-        const reminderItems = reminders.map(
-          (reminder) =>
-            `${formatDateTime(reminder.dueAtUtc, preferences.locale, reminder.timezone, includeDate)} — reminder: “${reminder.title}”${
-              asksForDetails && reminder.notes.trim() ? ` — ${clippedDetail(reminder.notes)}` : ''
-            }`
-        )
-        const items = [...eventItems, ...reminderItems].slice(0, 8)
-        const totalItems = occurrences.length + reminders.length
-        const daySpan =
-          occurrences.length > 1 && !includeDate
-            ? ` Your scheduled day runs from ${formatTime(occurrences[0]?.startUtc ?? queryStart, preferences.locale, preferences.timezone)} to ${formatTime(occurrences.at(-1)?.endUtc ?? queryEnd, preferences.locale, preferences.timezone)}.`
-            : ''
-        const summary =
-          items.length === 0
-            ? `nothing scheduled for ${formatDate(queryStart, preferences.locale, preferences.timezone)}`
-            : `${totalItems} item${totalItems === 1 ? '' : 's'}: ${items.join('; ')}${
-                totalItems > items.length ? `; plus ${totalItems - items.length} more` : ''
-              }.${daySpan}`
-        text = this.groundedReply(
-          conversationId,
-          id,
-          nextOnly ? 'next-item-answer' : 'schedule-summary',
-          [{ key: 'SUMMARY', kind: 'text', value: summary }],
-          [
-            'Here’s the shape of it: <SUMMARY>.',
-            'Your local calendar shows <SUMMARY>.',
-            'I checked the schedule and found <SUMMARY>.'
-          ]
-        )
+        const answerPage = renderGroundedAnswer({
+          items: groundedItems,
+          locale: preferences.locale,
+          mode: requestedAttribute
+            ? 'attributes'
+            : asksForDetails
+              ? 'details'
+              : asksForSummary
+                ? 'summary'
+                : 'names',
+          fields: requestedAttribute ? [requestedAttribute] : [],
+          emptyText
+        })
+        text = answerPage.text
+        continuationCursor = answerPage.nextCursor
         break
       }
       case 'calendar.search': {
@@ -3911,52 +6880,52 @@ export class PersistentAssistantService {
           )
         relatedEventIds = events.map((event) => event.id)
         relatedReminderIds = reminders.map((reminder) => reminder.id)
-        if (!expandedAnswer) {
-          text = compactNameAnswer(
-            [...events.map((event) => event.title), ...reminders.map((reminder) => reminder.title)],
-            preferences.locale,
-            `No active match for “${query}”.`
-          )
-          break
-        }
-        const matches = [
-          ...events.map((event) =>
-            asksForLocation && !asksForDetails && !asksForTime
-              ? `“${event.title}” — ${event.location.trim() || 'no location saved'}`
-              : asksForTime && !asksForDetails && !asksForLocation
-                ? `“${event.title}” — ${formatDateTime(event.startUtc, preferences.locale, event.timezone)}`
-                : `“${event.title}” on ${formatDateTime(event.startUtc, preferences.locale, event.timezone)}${
-                    event.location.trim() ? ` at ${event.location.trim()}` : ''
-                  }${
-                    (asksForDetails || asksForLocation) && event.description.trim()
-                      ? ` — ${clippedDetail(event.description)}`
-                      : ''
-                  }`
-          ),
-          ...reminders.map((reminder) =>
-            asksForLocation && !asksForDetails && !asksForTime
-              ? `reminder “${reminder.title}” — reminders do not have locations`
-              : `reminder “${reminder.title}” at ${formatDateTime(reminder.dueAtUtc, preferences.locale, reminder.timezone)}${
-                  asksForDetails && reminder.notes.trim()
-                    ? ` — ${clippedDetail(reminder.notes)}`
-                    : ''
-                }`
-          )
-        ]
-        const summary = matches.length
-          ? matches.slice(0, 6).join('; ')
-          : `no active match for “${query}”`
-        text = this.groundedReply(
-          conversationId,
-          id,
-          'item-details-answer',
-          [{ key: 'SUMMARY', kind: 'text', value: summary }],
-          [
-            'I found <SUMMARY>.',
-            'The closest local result is <SUMMARY>.',
-            'Your calendar has <SUMMARY>.'
-          ]
+        orderedResultItems = [
+          ...events.map((event) => ({
+            kind: 'event' as const,
+            id: event.id,
+            occurrenceStart: event.startUtc
+          })),
+          ...reminders.map((reminder) => ({
+            kind: 'reminder' as const,
+            id: reminder.id,
+            occurrenceStart: reminder.dueAtUtc
+          }))
+        ].sort(
+          (left, right) => Date.parse(left.occurrenceStart) - Date.parse(right.occurrenceStart)
         )
+        selectedResultItems = orderedResultItems
+        const groundedItems = [
+          ...events.map((event) => ({
+            at: event.startUtc,
+            item: groundedEventAnswerItem(
+              eventEntityOccurrence(event),
+              preferences.locale,
+              event.recurrence
+            )
+          })),
+          ...reminders.map((reminder) => ({
+            at: reminder.dueAtUtc,
+            item: groundedReminderAnswerItem(reminder, preferences.locale)
+          }))
+        ]
+          .sort((left, right) => Date.parse(left.at) - Date.parse(right.at))
+          .map((entry) => entry.item)
+        const answerPage = renderGroundedAnswer({
+          items: groundedItems,
+          locale: preferences.locale,
+          mode: requestedAttribute
+            ? 'attributes'
+            : asksForDetails
+              ? 'details'
+              : asksForSummary
+                ? 'summary'
+                : 'names',
+          fields: requestedAttribute ? [requestedAttribute] : [],
+          emptyText: `No active match for “${query}”.`
+        })
+        text = answerPage.text
+        continuationCursor = answerPage.nextCursor
         break
       }
       case 'calendar.conflicts': {
@@ -3980,6 +6949,14 @@ export class PersistentAssistantService {
           }
         }
         relatedEventIds = [...new Set(relatedEventIds)]
+        orderedResultItems = occurrences
+          .filter((occurrence) => relatedEventIds.includes(occurrence.eventId))
+          .map((occurrence) => ({
+            kind: 'event',
+            id: occurrence.eventId,
+            occurrenceStart: occurrence.startUtc
+          }))
+        selectedResultItems = orderedResultItems
         const summary = pairs.length
           ? `${pairs.length} conflict${pairs.length === 1 ? '' : 's'}: ${pairs.slice(0, 6).join('; ')}`
           : 'no overlapping events'
@@ -4006,7 +6983,7 @@ export class PersistentAssistantService {
         text = this.groundedReply(
           conversationId,
           id,
-          'unsupported',
+          'policy-boundary',
           [
             {
               key: 'DETAIL',
@@ -4014,8 +6991,16 @@ export class PersistentAssistantService {
               value: 'I could not answer that calendar question safely.'
             }
           ],
-          ['<DETAIL>', 'I stopped at the safe boundary: <DETAIL>', 'For this one, <DETAIL>']
+          ['<DETAIL>', 'I could not complete that calendar answer: <DETAIL>']
         )
+    }
+
+    if (resultCursor === null && selectedResultItems.length === 1) {
+      const selectedKey = dialogueFrameItemKey(selectedResultItems[0]!)
+      const selectedIndex = orderedResultItems.findIndex(
+        (item) => dialogueFrameItemKey(item) === selectedKey
+      )
+      resultCursor = selectedIndex >= 0 ? selectedIndex : null
     }
 
     this.recordQueryState(
@@ -4024,7 +7009,12 @@ export class PersistentAssistantService {
       queryStart,
       queryEnd,
       relatedEventIds,
-      relatedReminderIds
+      relatedReminderIds,
+      orderedResultItems,
+      selectedResultItems,
+      [requestedAttribute ?? (asksForDetails ? 'details' : 'name')],
+      resultCursor,
+      continuationCursor
     )
     return this.respond(conversationId, id, range, {
       kind: 'answer',

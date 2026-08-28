@@ -25,11 +25,15 @@ The generator uses a fixed January 2026 Chicago context and explicit UTC offset.
 
 `documents/phase7-table-plan.pdf` is a polished born-digital row schedule whose semantic fields depend on two-dimensional alignment. `documents/phase7-scanned-table-plan.pdf` is its raster-only counterpart, and `documents/phase7-table-plan.png` is the source scan. They exercise native extraction and OCR without changing the visible plan.
 
+The Phase 0 document-evaluation expansion adds six deliberately different sources: a hybrid PDF whose raster body is hidden behind enough native footer text to exercise OCR gating, a two-page syllabus with recurrence and an asynchronous skip, a month-grid screenshot, a perspective phone-photo itinerary, a WebP event flyer, and a sideways raster PDF. Together with the earlier native/scan pairs, `evals/documents/v0.1/corpus.jsonl` freezes 12 fixtures across six source groups and scores 38 proposals field by field.
+
 Regenerate the local fixtures with the development-only Python script and verify their signatures, dimensions, and safety bounds with:
 
 ```bash
 python scripts/generate-document-fixtures.py
 pnpm documents:fixtures:check
+pnpm eval:documents:check
+pnpm eval:documents:baseline
 ```
 
 Python and ReportLab/Pillow are fixture-development tools only; neither is shipped in the Electron application. The committed Phase 4 and Phase 7 PDF fixtures were rendered to images and visually inspected before their checkpoints were completed.

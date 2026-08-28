@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "corpusVersion": "0.1.0",
+  "corpusVersion": "0.2.0",
   "generator": "scripts/build-assistant-corpus.ts prepare",
   "seed": 260826,
   "paraphrasesPerJob": 1,

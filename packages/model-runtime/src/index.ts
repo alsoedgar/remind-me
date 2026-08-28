@@ -79,7 +79,9 @@ export const modelManifestSchema = z
             isolation: z.literal('sandboxed-web-worker'),
             cpuFallback: z.literal(true),
             requiresNetwork: z.literal(false),
-            evidenceProjection: z.literal(true)
+            evidenceProjection: z.literal(true),
+            repairFallback: z.literal('optional-candidate-only-local-model'),
+            repairHasMutationAuthority: z.literal(false)
           })
           .strict()
       })

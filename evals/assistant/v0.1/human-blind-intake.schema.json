@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Remind Me independent human-blind evaluation scenario",
-  "description": "Store collected rows in human-blind.local.jsonl. Never place that file in a training, prompt-generation, or teacher-distillation path.",
+  "description": "Historical Phase 0 draft, superseded by ../human-blind/collection-record.schema.json and protocol-v1.md. Never place private collection data in a training, prompt-generation, or teacher-distillation path.",
   "type": "object",
   "required": [
     "id",

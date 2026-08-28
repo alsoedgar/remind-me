@@ -15,6 +15,11 @@ Files:
   shipped bulk orchestration by sending the deterministically split clauses,
   alternates planner and chat, checks the four expected operation types, checks
   exact source grounding, and requires complete chat sentences.
+- `hardware-gates.json` defines separate compact, balanced, and performance
+  ceilings for full requests, warm planner/chat work, first-token time, and
+  isolated-worker RSS.
+- `../phase0-quality/real-qwen.latest.json` is the current hash-bound real-model
+  release evidence consumed by `pnpm eval:flex-model:phase7:check`.
 
 Run them with an already installed, checksum-matching optional pack:
 

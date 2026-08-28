@@ -167,6 +167,60 @@ describe('RemindSpeak protected PhraseLattice runtime', () => {
     expect(empty.every((template) => !template.includes('<'))).toBe(true)
   })
 
+  it('keeps benign runtime and conversational limits separate from policy boundaries', async () => {
+    const speaker = await RemindSpeakPlanner.load(modelRoot)
+    for (const speechAct of [
+      'conversation-clarification',
+      'runtime-unavailable',
+      'offline-fact-limit',
+      'policy-boundary'
+    ] as const) {
+      const templates = speaker.generateTemplates({
+        requestId: `request:${speechAct}`,
+        speechAct,
+        facts: [
+          {
+            key: 'DETAIL',
+            kind: 'text',
+            placeholder: '<DETAIL>',
+            value: 'one verified detail'
+          }
+        ],
+        style: cozyStyle,
+        recentReplies: []
+      })
+      expect(templates).toHaveLength(5)
+      expect(templates.every((template) => template.match(/<DETAIL>/gu)?.length === 1)).toBe(true)
+    }
+
+    const benign = [
+      ...speaker.generateTemplates({
+        requestId: 'request:runtime-copy',
+        speechAct: 'runtime-unavailable',
+        facts: [
+          {
+            key: 'DETAIL',
+            kind: 'text',
+            placeholder: '<DETAIL>',
+            value: 'the model is not installed'
+          }
+        ],
+        style: cozyStyle,
+        recentReplies: []
+      }),
+      ...speaker.generateTemplates({
+        requestId: 'request:conversation-copy',
+        speechAct: 'conversation-clarification',
+        facts: [
+          { key: 'DETAIL', kind: 'text', placeholder: '<DETAIL>', value: 'which topic you meant' }
+        ],
+        style: cozyStyle,
+        recentReplies: []
+      })
+    ].join(' ')
+    expect(benign).not.toMatch(/safe (?:local )?action|safe boundary|calendar-only/iu)
+  })
+
   it('applies only a bounded local phrase preference during reranking', async () => {
     const speaker = await RemindSpeakPlanner.load(modelRoot)
     const request = { ...proposalRequest(), requestId: 'request:preference-rerank' }

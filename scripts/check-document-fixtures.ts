@@ -18,7 +18,25 @@ const fixtures = [
     name: 'phase7-table-plan.png',
     kind: 'image' as const,
     dimensions: { width: 1650, height: 1275 }
-  }
+  },
+  { name: 'phase0-hybrid-table.pdf', kind: 'pdf' as const },
+  { name: 'phase0-multipage-syllabus.pdf', kind: 'pdf' as const },
+  {
+    name: 'phase0-month-grid.png',
+    kind: 'image' as const,
+    dimensions: { width: 1600, height: 1200 }
+  },
+  {
+    name: 'phase0-phone-itinerary.jpg',
+    kind: 'image' as const,
+    dimensions: { width: 1350, height: 1800 }
+  },
+  {
+    name: 'phase0-event-flyer.webp',
+    kind: 'image' as const,
+    dimensions: { width: 1200, height: 1500 }
+  },
+  { name: 'phase0-rotated-schedule.pdf', kind: 'pdf' as const }
 ]
 
 const digests = new Set<string>()
@@ -50,5 +68,5 @@ for (const fixture of fixtures) {
 if (digests.size !== fixtures.length) throw new Error('Document fixtures must be distinct')
 
 console.log(
-  `Verified ${fixtures.length} bounded native-PDF, scanned-PDF, and image fixtures across vertical and table layouts.`
+  `Verified ${fixtures.length} bounded native, scanned, hybrid, rotated, multi-page, and image fixtures across six layout families.`
 )

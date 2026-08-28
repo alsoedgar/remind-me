@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 
-import { createWorker, OEM, type LoggerMessage, type Worker as OcrWorker } from 'tesseract.js'
+import { createWorker, OEM, PSM, type LoggerMessage, type Worker as OcrWorker } from 'tesseract.js'
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import {
   documentExtractionSchema,
@@ -8,6 +8,7 @@ import {
   maximumDocumentCharacters,
   maximumDocumentImagePixels,
   maximumDocumentPages,
+  maximumDocumentReviewImageCharacters,
   maximumDocumentWords,
   type DocumentExtraction,
   type DocumentPage,
@@ -17,9 +18,15 @@ import {
 import {
   cleanDocumentWord as cleanWord,
   contentFromPositionedWords,
+  decideNativePageOcr,
+  isBetterCalendarGridContent,
+  isBetterOcrContent,
+  isStrongOcrOrientation,
   normalizeBoundingBox,
   PlanScanRuntime,
   positionedNativeWords,
+  shouldRetryOcrPageSegmentation,
+  shouldRetryOcrOrientation,
   splitDocumentWords as splitWords,
   type DocumentTextContent,
   type PositionedDocumentWord,
@@ -53,6 +60,12 @@ interface OcrProgressContext {
   totalPages: number
 }
 
+interface OcrCanvasResult {
+  canvas: OffscreenCanvas
+  content: DocumentTextContent
+  rotation: 0 | 90 | 180 | 270
+}
+
 interface PdfCanvasAndContext {
   canvas: OffscreenCanvas | null
   context: OffscreenCanvasRenderingContext2D | null
@@ -81,8 +94,8 @@ class OffscreenPdfCanvasFactory {
   }
 }
 
-const nativeTextThreshold = 24
 const thumbnailMaximumDimension = 440
+const reviewMaximumDimension = 2_200
 const ocrMaximumDimension = 2_200
 const ocrMaximumPixels = 4_500_000
 const workerScope = self as unknown as DedicatedWorkerGlobalScope
@@ -126,8 +139,8 @@ function canvasScale(width: number, height: number, maximumDimension: number): n
   return Math.min(dimensionScale, pixelScale)
 }
 
-async function canvasDataUrl(canvas: OffscreenCanvas): Promise<string> {
-  const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.76 })
+async function canvasDataUrl(canvas: OffscreenCanvas, quality = 0.76): Promise<string> {
+  const blob = await canvas.convertToBlob({ type: 'image/jpeg', quality })
   const bytes = new Uint8Array(await blob.arrayBuffer())
   let binary = ''
   const chunkSize = 0x8000
@@ -135,6 +148,14 @@ async function canvasDataUrl(canvas: OffscreenCanvas): Promise<string> {
     binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize))
   }
   return `data:image/jpeg;base64,${btoa(binary)}`
+}
+
+async function reviewImageDataUrl(canvas: OffscreenCanvas): Promise<string> {
+  for (const quality of [0.88, 0.74, 0.6, 0.48]) {
+    const dataUrl = await canvasDataUrl(canvas, quality)
+    if (dataUrl.length <= maximumDocumentReviewImageCharacters) return dataUrl
+  }
+  throw new Error('This page is too visually dense for the private high-resolution review view.')
 }
 
 function thumbnailFromCanvas(source: OffscreenCanvas): OffscreenCanvas {
@@ -237,6 +258,10 @@ async function ensureOcrWorker(): Promise<OcrWorker> {
     gzip: true,
     logger
   })
+  await ocrWorker.setParameters({
+    tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
+    preserve_interword_spaces: '1'
+  })
   return ocrWorker
 }
 
@@ -257,13 +282,15 @@ async function ensurePlanScanRuntime(): Promise<PlanScanRuntime> {
   return planScanRuntime
 }
 
-async function recognizeCanvas(
+async function recognizeCanvasOnce(
   canvas: OffscreenCanvas,
   page: number,
-  totalPages: number
+  totalPages: number,
+  segmentation: PSM
 ): Promise<DocumentTextContent> {
   ocrProgressContext = { page, totalPages }
   const worker = await ensureOcrWorker()
+  await worker.setParameters({ tessedit_pageseg_mode: segmentation })
   const result = await worker.recognize(canvas, { rotateAuto: false }, { text: true, blocks: true })
   return ocrContent(
     result.data.blocks,
@@ -273,6 +300,74 @@ async function recognizeCanvas(
     canvas.width,
     canvas.height
   )
+}
+
+async function recognizeCanvasLayout(
+  canvas: OffscreenCanvas,
+  page: number,
+  totalPages: number
+): Promise<DocumentTextContent> {
+  let content = await recognizeCanvasOnce(canvas, page, totalPages, PSM.SINGLE_BLOCK)
+  if (shouldRetryOcrPageSegmentation(content)) {
+    const layout = await recognizeCanvasOnce(canvas, page, totalPages, PSM.AUTO)
+    if (isBetterCalendarGridContent(layout, content)) content = layout
+  }
+  return content
+}
+
+function rotatedCanvas(source: OffscreenCanvas, rotation: 90 | 180 | 270): OffscreenCanvas {
+  const swapsDimensions = rotation === 90 || rotation === 270
+  const canvas = new OffscreenCanvas(
+    swapsDimensions ? source.height : source.width,
+    swapsDimensions ? source.width : source.height
+  )
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  if (!context) throw new Error('Could not create an OCR rotation canvas')
+  context.fillStyle = '#ffffff'
+  context.fillRect(0, 0, canvas.width, canvas.height)
+  if (rotation === 90) {
+    context.translate(canvas.width, 0)
+    context.rotate(Math.PI / 2)
+  } else if (rotation === 180) {
+    context.translate(canvas.width, canvas.height)
+    context.rotate(Math.PI)
+  } else {
+    context.translate(0, canvas.height)
+    context.rotate(-Math.PI / 2)
+  }
+  context.drawImage(source, 0, 0)
+  return canvas
+}
+
+async function recognizeCanvas(
+  canvas: OffscreenCanvas,
+  page: number,
+  totalPages: number
+): Promise<OcrCanvasResult> {
+  const initial: OcrCanvasResult = {
+    canvas,
+    content: await recognizeCanvasLayout(canvas, page, totalPages),
+    rotation: 0
+  }
+  if (!shouldRetryOcrOrientation(initial.content)) return initial
+
+  let best = initial
+  const created: OffscreenCanvas[] = []
+  for (const rotation of [90, 270, 180] as const) {
+    const candidateCanvas = rotatedCanvas(canvas, rotation)
+    created.push(candidateCanvas)
+    const candidate: OcrCanvasResult = {
+      canvas: candidateCanvas,
+      content: await recognizeCanvasLayout(candidateCanvas, page, totalPages),
+      rotation
+    }
+    if (isBetterOcrContent(candidate.content, best.content)) best = candidate
+    if (best.rotation !== 0 && isStrongOcrOrientation(best.content)) break
+  }
+  for (const candidateCanvas of created) {
+    if (candidateCanvas !== best.canvas) candidateCanvas.width = candidateCanvas.height = 0
+  }
+  return best
 }
 
 async function renderPdfPage(
@@ -365,39 +460,54 @@ async function extractPdf(selection: DocumentSelection): Promise<{
         pageNumber,
         document.numPages
       )
-      const needsOcr = nativeCharacters < nativeTextThreshold
+      const ocrDecision = decideNativePageOcr(nativeCharacters, native)
+      const needsOcr = ocrDecision.needsOcr
       const rendered = await renderPdfPage(
         page,
-        needsOcr ? ocrMaximumDimension : thumbnailMaximumDimension
+        needsOcr ? ocrMaximumDimension : reviewMaximumDimension
       )
       let combined = native
+      let displayCanvas = rendered
+      let additionalRotation: 0 | 90 | 180 | 270 = 0
       let extraction: DocumentPage['extraction'] = 'native-text'
       if (needsOcr) {
         const ocr = await recognizeCanvas(rendered, pageNumber, document.numPages)
-        combined = {
-          words: [...native.words, ...ocr.words],
-          blocks: [...native.blocks, ...ocr.blocks]
+        if (ocr.content.words.length > 0) {
+          combined = ocr.content
+          displayCanvas = ocr.canvas
+          additionalRotation = ocr.rotation
+          extraction = 'ocr'
         }
-        extraction = native.words.length > 0 ? 'mixed' : 'ocr'
-        warnings.push(
-          `Page ${pageNumber} had little embedded text, so the bundled OCR model read its pixels.`
-        )
+        const reason =
+          ocrDecision.reason === 'isolated-native-text'
+            ? 'its embedded text covered only an isolated part of the page'
+            : ocrDecision.reason === 'weak-positioned-text'
+              ? 'its embedded text could not be positioned reliably'
+              : 'its embedded text was sparse'
+        warnings.push(`Page ${pageNumber} used the bundled OCR model because ${reason}.`)
+        if (additionalRotation !== 0) {
+          warnings.push(
+            `OCR rotated page ${pageNumber} by ${additionalRotation} degrees to recover readable text.`
+          )
+        }
       }
       if (combined.words.length > 5_000 || combined.blocks.length > 1_000) {
         throw new Error(`Page ${pageNumber} contains too much text to review safely.`)
       }
       const thumbnail =
-        Math.max(rendered.width, rendered.height) > thumbnailMaximumDimension
-          ? thumbnailFromCanvas(rendered)
-          : rendered
+        Math.max(displayCanvas.width, displayCanvas.height) > thumbnailMaximumDimension
+          ? thumbnailFromCanvas(displayCanvas)
+          : displayCanvas
+      const swapsDimensions = additionalRotation === 90 || additionalRotation === 270
       pages.push({
         page: pageNumber,
-        width: viewport.width,
-        height: viewport.height,
-        rotation: page.rotate,
+        width: swapsDimensions ? viewport.height : viewport.width,
+        height: swapsDimensions ? viewport.width : viewport.height,
+        rotation: (page.rotate + additionalRotation) % 360,
         extraction,
         nativeCharacterCount: nativeCharacters,
         thumbnailDataUrl: await canvasDataUrl(thumbnail),
+        reviewImageDataUrl: await reviewImageDataUrl(displayCanvas),
         words: combined.words,
         blocks: combined.blocks
       })
@@ -433,22 +543,29 @@ async function extractImage(selection: DocumentSelection): Promise<{
     context.fillRect(0, 0, canvas.width, canvas.height)
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
     const ocr = await recognizeCanvas(canvas, 1, 1)
-    const thumbnail = thumbnailFromCanvas(canvas)
+    const thumbnail = thumbnailFromCanvas(ocr.canvas)
+    const swapsDimensions = ocr.rotation === 90 || ocr.rotation === 270
     const page: DocumentPage = {
       page: 1,
-      width: validation.dimensions.width,
-      height: validation.dimensions.height,
-      rotation: 0,
+      width: swapsDimensions ? validation.dimensions.height : validation.dimensions.width,
+      height: swapsDimensions ? validation.dimensions.width : validation.dimensions.height,
+      rotation: ocr.rotation,
       extraction: 'ocr',
       nativeCharacterCount: 0,
       thumbnailDataUrl: await canvasDataUrl(thumbnail),
-      words: ocr.words,
-      blocks: ocr.blocks
+      reviewImageDataUrl: await reviewImageDataUrl(ocr.canvas),
+      words: ocr.content.words,
+      blocks: ocr.content.blocks
     }
     assertContentLimits([page])
     return {
       pages: [page],
-      warnings: ['Images have no embedded text, so the bundled English OCR model read the pixels.']
+      warnings: [
+        'Images have no embedded text, so the bundled English OCR model read the pixels.',
+        ...(ocr.rotation === 0
+          ? []
+          : [`OCR rotated the image by ${ocr.rotation} degrees to recover readable text.`])
+      ]
     }
   } finally {
     bitmap.close()

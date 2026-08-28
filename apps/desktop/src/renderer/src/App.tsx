@@ -4,7 +4,9 @@ import type {
   AppInfo,
   AppWindowMode,
   CalendarSnapshot,
+  FlexModelAccelerationPreference,
   FlexModelStatus,
+  FlexModelWarmthPolicy,
   ResponseStyle,
   Weekday
 } from '@remind-me/contracts'
@@ -21,6 +23,7 @@ import { AssistantPanel } from './components/assistant-panel'
 import { DesktopWidget } from './components/desktop-widget'
 import { DocumentImportDialog } from './components/document-import-dialog'
 import { ThemeCustomizer } from './components/theme-customizer'
+import { dayAgendaItems } from './day-agenda'
 import { appearanceFromPreferences, applyAppearanceToDocument } from './theme-runtime'
 import { useCalendarStore } from './store/calendar-store'
 import { useAssistantStore } from './store/assistant-store'
@@ -402,6 +405,9 @@ function CalendarView({
   const [anchor, setAnchor] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   )
+  const [selectedDate, setSelectedDate] = useState<string | null>(() =>
+    todayDate(snapshot.preferences.timezone)
+  )
   const [search, setSearch] = useState('')
   const loadFor = useCalendarStore((state) => state.loadFor)
   const preferences = snapshot.preferences
@@ -422,9 +428,26 @@ function CalendarView({
     year: 'numeric'
   }).format(anchor)
   const query = search.trim().toLocaleLowerCase(preferences.locale)
+  const selectedAgenda = useMemo(
+    () =>
+      selectedDate ? dayAgendaItems(snapshot.occurrences, snapshot.reminders, selectedDate) : [],
+    [selectedDate, snapshot.occurrences, snapshot.reminders]
+  )
+  const selectedDateLabel = selectedDate
+    ? new Intl.DateTimeFormat(preferences.locale, {
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC'
+      }).format(new Date(`${selectedDate}T12:00:00.000Z`))
+    : ''
+  const selectedEventCount = selectedAgenda.filter((item) => item.kind === 'event').length
+  const selectedReminderCount = selectedAgenda.length - selectedEventCount
   function moveMonth(change: number): void {
     const next = new Date(anchor.getFullYear(), anchor.getMonth() + change, 1)
     setAnchor(next)
+    setSelectedDate(dateKey(next.getFullYear(), next.getMonth(), 1))
     void loadFor(next)
   }
 
@@ -459,6 +482,7 @@ function CalendarView({
             onClick={() => {
               const now = new Date()
               setAnchor(new Date(now.getFullYear(), now.getMonth(), 1))
+              setSelectedDate(todayDate(preferences.timezone))
               void loadFor(now)
             }}
           >
@@ -474,104 +498,254 @@ function CalendarView({
           </button>
         </div>
       </div>
-      <div className="calendar-weekdays" aria-hidden="true">
-        {weekdayLabels.map((day, index) => (
-          <span key={`${day}-${index}`}>{day}</span>
-        ))}
-      </div>
-      <div className="calendar-grid">
-        {cells.map((cell) => {
-          const occurrences = snapshot.occurrences.filter(
-            (occurrence) =>
-              occurrence.originalDate === cell.date &&
-              (!query ||
-                `${occurrence.title} ${occurrence.location}`
-                  .toLocaleLowerCase(preferences.locale)
-                  .includes(query))
-          )
-          const reminders = snapshot.reminders.filter(
-            (reminder) =>
-              reminder.status === 'active' &&
-              localParts(reminder.dueAtUtc, reminder.timezone).date === cell.date &&
-              (!query ||
-                `${reminder.title} ${reminder.notes}`
-                  .toLocaleLowerCase(preferences.locale)
-                  .includes(query))
-          )
-          const items = occurrences.length + reminders.length
-          return (
-            <div
-              className="calendar-day"
-              data-outside={!cell.inMonth}
-              data-today={cell.today}
-              key={cell.key}
-            >
-              <div className="calendar-day-actions">
-                <button
-                  className="calendar-day-number"
-                  type="button"
-                  aria-label={`Add event on ${cell.date}`}
-                  onClick={() =>
-                    onOpen({ kind: 'event', event: null, date: cell.date, title: null })
-                  }
+      <div className="calendar-browser" data-agenda-open={Boolean(selectedDate)}>
+        <div className="calendar-month-pane">
+          <div className="calendar-weekdays" aria-hidden="true">
+            {weekdayLabels.map((day, index) => (
+              <span key={`${day}-${index}`}>{day}</span>
+            ))}
+          </div>
+          <div className="calendar-grid">
+            {cells.map((cell) => {
+              const occurrences = snapshot.occurrences.filter(
+                (occurrence) =>
+                  occurrence.originalDate === cell.date &&
+                  (!query ||
+                    `${occurrence.title} ${occurrence.location}`
+                      .toLocaleLowerCase(preferences.locale)
+                      .includes(query))
+              )
+              const reminders = snapshot.reminders.filter(
+                (reminder) =>
+                  reminder.status === 'active' &&
+                  localParts(reminder.dueAtUtc, reminder.timezone).date === cell.date &&
+                  (!query ||
+                    `${reminder.title} ${reminder.notes}`
+                      .toLocaleLowerCase(preferences.locale)
+                      .includes(query))
+              )
+              const items = occurrences.length + reminders.length
+              return (
+                <div
+                  className="calendar-day"
+                  data-outside={!cell.inMonth}
+                  data-today={cell.today}
+                  data-selected={selectedDate === cell.date}
+                  key={cell.key}
                 >
-                  {cell.day}
-                </button>
-                {occurrences.length > 0 ? (
                   <button
-                    className="repeat-day-button"
+                    className="calendar-day-open"
                     type="button"
-                    aria-label={`Repeat the schedule from ${cell.date}`}
-                    title="Repeat this day's schedule"
-                    onClick={() => onRepeatDay(cell.date)}
-                  >
-                    ↻
-                  </button>
-                ) : null}
+                    aria-label={`View all ${items} ${items === 1 ? 'item' : 'items'} on ${cell.date}`}
+                    aria-pressed={selectedDate === cell.date}
+                    onClick={() => setSelectedDate(cell.date)}
+                  />
+                  <div className="calendar-day-actions">
+                    <button
+                      className="calendar-day-number"
+                      type="button"
+                      aria-label={`View ${cell.date}`}
+                      aria-current={cell.today ? 'date' : undefined}
+                      onClick={() => setSelectedDate(cell.date)}
+                    >
+                      {cell.day}
+                    </button>
+                    <div className="calendar-day-action-buttons">
+                      <button
+                        className="calendar-add-button"
+                        type="button"
+                        aria-label={`Add event on ${cell.date}`}
+                        title="Add an event"
+                        onClick={() =>
+                          onOpen({ kind: 'event', event: null, date: cell.date, title: null })
+                        }
+                      >
+                        +
+                      </button>
+                      {occurrences.length > 0 ? (
+                        <button
+                          className="repeat-day-button"
+                          type="button"
+                          aria-label={`Repeat the schedule from ${cell.date}`}
+                          title="Repeat this day's schedule"
+                          onClick={() => onRepeatDay(cell.date)}
+                        >
+                          ↻
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                  <div className="calendar-items">
+                    {occurrences.slice(0, 3).map((occurrence) => {
+                      const event = snapshot.events.find(
+                        (candidate) => candidate.id === occurrence.eventId
+                      )
+                      return (
+                        <button
+                          className="calendar-pill event-pill"
+                          type="button"
+                          key={occurrence.occurrenceId}
+                          title={`${occurrence.title}${occurrence.location ? ` · ${occurrence.location}` : ''}`}
+                          onClick={() => {
+                            if (event) onOpen({ kind: 'event', event, date: null, title: null })
+                          }}
+                        >
+                          <span>
+                            {formatEventTime(
+                              occurrence.startUtc,
+                              occurrence.timezone,
+                              preferences.locale,
+                              occurrence.allDay
+                            )}
+                          </span>{' '}
+                          {occurrence.title}
+                        </button>
+                      )
+                    })}
+                    {reminders.slice(0, Math.max(0, 3 - occurrences.length)).map((reminder) => (
+                      <button
+                        className="calendar-pill reminder-pill"
+                        type="button"
+                        key={reminder.id}
+                        title={reminder.title}
+                        onClick={() =>
+                          onOpen({ kind: 'reminder', reminder, date: null, title: null })
+                        }
+                      >
+                        ◦ {reminder.title}
+                      </button>
+                    ))}
+                    {items > 3 ? (
+                      <button
+                        className="more-items"
+                        type="button"
+                        onClick={() => setSelectedDate(cell.date)}
+                      >
+                        +{items - 3} more · view day
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        {selectedDate ? (
+          <aside className="calendar-day-agenda" aria-labelledby="selected-day-heading">
+            <header className="calendar-agenda-heading">
+              <div>
+                <p className="eyebrow">Complete day</p>
+                <h3 id="selected-day-heading">{selectedDateLabel}</h3>
+                <p>
+                  {selectedEventCount} {selectedEventCount === 1 ? 'event' : 'events'}
+                  {selectedReminderCount
+                    ? ` · ${selectedReminderCount} ${selectedReminderCount === 1 ? 'reminder' : 'reminders'}`
+                    : ''}
+                </p>
               </div>
-              <div className="calendar-items">
-                {occurrences.slice(0, 3).map((occurrence) => {
-                  const event = snapshot.events.find(
-                    (candidate) => candidate.id === occurrence.eventId
+              <button
+                className="calendar-agenda-close"
+                type="button"
+                aria-label="Close day agenda"
+                onClick={() => setSelectedDate(null)}
+              >
+                ×
+              </button>
+            </header>
+            <div className="calendar-agenda-actions">
+              <button
+                className="retro-button"
+                type="button"
+                onClick={() =>
+                  onOpen({ kind: 'event', event: null, date: selectedDate, title: null })
+                }
+              >
+                + Add event
+              </button>
+              {selectedEventCount > 0 ? (
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => onRepeatDay(selectedDate)}
+                >
+                  ↻ Repeat day
+                </button>
+              ) : null}
+            </div>
+            <div className="calendar-agenda-list" aria-live="polite">
+              {selectedAgenda.length ? (
+                selectedAgenda.map((item) => {
+                  if (item.kind === 'event') {
+                    const occurrence = item.occurrence
+                    const event = snapshot.events.find(
+                      (candidate) => candidate.id === occurrence.eventId
+                    )
+                    const repeat = recurrenceLabel(event?.recurrence ?? null)
+                    return (
+                      <button
+                        className="calendar-agenda-item"
+                        type="button"
+                        key={item.id}
+                        onClick={() => {
+                          if (event) onOpen({ kind: 'event', event, date: null, title: null })
+                        }}
+                      >
+                        <time>
+                          {formatEventTime(
+                            occurrence.startUtc,
+                            occurrence.timezone,
+                            preferences.locale,
+                            occurrence.allDay
+                          )}
+                        </time>
+                        <span>
+                          <strong>{occurrence.title}</strong>
+                          {occurrence.location || occurrence.description || repeat ? (
+                            <small>
+                              {[occurrence.location, occurrence.description, repeat]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </small>
+                          ) : null}
+                        </span>
+                        <i>event</i>
+                      </button>
+                    )
+                  }
+                  const reminder = snapshot.reminders.find(
+                    (candidate) => candidate.id === item.reminder.id
                   )
+                  if (!reminder) return null
                   return (
                     <button
-                      className="calendar-pill event-pill"
+                      className="calendar-agenda-item calendar-agenda-reminder"
                       type="button"
-                      key={occurrence.occurrenceId}
-                      title={occurrence.title}
-                      onClick={() => {
-                        if (event) onOpen({ kind: 'event', event, date: null, title: null })
-                      }}
+                      key={item.id}
+                      onClick={() =>
+                        onOpen({ kind: 'reminder', reminder, date: null, title: null })
+                      }
                     >
+                      <time>
+                        {formatDueDate(reminder.dueAtUtc, reminder.timezone, preferences.locale)}
+                      </time>
                       <span>
-                        {formatEventTime(
-                          occurrence.startUtc,
-                          occurrence.timezone,
-                          preferences.locale,
-                          occurrence.allDay
-                        )}
-                      </span>{' '}
-                      {occurrence.title}
+                        <strong>{reminder.title}</strong>
+                        {reminder.notes ? <small>{reminder.notes}</small> : null}
+                      </span>
+                      <i>reminder</i>
                     </button>
                   )
-                })}
-                {reminders.slice(0, Math.max(0, 3 - occurrences.length)).map((reminder) => (
-                  <button
-                    className="calendar-pill reminder-pill"
-                    type="button"
-                    key={reminder.id}
-                    title={reminder.title}
-                    onClick={() => onOpen({ kind: 'reminder', reminder, date: null, title: null })}
-                  >
-                    ◦ {reminder.title}
-                  </button>
-                ))}
-                {items > 3 ? <span className="more-items">+{items - 3} more</span> : null}
-              </div>
+                })
+              ) : (
+                <div className="calendar-agenda-empty">
+                  <span aria-hidden="true">☼</span>
+                  <strong>This day is open.</strong>
+                  <p>Add a plan here, or choose any other day to inspect it.</p>
+                </div>
+              )}
             </div>
-          )
-        })}
+          </aside>
+        ) : null}
       </div>
     </section>
   )
@@ -862,6 +1036,14 @@ function SettingsView({
       setFlexModelBusy(false)
     }
   }
+  const flexBackendLabel = (backend: FlexModelStatus['profile']['backend']): string =>
+    backend === 'metal'
+      ? 'Apple silicon Metal'
+      : backend === 'cuda'
+        ? 'NVIDIA CUDA'
+        : backend === 'vulkan'
+          ? 'Vulkan GPU'
+          : `${flexModel?.profile.threads ?? 1}-thread portable CPU`
 
   return (
     <div className="settings-grid">
@@ -1520,9 +1702,7 @@ function SettingsView({
                   <li>
                     <span>Runtime</span>
                     <strong>
-                      {flexModel.profile.backend === 'metal'
-                        ? 'Apple silicon Metal'
-                        : `${flexModel.profile.threads}-thread portable CPU`}
+                      {flexBackendLabel(flexModel.profile.backend)}
                       {' · '}
                       {(flexModel.profile.contextSize / 1_024).toFixed(0)}K tokens per task
                     </strong>
@@ -1544,17 +1724,90 @@ function SettingsView({
                         : `${flexModel.profile.idleUnloadSeconds} sec`}
                     </strong>
                   </li>
+                  <li>
+                    <span>Packaged backends</span>
+                    <strong>
+                      {flexModel.availableBackends
+                        .map((backend) => backend.toUpperCase())
+                        .join(' · ')}
+                    </strong>
+                  </li>
+                  <li>
+                    <span>Local queue</span>
+                    <strong>
+                      {flexModel.queue.activeWorkload
+                        ? `${flexModel.queue.activeWorkload} active · ${flexModel.queue.queuedJobs} waiting`
+                        : flexModel.queue.queuedJobs
+                          ? `${flexModel.queue.queuedJobs} waiting`
+                          : 'Idle'}
+                    </strong>
+                  </li>
                   {flexModel.lastRequest ? (
                     <li>
                       <span>Last local run</span>
                       <strong>
-                        {flexModel.lastRequest.workload === 'plan' ? 'Planner' : 'Conversation'} ·{' '}
-                        {(flexModel.lastRequest.elapsedMs / 1_000).toFixed(1)} sec ·{' '}
-                        {flexModel.lastRequest.outputTokens} output tokens
+                        {flexModel.lastRequest.workload === 'plan'
+                          ? 'Planner'
+                          : flexModel.lastRequest.workload === 'document-repair'
+                            ? 'Document repair'
+                            : flexModel.lastRequest.workload === 'document-fallback'
+                              ? 'Document fallback'
+                              : 'Conversation'}{' '}
+                        · {(flexModel.lastRequest.elapsedMs / 1_000).toFixed(1)} sec ·{' '}
+                        {flexModel.lastRequest.outputTokens} output tokens ·{' '}
+                        {flexModel.lastRequest.timeToFirstTokenMs === null
+                          ? 'structured output'
+                          : `${(flexModel.lastRequest.timeToFirstTokenMs / 1_000).toFixed(1)} sec first token`}
+                        {' · '}
+                        {flexModel.lastRequest.prefixCacheReused ? 'prefix reused' : 'fresh prefix'}
+                        {' · '}
+                        {flexModel.lastRequest.processRssMiB.toLocaleString()} MiB worker memory
                       </strong>
                     </li>
                   ) : null}
                 </ul>
+                <div className="settings-form-grid flex-runtime-controls">
+                  <label>
+                    Memory behavior
+                    <select
+                      value={flexModel.warmthPolicy}
+                      disabled={flexModelBusy}
+                      onChange={(event) =>
+                        void runFlexModelAction(
+                          () =>
+                            window.remindMe.configureFlexModel({
+                              warmthPolicy: event.target.value as FlexModelWarmthPolicy
+                            }),
+                          'Local model memory behavior updated.'
+                        )
+                      }
+                    >
+                      <option value="memory-saver">Memory saver</option>
+                      <option value="automatic">Automatic</option>
+                      <option value="keep-warm">Keep warm when hardware allows</option>
+                    </select>
+                  </label>
+                  <label>
+                    Acceleration
+                    <select
+                      value={flexModel.accelerationPreference}
+                      disabled={flexModelBusy}
+                      onChange={(event) =>
+                        void runFlexModelAction(
+                          () =>
+                            window.remindMe.configureFlexModel({
+                              accelerationPreference: event.target
+                                .value as FlexModelAccelerationPreference
+                            }),
+                          'Local model acceleration preference updated.'
+                        )
+                      }
+                    >
+                      <option value="auto">Best packaged backend</option>
+                      <option value="cpu">Portable CPU</option>
+                    </select>
+                  </label>
+                </div>
               </details>
               {flexModel.state === 'downloading' ? (
                 <div className="flex-model-progress" aria-live="polite">
@@ -1891,6 +2144,10 @@ export function App(): ReactNode {
     if (await setWindowMode('full')) setEditor(request)
   }
 
+  async function openWidgetDocument(): Promise<void> {
+    if (await setWindowMode('full')) setDocumentPlannerOpen(true)
+  }
+
   if (windowState?.mode === 'widget' || windowState?.mode === 'glance') {
     return (
       <div className="widget-root">
@@ -1910,6 +2167,8 @@ export function App(): ReactNode {
               if (opened) setAssistantOpen(true)
             })
           }}
+          onOpenDocument={() => void openWidgetDocument()}
+          onOpenEditor={(request) => void openWidgetEditor(request)}
           onQuickAdd={(date) =>
             void openWidgetEditor({ kind: 'event', event: null, date, title: null })
           }
@@ -1954,6 +2213,7 @@ export function App(): ReactNode {
             </div>
             <button
               className="document-import-button"
+              data-testid="document-import-button"
               type="button"
               disabled={!snapshot}
               onClick={() => setDocumentPlannerOpen(true)}

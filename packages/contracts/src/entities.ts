@@ -8,6 +8,7 @@ import {
 } from './common'
 import { calendarOperationSchema, riskLevelSchema } from './calendar-ir'
 import { recurrenceRuleSchema, weekdaySchema } from './recurrence'
+import { documentImportIdentitySchema } from './document-identity'
 import { responseSpeechActSchema, responseStyleSchema } from './response-plan'
 
 export const calendarEntitySchema = z
@@ -36,6 +37,7 @@ export const eventEntitySchema = z
     recurrence: recurrenceRuleSchema.nullable(),
     status: z.enum(['active', 'cancelled']),
     provenance: z.enum(['manual', 'assistant', 'import']),
+    importIdentity: documentImportIdentitySchema.nullable().optional(),
     createdAt: isoInstantSchema,
     updatedAt: isoInstantSchema
   })
@@ -62,6 +64,7 @@ export const reminderEntitySchema = z
     status: z.enum(['active', 'completed', 'cancelled']),
     completedAt: isoInstantSchema.nullable(),
     provenance: z.enum(['manual', 'assistant', 'import']),
+    importIdentity: documentImportIdentitySchema.nullable().optional(),
     createdAt: isoInstantSchema,
     updatedAt: isoInstantSchema
   })

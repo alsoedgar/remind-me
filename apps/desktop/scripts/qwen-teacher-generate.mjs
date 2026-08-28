@@ -133,6 +133,26 @@ const SPEAK_SPECS = [
     meaning: 'ask for a missing detail without implying a write'
   },
   {
+    speechAct: 'conversation-clarification',
+    signature: ['DETAIL'],
+    meaning: 'ask a natural conversational follow-up without calendar safety wording'
+  },
+  {
+    speechAct: 'runtime-unavailable',
+    signature: ['DETAIL'],
+    meaning: 'explain that the optional local language runtime is unavailable'
+  },
+  {
+    speechAct: 'offline-fact-limit',
+    signature: ['DETAIL'],
+    meaning: 'explain that a changing external fact cannot be verified offline'
+  },
+  {
+    speechAct: 'policy-boundary',
+    signature: ['DETAIL'],
+    meaning: 'decline a genuinely disallowed request and offer a safer direction'
+  },
+  {
     speechAct: 'conflict-warning',
     signature: ['SUMMARY'],
     meaning: 'warn about a verified overlap without changing anything'

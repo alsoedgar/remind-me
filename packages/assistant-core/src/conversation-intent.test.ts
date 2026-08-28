@@ -19,6 +19,8 @@ describe('local conversational intent parsing', () => {
     ["How's it going?", 'wellbeing'],
     ['Give me a short motivational thought for studying', 'encouragement'],
     ['I could use some encouragement', 'encouragement'],
+    ['Say something encouraging about studying', 'encouragement'],
+    ['Tell me a tiny joke about homework', 'joke'],
     ['Thank you so much!', 'thanks'],
     ['Talk to you later', 'goodbye']
   ])('maps %s to %s', (text, intent) => {

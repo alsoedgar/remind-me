@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "suiteVersion": "0.1.0",
+  "corpusPath": "evals/documents/v0.1/corpus.jsonl",
+  "corpusSha256": "6a2f6aedaa3c9008547105774fe81c37fe2c1c7edc23cff378a5f469538830d5",
+  "records": 12,
+  "sourceGroups": 6,
+  "expectedItems": 38,
+  "expectedSkips": 1,
+  "humanBlindRecords": 0,
+  "trainingExcluded": true,
+  "frozen": true,
+  "fixtureDigests": {
+    "fixtures/documents/phase0-event-flyer.webp": "0567e6777c2d81ae7c364e0564ceec149e5c6290f029d3c530b0e698cce9798f",
+    "fixtures/documents/phase0-hybrid-table.pdf": "e47500043b77fc0bfebd955d39717dc25cf7039ab425b40790e36017e08508f2",
+    "fixtures/documents/phase0-month-grid.png": "671ac7fd8ab155692a8edc7a1105c81b931c34dfa1cbf5f09268252c6f0070b4",
+    "fixtures/documents/phase0-multipage-syllabus.pdf": "b7bd1a7c1e23fc971ae7724ec275fe1ece9ca1ff7ee53af3ba8a0d48c6c5ae70",
+    "fixtures/documents/phase0-phone-itinerary.jpg": "0e45e4a8f5a464052d85235fa3e1857af0c6d27affa357cef02dff6b39d4d4e4",
+    "fixtures/documents/phase0-rotated-schedule.pdf": "e2acf3f451f4d1f66ae9834cfff5a9c15b64d5dab435b957e871039a327edf22",
+    "fixtures/documents/phase4-scanned-schedule.pdf": "3880d36cfe72bb90ec44d710d3bc670d240bfdf057e42ac60a8d668ff3a56a5d",
+    "fixtures/documents/phase4-schedule.pdf": "87b1c39001ec40003ca4f04f56561afcfbc1b857adb8d9daea4a70b0419dd69b",
+    "fixtures/documents/phase4-schedule.png": "dc7c5f7df35c1a189bf04ec2c0f3ea0cb0cab6e9512bb383ed6546707fa4055e",
+    "fixtures/documents/phase7-scanned-table-plan.pdf": "20a3558a54894eecb1c675bf8b57df46bffc12e848ee2669569f1ebd8030a185",
+    "fixtures/documents/phase7-table-plan.pdf": "01a2debd6850e301dd2adfcdde034a50a3628168a06e57df44934e17ac75d6ae",
+    "fixtures/documents/phase7-table-plan.png": "033e65470e8f1654091fce776ed005b7bfd97c6be162cf0ce2e09dd60893e47d"
+  },
+  "taxonomy": {
+    "inputClasses": {
+      "born-digital": 3,
+      "direct-image": 3,
+      "hybrid-pdf": 1,
+      "phone-photo": 1,
+      "raster-pdf": 2,
+      "rotated-scan": 1,
+      "screenshot": 1
+    },
+    "layoutFamilies": {
+      "calendar-grid": 1,
+      "flyer": 1,
+      "itinerary-cards": 1,
+      "row-table": 4,
+      "syllabus": 1,
+      "vertical-list": 4
+    },
+    "sourceKinds": {
+      "image": 5,
+      "pdf": 7
+    }
+  }
+}

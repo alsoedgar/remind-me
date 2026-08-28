@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "corpusVersion": "0.1.0",
+  "corpusVersion": "0.2.0",
   "provenance": {
     "teacherModelId": "Qwen3-1.7B-Q4_K_M",
     "teacherByteLength": 1282439264,
@@ -15,9 +15,9 @@
     "rawPath": "ml/assistant_corpus/raw/qwen-paraphrases.json",
     "rawSha256": "b8d07526d22dd21016fbb93f92eeb0d328f5fecfac60bc88f04d838336bc074a",
     "jobsPath": "ml/assistant_corpus/raw/teacher-jobs.json",
-    "jobsSha256": "68760769e91e2671d1601f86d768b06dd466dc97e117c87edbd552daa4e402ab",
+    "jobsSha256": "6043699dbfc3b3c5b300e1511781ec80bf13e314b004915ba65b288dddc15f90",
     "repairJobsPath": "ml/assistant_corpus/raw/teacher-repair-jobs.json",
-    "repairJobsSha256": "0a70c2b36e467c381fc3e5e1ceb4aa2c6b2536780b0acc122334bb3f8325411d",
+    "repairJobsSha256": "8a3ebf718b1c8c0ba567e0fa556f9fcfe89617ac451976205ca2fe08fe369536",
     "registrySha256": "7da27bed9f18b097f40db8f09a6f9c8b0bcdfb0b9866dcdbc947a620bcd6163f",
     "frozenEvaluationPath": "evals/assistant/v0.1/scenarios.jsonl",
     "frozenEvaluationSha256": "0adff837434c8902a720f6e85b9e5d1049e117619521d831ef04748a8c776ca5",

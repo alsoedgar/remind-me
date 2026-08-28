@@ -1,6 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import { Temporal } from '@js-temporal/polyfill'
-import { expandEventsInRange, findOccurrenceConflicts } from '@remind-me/calendar-engine'
+import {
+  createEventDocumentImportIdentity,
+  createReminderDocumentImportIdentity,
+  expandEventsInRange,
+  findOccurrenceConflicts,
+  refreshEventDocumentImportIdentity,
+  refreshReminderDocumentImportIdentity
+} from '@remind-me/calendar-engine'
 import {
   availabilityResultSchema,
   availabilityRequestSchema,
@@ -76,42 +83,6 @@ function eventInstants(form: EventForm): { startUtc: string; endUtc: string } {
   }
 }
 
-function normalizedImportText(value: string): string {
-  return value.replace(/\s+/gu, ' ').trim().toLocaleLowerCase()
-}
-
-function normalizedRecurrence(rule: RecurrenceRule | null): string {
-  if (!rule) return 'once'
-  return JSON.stringify({
-    ...rule,
-    byWeekday: [...rule.byWeekday].sort(),
-    byMonthDay: [...rule.byMonthDay].sort((left, right) => left - right)
-  })
-}
-
-function importedEventFingerprint(event: EventEntity): string {
-  return [
-    normalizedImportText(event.title),
-    normalizedImportText(event.description),
-    normalizedImportText(event.location),
-    event.startUtc,
-    event.endUtc,
-    event.timezone,
-    String(event.allDay),
-    normalizedRecurrence(event.recurrence)
-  ].join('|')
-}
-
-function importedReminderFingerprint(reminder: ReminderEntity): string {
-  return [
-    normalizedImportText(reminder.title),
-    normalizedImportText(reminder.notes),
-    reminder.dueAtUtc,
-    reminder.timezone,
-    normalizedRecurrence(reminder.recurrence)
-  ].join('|')
-}
-
 function matchesNextDate(
   date: Temporal.PlainDate,
   base: Temporal.PlainDate,
@@ -181,6 +152,21 @@ function nextRecurringReminder(reminder: ReminderEntity): ReminderEntity | null 
             : rule,
         status: 'active',
         completedAt: null,
+        importIdentity: reminder.importIdentity
+          ? refreshReminderDocumentImportIdentity(reminder.importIdentity, {
+              id: null,
+              calendarId: reminder.calendarId,
+              title: reminder.title,
+              notes: reminder.notes,
+              dueDate: candidate.toString(),
+              dueTime: current.toPlainTime().toString({ smallestUnit: 'minute' }),
+              timezone: reminder.timezone,
+              recurrence:
+                rule.end.kind === 'count'
+                  ? { ...rule, end: { kind: 'count', count: rule.end.count - 1 } }
+                  : rule
+            })
+          : null,
         updatedAt: new Date().toISOString()
       })
     }
@@ -251,6 +237,9 @@ export class PersistentCalendarService {
       recurrence: form.recurrence,
       status: 'active',
       provenance: existing?.provenance ?? options.actor ?? 'manual',
+      importIdentity: existing?.importIdentity
+        ? refreshEventDocumentImportIdentity(existing.importIdentity, form)
+        : null,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now
     })
@@ -314,6 +303,9 @@ export class PersistentCalendarService {
       status: 'active',
       completedAt: null,
       provenance: existing?.provenance ?? options.actor ?? 'manual',
+      importIdentity: existing?.importIdentity
+        ? refreshReminderDocumentImportIdentity(existing.importIdentity, form)
+        : null,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now
     })
@@ -460,6 +452,9 @@ export class PersistentCalendarService {
               recurrence: form.recurrence,
               status: 'active',
               provenance: existing?.provenance ?? options.actor ?? 'manual',
+              importIdentity: existing?.importIdentity
+                ? refreshEventDocumentImportIdentity(existing.importIdentity, form)
+                : null,
               createdAt: existing?.createdAt ?? now,
               updatedAt: now
             })
@@ -491,6 +486,9 @@ export class PersistentCalendarService {
               status: 'active',
               completedAt: null,
               provenance: existing?.provenance ?? options.actor ?? 'manual',
+              importIdentity: existing?.importIdentity
+                ? refreshReminderDocumentImportIdentity(existing.importIdentity, form)
+                : null,
               createdAt: existing?.createdAt ?? now,
               updatedAt: now
             })
@@ -691,86 +689,89 @@ export class PersistentCalendarService {
     const now = new Date().toISOString()
     const defaultCalendar = this.repository.listCalendars()[0]
     if (!defaultCalendar) throw new Error('No local calendar is available')
-    const events = items.flatMap((item) => {
-      if (item.kind !== 'event') return []
-      const form = eventFormSchema.parse(item.form)
-      return [
-        eventEntitySchema.parse({
-          id: `event:${randomUUID()}`,
-          calendarId: defaultCalendar.id,
-          title: form.title,
-          description: form.description,
-          location: form.location,
-          ...eventInstants(form),
-          timezone: form.timezone,
-          allDay: form.allDay,
-          recurrence: form.recurrence,
-          status: 'active',
-          provenance: 'import',
-          createdAt: now,
-          updatedAt: now
-        })
-      ]
-    })
-    const reminders = items.flatMap((item) => {
-      if (item.kind !== 'reminder') return []
-      const form = reminderFormSchema.parse(item.form)
-      return [
-        reminderEntitySchema.parse({
-          id: `reminder:${randomUUID()}`,
-          calendarId: defaultCalendar.id,
-          title: form.title,
-          notes: form.notes,
-          dueAtUtc: toInstant(form.dueDate, form.dueTime, form.timezone),
-          timezone: form.timezone,
-          recurrence: form.recurrence,
-          status: 'active',
-          completedAt: null,
-          provenance: 'import',
-          createdAt: now,
-          updatedAt: now
-        })
-      ]
-    })
-    const eventFingerprints = new Set(
-      this.repository
-        .listEvents()
-        .filter((event) => event.status === 'active')
-        .map(importedEventFingerprint)
+    const sourceRowKey = (sourceSha256: string, sourceRowId: string): string =>
+      `${sourceSha256}:${sourceRowId}`
+    const reviewedSourceRows = new Set(
+      items.map((item) =>
+        sourceRowKey(item.sourceIdentity.sourceSha256, item.sourceIdentity.sourceRowId)
+      )
     )
-    const reminderFingerprints = new Set(
-      this.repository
-        .listReminders()
-        .filter((reminder) => reminder.status === 'active')
-        .map(importedReminderFingerprint)
+    if (reviewedSourceRows.size !== items.length) {
+      throw new Error('A reviewed document batch cannot contain the same source row twice')
+    }
+    const importedSourceRows = new Set(
+      [...this.repository.listEvents(), ...this.repository.listReminders()].flatMap((entity) =>
+        entity.importIdentity
+          ? [sourceRowKey(entity.importIdentity.sourceSha256, entity.importIdentity.sourceRowId)]
+          : []
+      )
     )
+    const events: EventEntity[] = []
+    const reminders: ReminderEntity[] = []
     let duplicateCount = 0
-    const uniqueEvents = events.filter((event) => {
-      const fingerprint = importedEventFingerprint(event)
-      if (eventFingerprints.has(fingerprint)) {
+    for (const item of items) {
+      const sourceKey = sourceRowKey(
+        item.sourceIdentity.sourceSha256,
+        item.sourceIdentity.sourceRowId
+      )
+      if (importedSourceRows.has(sourceKey)) {
         duplicateCount += 1
-        return false
+        continue
       }
-      eventFingerprints.add(fingerprint)
-      return true
-    })
-    const uniqueReminders = reminders.filter((reminder) => {
-      const fingerprint = importedReminderFingerprint(reminder)
-      if (reminderFingerprints.has(fingerprint)) {
-        duplicateCount += 1
-        return false
+      importedSourceRows.add(sourceKey)
+      if (item.kind === 'event') {
+        const form = eventFormSchema.parse(item.form)
+        events.push(
+          eventEntitySchema.parse({
+            id: `event:${randomUUID()}`,
+            calendarId: defaultCalendar.id,
+            title: form.title,
+            description: form.description,
+            location: form.location,
+            ...eventInstants(form),
+            timezone: form.timezone,
+            allDay: form.allDay,
+            recurrence: form.recurrence,
+            status: 'active',
+            provenance: 'import',
+            importIdentity: createEventDocumentImportIdentity(
+              item.sourceIdentity,
+              form,
+              item.schedule
+            ),
+            createdAt: now,
+            updatedAt: now
+          })
+        )
+      } else {
+        const form = reminderFormSchema.parse(item.form)
+        reminders.push(
+          reminderEntitySchema.parse({
+            id: `reminder:${randomUUID()}`,
+            calendarId: defaultCalendar.id,
+            title: form.title,
+            notes: form.notes,
+            dueAtUtc: toInstant(form.dueDate, form.dueTime, form.timezone),
+            timezone: form.timezone,
+            recurrence: form.recurrence,
+            status: 'active',
+            completedAt: null,
+            provenance: 'import',
+            importIdentity: createReminderDocumentImportIdentity(item.sourceIdentity, form),
+            createdAt: now,
+            updatedAt: now
+          })
+        )
       }
-      reminderFingerprints.add(fingerprint)
-      return true
-    })
-    if (uniqueEvents.length === 0 && uniqueReminders.length === 0) {
-      throw new Error('Every selected item already exists in this calendar.')
+    }
+    if (events.length === 0 && reminders.length === 0) {
+      throw new Error('Every selected source row was imported already.')
     }
     const safeDisplayName = sourceDisplayName.trim().slice(0, 500) || 'document'
     const receipt = this.repository.importEntities(
-      uniqueEvents,
-      uniqueReminders,
-      `Imported ${uniqueEvents.length} event(s) and ${uniqueReminders.length} reminder(s) from “${safeDisplayName}”${duplicateCount > 0 ? `; skipped ${duplicateCount} exact duplicate(s)` : ''}.`
+      events,
+      reminders,
+      `Imported ${events.length} event(s) and ${reminders.length} reminder(s) from “${safeDisplayName}”${duplicateCount > 0 ? `; skipped ${duplicateCount} source row(s) imported earlier` : ''}.`
     )
     return calendarMutationResultSchema.parse({ snapshot: this.getSnapshot(range), receipt })
   }

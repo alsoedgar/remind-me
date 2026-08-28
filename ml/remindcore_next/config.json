@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "seed": 8262026,
-  "modelId": "remindcore-hashframe-next-en-qwen-assisted",
-  "version": "0.3.0",
+  "modelId": "remindcore-hashframe-context-en-qwen-assisted",
+  "version": "0.4.0",
   "contractVersion": "0.1",
   "maximumActions": 3,
   "capacityCandidates": [4096, 8192, 16384],
@@ -21,6 +21,11 @@
     "minimumChallengeGainOverShippedBaseline": 0.18,
     "minimumChallengeSelectivePrecision": 0.99,
     "minimumChallengeSelectiveCoverage": 0.04,
+    "minimumChallengeDialogueRelationAccuracy": 0.85,
+    "minimumChallengeRequestedAttributeAccuracy": 0.75,
+    "minimumChallengeScopeAccuracy": 0.8,
+    "minimumChallengeSelectionAccuracy": 0.8,
+    "minimumChallengeTurnKindAccuracy": 0.85,
     "maximumQuantizedExactAccuracyReduction": 0.005
   }
 }

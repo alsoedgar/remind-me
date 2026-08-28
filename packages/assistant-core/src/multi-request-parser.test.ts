@@ -47,6 +47,36 @@ describe('multi-request splitting', () => {
     ])
   })
 
+  it('preserves reminder type and separate dates in conversational noisy batches', () => {
+    expect(
+      splitCalendarRequests(
+        'can you add a reminder for my calc III exam on october 31st from 6-7:30 and also my calc III 2nd exam at nov. 1 6:7-30'
+      )
+    ).toEqual([
+      'can you add a reminder for my calc III exam on october 31st from 6-7:30',
+      'Add a reminder for my calc III 2nd exam at nov. 1 6:7-30'
+    ])
+    expect(
+      splitCalendarRequests(
+        'add Calc III exam October 31 6pm-7:30pm and Calc III exam 2 November 1 6pm-7:30pm'
+      )
+    ).toEqual([
+      'add Calc III exam October 31 6pm-7:30pm',
+      'add Calc III exam 2 November 1 6pm-7:30pm'
+    ])
+  })
+
+  it('applies one explicitly shared trailing time to every dated item', () => {
+    expect(
+      splitCalendarRequests(
+        'Please add Calc exam on October 31, 2026 and Physics exam on November 1, 2026, both from 6 PM to 7:30 PM'
+      )
+    ).toEqual([
+      'Please add Calc exam on October 31, 2026 from 6 PM to 7:30 PM',
+      'add Physics exam on November 1, 2026 from 6 PM to 7:30 PM'
+    ])
+  })
+
   it('expands exact known targets for selected and shared mutations', () => {
     const titles = ['Design review', 'Project sync', 'Water plants', 'Coffee and planning']
     expect(splitCalendarRequests('Delete Design review and Project sync', titles)).toEqual([

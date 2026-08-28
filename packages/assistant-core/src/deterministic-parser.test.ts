@@ -80,6 +80,10 @@ describe('deterministic calendar parser', () => {
     ['Lunch with Maya Friday at 1 PM', 'event.create'],
     ['Add birthday all-day on June 4', 'event.create'],
     ['What do I have today?', 'calendar.list'],
+    ["What's scheduled next Monday?", 'calendar.list'],
+    ['What classes do I have next Monday?', 'calendar.list'],
+    ['What does next Monday look like?', 'calendar.list'],
+    ['What does tomorrow look like?', 'calendar.list'],
     ['What did I have yesterday?', 'calendar.list'],
     ['What was on my schedule last Monday?', 'calendar.list'],
     ["What's next?", 'calendar.list'],
@@ -132,6 +136,43 @@ describe('deterministic calendar parser', () => {
       allDay: false
     })
     expect(draft.recurrence).toBeNull()
+  })
+
+  it('accepts compact ranges while keeping missing meridiems ambiguous', () => {
+    const compact = parse('Add Calc III exam on October 31 from 6pm-7:30pm')
+    const inherited = parse('Add Calc III exam on October 31 from 6-7:30 PM')
+    const canonicalDate = parse('Add Calc III exam 2026-10-31 from 6:00 PM to 7:30 PM')
+    const malformed = parse('Add Calc III exam on October 31 6:7-30')
+
+    expect(compact.fields.when?.value).toMatchObject({
+      start: { time: '18:00' },
+      end: { time: '19:30' }
+    })
+    expect(inherited.fields.when?.value).toMatchObject({
+      start: { time: '18:00' },
+      end: { time: '19:30' }
+    })
+    expect(canonicalDate.fields.when?.value).toMatchObject({
+      start: { date: { kind: 'absolute', date: '2026-10-31' }, time: '18:00' },
+      end: { time: '19:30' }
+    })
+    expect(malformed.operation).toBe('assistant.clarify')
+    expect(malformed.ambiguities[0]?.code).toBe('missing-time')
+  })
+
+  it('keeps polite reminder requests as reminders and never discards a duration', () => {
+    const reminder = parse('Can you add a reminder for call Mom tomorrow at 6 PM')
+    const ranged = parse(
+      'Can you add a reminder for my Calc III exam on October 31 from 6 PM to 7:30 PM'
+    )
+
+    expect(reminder.operation).toBe('reminder.create')
+    expect(reminder.fields.title?.value).toBe('call Mom')
+    expect(ranged.operation).toBe('assistant.clarify')
+    expect(ranged.ambiguities[0]).toMatchObject({
+      code: 'unsupported-expression',
+      options: ['Create calendar events']
+    })
   })
 
   it('only treats a named weekday as recurring when the user says every', () => {
@@ -340,6 +381,81 @@ describe('deterministic calendar parser', () => {
     const stale = parse('Where is it?', { events })
     expect(stale.operation).toBe('assistant.clarify')
     expect(stale.ambiguities[0]?.code).toBe('unclear-reference')
+  })
+
+  it('resolves ordinal dialogue targets by exact focused ID, even with duplicate titles', () => {
+    const events = [
+      event('event:office-hours:first', 'Office hours'),
+      event('event:office-hours:second', 'Office hours')
+    ]
+    const focus = events.map((candidate) => candidate.id)
+
+    const moved = parse('Move the second one to Monday at 3 PM', {
+      events,
+      focusedEventIds: focus
+    })
+    expect(moved.operation).toBe('event.move')
+    expect(moved.selection?.eventIds).toEqual(['event:office-hours:second'])
+
+    const deleted = parse('Delete the last event', { events, focusedEventIds: focus })
+    expect(deleted.operation).toBe('event.delete')
+    expect(deleted.selection?.eventIds).toEqual(['event:office-hours:second'])
+
+    const outOfRange = parse('Delete the third one', { events, focusedEventIds: focus })
+    expect(outOfRange.operation).toBe('assistant.clarify')
+    expect(outOfRange.ambiguities[0]).toMatchObject({ code: 'unclear-reference' })
+  })
+
+  it('resolves focused items by stored time or location without confusing the move destination', () => {
+    const morning = {
+      ...event('event:office-hours:morning', 'Office hours'),
+      location: 'Library 201'
+    }
+    const afternoon = {
+      ...event('event:office-hours:afternoon', 'Office hours'),
+      location: 'Studio B',
+      startUtc: '2026-08-28T20:00:00.000Z',
+      endUtc: '2026-08-28T21:00:00.000Z'
+    }
+    const events = [morning, afternoon]
+    const focus = events.map((candidate) => candidate.id)
+
+    const moved = parse('Move the 3 PM one to Saturday at 4 PM', {
+      events,
+      focusedEventIds: focus
+    })
+    expect(moved.operation).toBe('event.move')
+    expect(moved.selection?.eventIds).toEqual(['event:office-hours:afternoon'])
+    expect(moved.fields.when?.value).toMatchObject({
+      start: { date: { kind: 'weekday', weekday: 'saturday' }, time: '16:00' }
+    })
+
+    const deleted = parse('Delete the one in Studio B', { events, focusedEventIds: focus })
+    expect(deleted.operation).toBe('event.delete')
+    expect(deleted.selection?.eventIds).toEqual(['event:office-hours:afternoon'])
+
+    const deletedByTime = parse('Delete the 3 PM one', { events, focusedEventIds: focus })
+    expect(deletedByTime.operation).toBe('event.delete')
+    expect(deletedByTime.selection?.eventIds).toEqual(['event:office-hours:afternoon'])
+    expect(deletedByTime.selection?.query?.sourceSpan).toEqual({ start: 11, end: 19 })
+
+    const reminders = [
+      { ...reminder('reminder:morning', 'Pack bag'), dueAtUtc: '2026-08-24T14:00:00.000Z' },
+      reminder('reminder:evening', 'Water plants')
+    ]
+    const completed = parse('Complete the evening one', {
+      reminders,
+      focusedReminderIds: reminders.map((candidate) => candidate.id)
+    })
+    expect(completed.operation).toBe('reminder.complete')
+    expect(completed.selection?.reminderIds).toEqual(['reminder:evening'])
+
+    const ambiguous = parse('Delete the one in Studio B', {
+      events: [morning, afternoon, { ...morning, id: 'event:studio:second', location: 'Studio B' }],
+      focusedEventIds: focus.concat('event:studio:second')
+    })
+    expect(ambiguous.operation).toBe('assistant.clarify')
+    expect(ambiguous.ambiguities[0]).toMatchObject({ code: 'multiple-targets' })
   })
 
   it('clarifies a singular pronoun when several recent items remain in focus', () => {

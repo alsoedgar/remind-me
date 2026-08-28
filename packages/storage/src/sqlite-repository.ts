@@ -7,12 +7,14 @@ import {
   assistantProposalSchema,
   calendarEntitySchema,
   conversationTurnEntitySchema,
+  documentImportIdentitySchema,
   emptyAssistantDialogueState,
   eventEntitySchema,
   preferencesEntitySchema,
   recurrenceExceptionEntitySchema,
   recurrenceRuleSchema,
   reminderEntitySchema,
+  upgradeAssistantDialogueState,
   type ActionHistoryEntity,
   type AssistantConversation,
   type AssistantDialogueState,
@@ -21,6 +23,7 @@ import {
   type CalendarEntity,
   type CalendarOperation,
   type ConversationTurnEntity,
+  type DocumentImportIdentity,
   type EventEntity,
   type MutationReceipt,
   type PreferencesEntity,
@@ -31,6 +34,7 @@ import {
 import {
   databaseSchemaVersion,
   initialMigrationSql,
+  fourthMigrationSql,
   secondMigrationSql,
   thirdMigrationSql
 } from './schema'
@@ -84,6 +88,12 @@ function jsonRecurrence(value: string | null): EventEntity['recurrence'] {
   return recurrenceRuleSchema.nullable().parse(value ? JSON.parse(value) : null)
 }
 
+function jsonDocumentImportIdentity(value: unknown): DocumentImportIdentity | null {
+  if (value === null || value === undefined) return null
+  if (typeof value !== 'string') throw new Error('Expected import_identity_json to be text')
+  return documentImportIdentitySchema.parse(JSON.parse(value))
+}
+
 function mapCalendar(row: DatabaseRow): CalendarEntity {
   return calendarEntitySchema.parse({
     id: stringValue(row, 'id'),
@@ -110,6 +120,7 @@ function mapEvent(row: DatabaseRow): EventEntity {
     recurrence: jsonRecurrence(nullableString(row, 'recurrence_json')),
     status: stringValue(row, 'status'),
     provenance: stringValue(row, 'provenance'),
+    importIdentity: jsonDocumentImportIdentity(row.import_identity_json),
     createdAt: stringValue(row, 'created_at'),
     updatedAt: stringValue(row, 'updated_at')
   })
@@ -127,6 +138,7 @@ function mapReminder(row: DatabaseRow): ReminderEntity {
     status: stringValue(row, 'status'),
     completedAt: nullableString(row, 'completed_at'),
     provenance: stringValue(row, 'provenance'),
+    importIdentity: jsonDocumentImportIdentity(row.import_identity_json),
     createdAt: stringValue(row, 'created_at'),
     updatedAt: stringValue(row, 'updated_at')
   })
@@ -304,6 +316,7 @@ export class SqliteCalendarRepository {
       this.database.exec(`
         DELETE FROM attachments;
         DELETE FROM conversations;
+        DELETE FROM document_import_identities;
         DELETE FROM calendars;
         DELETE FROM action_history;
         DELETE FROM preferences;
@@ -331,27 +344,59 @@ export class SqliteCalendarRepository {
 
   listEvents(): EventEntity[] {
     return (
-      this.database.prepare('SELECT * FROM events ORDER BY start_utc, title').all() as DatabaseRow[]
+      this.database
+        .prepare(
+          `SELECT events.*, document_import_identities.identity_json AS import_identity_json
+           FROM events
+           LEFT JOIN document_import_identities
+             ON document_import_identities.entity_kind = 'event'
+            AND document_import_identities.entity_id = events.id
+           ORDER BY events.start_utc, events.title`
+        )
+        .all() as DatabaseRow[]
     ).map(mapEvent)
   }
 
   getEvent(id: string): EventEntity | null {
-    const row = this.database.prepare('SELECT * FROM events WHERE id = ?').get(id) as
-      DatabaseRow | undefined
+    const row = this.database
+      .prepare(
+        `SELECT events.*, document_import_identities.identity_json AS import_identity_json
+         FROM events
+         LEFT JOIN document_import_identities
+           ON document_import_identities.entity_kind = 'event'
+          AND document_import_identities.entity_id = events.id
+         WHERE events.id = ?`
+      )
+      .get(id) as DatabaseRow | undefined
     return row ? mapEvent(row) : null
   }
 
   listReminders(): ReminderEntity[] {
     return (
       this.database
-        .prepare('SELECT * FROM reminders ORDER BY due_at_utc, title')
+        .prepare(
+          `SELECT reminders.*, document_import_identities.identity_json AS import_identity_json
+           FROM reminders
+           LEFT JOIN document_import_identities
+             ON document_import_identities.entity_kind = 'reminder'
+            AND document_import_identities.entity_id = reminders.id
+           ORDER BY reminders.due_at_utc, reminders.title`
+        )
         .all() as DatabaseRow[]
     ).map(mapReminder)
   }
 
   getReminder(id: string): ReminderEntity | null {
-    const row = this.database.prepare('SELECT * FROM reminders WHERE id = ?').get(id) as
-      DatabaseRow | undefined
+    const row = this.database
+      .prepare(
+        `SELECT reminders.*, document_import_identities.identity_json AS import_identity_json
+         FROM reminders
+         LEFT JOIN document_import_identities
+           ON document_import_identities.entity_kind = 'reminder'
+          AND document_import_identities.entity_id = reminders.id
+         WHERE reminders.id = ?`
+      )
+      .get(id) as DatabaseRow | undefined
     return row ? mapReminder(row) : null
   }
 
@@ -436,7 +481,8 @@ export class SqliteCalendarRepository {
       .prepare('SELECT payload_json FROM assistant_dialogue_state WHERE conversation_id = ?')
       .get(conversationId) as DatabaseRow | undefined
     if (!row) throw new Error(`Dialogue state for ${conversationId} was not found`)
-    const stored = assistantDialogueStateSchema.parse(JSON.parse(stringValue(row, 'payload_json')))
+    const rawPayload: unknown = JSON.parse(stringValue(row, 'payload_json'))
+    const stored = upgradeAssistantDialogueState(rawPayload, now)
     const eventIds = new Set(
       (this.database.prepare('SELECT id FROM events').all() as DatabaseRow[]).map((event) =>
         stringValue(event, 'id')
@@ -447,14 +493,58 @@ export class SqliteCalendarRepository {
         stringValue(reminder, 'id')
       )
     )
+    const queryFrames = stored.queryFrames.map((frame) => {
+      const exists = (item: (typeof frame.orderedItems)[number]): boolean =>
+        item.kind === 'event' ? eventIds.has(item.id) : reminderIds.has(item.id)
+      const orderedItems = frame.orderedItems.filter(exists)
+      const retainedKeys = new Set(
+        orderedItems.map((item) => `${item.kind}:${item.id}:${item.occurrenceStart ?? ''}`)
+      )
+      const selectedItems = frame.selectedItems.filter((item) =>
+        retainedKeys.has(`${item.kind}:${item.id}:${item.occurrenceStart ?? ''}`)
+      )
+      const cursorItem =
+        frame.resultCursor === null ? null : (frame.orderedItems[frame.resultCursor] ?? null)
+      const resultCursor = cursorItem
+        ? orderedItems.findIndex(
+            (item) =>
+              item.kind === cursorItem.kind &&
+              item.id === cursorItem.id &&
+              item.occurrenceStart === cursorItem.occurrenceStart
+          )
+        : null
+      const continuationItem =
+        frame.continuationCursor === null
+          ? null
+          : (frame.selectedItems.slice(frame.continuationCursor).find(exists) ?? null)
+      const continuationCursor = continuationItem
+        ? selectedItems.findIndex(
+            (item) =>
+              item.kind === continuationItem.kind &&
+              item.id === continuationItem.id &&
+              item.occurrenceStart === continuationItem.occurrenceStart
+          )
+        : null
+      return {
+        ...frame,
+        orderedItems,
+        selectedItems,
+        resultCursor: resultCursor === -1 ? null : resultCursor,
+        continuationCursor: continuationCursor === -1 ? null : continuationCursor
+      }
+    })
     const pruned = assistantDialogueStateSchema.parse({
       ...stored,
       focusedEventIds: stored.focusedEventIds.filter((id) => eventIds.has(id)),
       focusedReminderIds: stored.focusedReminderIds.filter((id) => reminderIds.has(id)),
       lastResultEventIds: stored.lastResultEventIds.filter((id) => eventIds.has(id)),
-      lastResultReminderIds: stored.lastResultReminderIds.filter((id) => reminderIds.has(id))
+      lastResultReminderIds: stored.lastResultReminderIds.filter((id) => reminderIds.has(id)),
+      queryFrames
     })
-    if (JSON.stringify(pruned) !== JSON.stringify(stored)) {
+    if (
+      JSON.stringify(pruned) !== JSON.stringify(stored) ||
+      JSON.stringify(stored) !== JSON.stringify(rawPayload)
+    ) {
       return this.saveAssistantDialogueState(conversationId, { ...pruned, updatedAt: now })
     }
     return pruned
@@ -622,6 +712,11 @@ export class SqliteCalendarRepository {
         assistantProposalId
       },
       () => {
+        this.database
+          .prepare(
+            "DELETE FROM document_import_identities WHERE entity_kind = 'event' AND entity_id = ?"
+          )
+          .run(id)
         this.database.prepare('DELETE FROM events WHERE id = ?').run(id)
       }
     )
@@ -655,6 +750,11 @@ export class SqliteCalendarRepository {
         assistantProposalId
       },
       () => {
+        this.database
+          .prepare(
+            "DELETE FROM document_import_identities WHERE entity_kind = 'reminder' AND entity_id = ?"
+          )
+          .run(id)
         this.database.prepare('DELETE FROM reminders WHERE id = ?').run(id)
       }
     )
@@ -725,9 +825,19 @@ export class SqliteCalendarRepository {
       for (const event of events) this.writeEvent(event)
       for (const reminder of reminders) this.writeReminder(reminder)
       for (const id of eventIdsToDelete) {
+        this.database
+          .prepare(
+            "DELETE FROM document_import_identities WHERE entity_kind = 'event' AND entity_id = ?"
+          )
+          .run(id)
         this.database.prepare('DELETE FROM events WHERE id = ?').run(id)
       }
       for (const id of reminderIdsToDelete) {
+        this.database
+          .prepare(
+            "DELETE FROM document_import_identities WHERE entity_kind = 'reminder' AND entity_id = ?"
+          )
+          .run(id)
         this.database.prepare('DELETE FROM reminders WHERE id = ?').run(id)
       }
     })
@@ -766,8 +876,11 @@ export class SqliteCalendarRepository {
     return (
       this.database
         .prepare(
-          `SELECT reminders.*
+          `SELECT reminders.*, document_import_identities.identity_json AS import_identity_json
            FROM reminders
+           LEFT JOIN document_import_identities
+             ON document_import_identities.entity_kind = 'reminder'
+            AND document_import_identities.entity_id = reminders.id
            WHERE reminders.status = 'active'
              AND NOT EXISTS (
                SELECT 1 FROM notification_deliveries deliveries
@@ -819,6 +932,10 @@ export class SqliteCalendarRepository {
         if (currentVersion === 2) {
           this.database.exec(thirdMigrationSql)
           currentVersion = 3
+        }
+        if (currentVersion === 3) {
+          this.database.exec(fourthMigrationSql)
+          currentVersion = 4
         }
         this.database.exec(`PRAGMA user_version = ${currentVersion}`)
         this.database.exec('COMMIT')
@@ -928,7 +1045,7 @@ export class SqliteCalendarRepository {
       deliveries.set(`${delivery.reminderId}\u0000${delivery.dueAtUtc}`, delivery)
     }
     this.database.exec(
-      'DELETE FROM recurrence_exceptions; DELETE FROM reminders; DELETE FROM events;'
+      'DELETE FROM recurrence_exceptions; DELETE FROM document_import_identities; DELETE FROM reminders; DELETE FROM events;'
     )
     for (const event of state.events) this.writeEvent(eventEntitySchema.parse(event))
     for (const reminder of state.reminders) this.writeReminder(reminderEntitySchema.parse(reminder))
@@ -995,6 +1112,7 @@ export class SqliteCalendarRepository {
         event.createdAt,
         event.updatedAt
       )
+    this.writeDocumentImportIdentity('event', event.id, event.importIdentity, event.updatedAt)
   }
 
   private writeReminder(reminder: ReminderEntity): void {
@@ -1029,6 +1147,50 @@ export class SqliteCalendarRepository {
         reminder.provenance,
         reminder.createdAt,
         reminder.updatedAt
+      )
+    this.writeDocumentImportIdentity(
+      'reminder',
+      reminder.id,
+      reminder.importIdentity,
+      reminder.updatedAt
+    )
+  }
+
+  private writeDocumentImportIdentity(
+    entityKind: 'event' | 'reminder',
+    entityId: string,
+    inputIdentity: DocumentImportIdentity | null | undefined,
+    updatedAt: string
+  ): void {
+    if (!inputIdentity) {
+      this.database
+        .prepare('DELETE FROM document_import_identities WHERE entity_kind = ? AND entity_id = ?')
+        .run(entityKind, entityId)
+      return
+    }
+    const identity = documentImportIdentitySchema.parse(inputIdentity)
+    this.database
+      .prepare(
+        `INSERT INTO document_import_identities (
+          entity_kind, entity_id, source_sha256, source_row_id, semantic_key,
+          identity_json, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(entity_kind, entity_id) DO UPDATE SET
+          source_sha256 = excluded.source_sha256,
+          source_row_id = excluded.source_row_id,
+          semantic_key = excluded.semantic_key,
+          identity_json = excluded.identity_json,
+          updated_at = excluded.updated_at`
+      )
+      .run(
+        entityKind,
+        entityId,
+        identity.sourceSha256,
+        identity.sourceRowId,
+        identity.semanticKey,
+        JSON.stringify(identity),
+        updatedAt,
+        updatedAt
       )
   }
 

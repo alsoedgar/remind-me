@@ -1,5 +1,6 @@
 export * from './assistant-service'
 export * from './calendar-service'
 export * from './database-runtime'
+export * from './grounded-answer'
 export * from './schema'
 export * from './sqlite-repository'

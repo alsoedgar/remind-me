@@ -129,6 +129,20 @@ jobs:
       - name: Build Linux installers
         if: matrix.signing == 'none'
         run: pnpm package:installer
+      - name: Run packaged document release gate on Linux
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum pnpm documents:release:package
+      - name: Run packaged document release gate
+        if: runner.os != 'Linux'
+        run: pnpm documents:release:package
+      - name: Upload document release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: document-release-${{ runner.os }}-${{ matrix.arch }}
+          path: evals/documents/reports/document-release.*.json
+          if-no-files-found: warn
+          retention-days: 14
       - run: pnpm package:audit
       - name: Audit signed release artifacts
         if: matrix.signing != 'none'

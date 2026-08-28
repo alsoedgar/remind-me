@@ -7,7 +7,8 @@ const explicitAction = new RegExp(
 
 const datedClause =
   /\b(?:today|tomorrow|tmr|tmrw|tmw|monday|tuesday|wednesday|thursday|friday|saturday|sunday|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?|\d{1,2}[/-]\d{1,2})\b/iu
-const timedClause = /\b(?:at|from|noon|midnight|\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?))\b/iu
+const timedClause =
+  /\b(?:at|from|between|noon|midnight|\d{1,2}(?::\d{1,2})?\s*(?:a\.?m\.?|p\.?m\.?))\b|\b\d{1,2}(?::\d{1,2})?\s*[-–—]\s*\d{1,2}(?::\d{1,2})?(?:\s*(?:a\.?m\.?|p\.?m\.?))?\b/iu
 
 type KnownTitleMention = {
   title: string
@@ -133,6 +134,11 @@ function splitKnownTargetMutation(text: string, knownTitles: readonly string[]):
 }
 
 function inheritedPrefix(first: string): string | null {
+  const reminder = new RegExp(
+    `^${politePrefix}(?:remind\\s+me(?:\\s+(?:to|about))?|remember\\s+to|(?:set|add|create)\\s+(?:a\\s+)?reminder(?:\\s+(?:to|for|about))?)\\s+`,
+    'iu'
+  ).exec(first)
+  if (reminder) return 'Add a reminder for '
   const event = new RegExp(
     `^${politePrefix}(add|create|schedule|book|put|block|make)\\s+`,
     'iu'
@@ -171,6 +177,51 @@ function splitCoordinatedTimedList(text: string): string[] {
   })
 }
 
+function splitCoordinatedDatedList(text: string): string[] {
+  const separator = new RegExp(
+    `\\s+(?:(?:and\\s+)?also|plus|and)\\s+(?=.{0,160}${datedClause.source})`,
+    'iu'
+  )
+  const parts = text
+    .split(separator)
+    .map((part) => part.trim())
+    .filter(Boolean)
+  if (parts.length < 2 || parts.length > 8) return [text]
+  const prefix = inheritedPrefix(parts[0] ?? '')
+  if (!prefix) return [text]
+  if (!parts.every((part) => datedClause.test(part) && timedClause.test(part))) return [text]
+  return parts.map((part, index) =>
+    index === 0 || explicitAction.test(part) ? part : `${prefix}${part}`
+  )
+}
+
+function splitExplicitSharedTemporalList(text: string): string[] {
+  const shared = /(?:,\s*|\s+)\b(?:both|all|each)\s+((?:at|from|between)\s+.{1,80}?)[.!?]*$/iu.exec(
+    text
+  )
+  if (shared?.index === undefined || !shared[1] || !timedClause.test(shared[1])) return [text]
+  const body = text
+    .slice(0, shared.index)
+    .trim()
+    .replace(/[,;]+$/u, '')
+    .trim()
+  const separator = new RegExp(
+    `\\s+(?:(?:and\\s+)?also|plus|and)\\s+(?=.{0,160}${datedClause.source})`,
+    'iu'
+  )
+  const parts = body
+    .split(separator)
+    .map((part) => part.trim())
+    .filter(Boolean)
+  if (parts.length < 2 || parts.length > 8) return [text]
+  const prefix = inheritedPrefix(parts[0] ?? '')
+  if (!prefix || !parts.every((part) => datedClause.test(part))) return [text]
+  return parts.map((part, index) => {
+    const withAction = index === 0 || explicitAction.test(part) ? part : `${prefix}${part}`
+    return `${withAction} ${shared[1]}`
+  })
+}
+
 function splitImplicitCommaList(text: string): string[] {
   const parts = text
     .split(/\s*,\s*(?:and\s+)?/iu)
@@ -202,7 +253,9 @@ export function splitCalendarRequests(text: string, knownTitles: readonly string
     .filter(Boolean)
 
   if (parts.length === 1 && parts[0]) {
-    parts = splitImplicitCommaList(parts[0])
+    parts = splitExplicitSharedTemporalList(parts[0])
+    if (parts.length === 1 && parts[0]) parts = splitImplicitCommaList(parts[0])
+    if (parts.length === 1 && parts[0]) parts = splitCoordinatedDatedList(parts[0])
     if (parts.length === 1 && parts[0]) parts = splitCoordinatedTimedList(parts[0])
     if (parts.length === 1 && parts[0]) parts = splitKnownTargetMutation(parts[0], knownTitles)
   }

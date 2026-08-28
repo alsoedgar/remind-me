@@ -1,8 +1,8 @@
 # RemindSpeak research workspace
 
-RemindSpeak is Remind Me's original grounded response-generation track. Version 0.3 is a bounded 28.31M-parameter PhraseLattice trained from zero initialization over verified `ResponsePlan` features and selectively distilled Qwen preference labels. It imports no pretrained weights or Qwen prose and never receives a database handle.
+RemindSpeak is Remind Me's original grounded response-generation track. Version 0.4 is a bounded 32.44M-parameter PhraseLattice trained from zero initialization over verified `ResponsePlan` features and selectively distilled Qwen preference labels. It imports no pretrained weights or Qwen prose and never receives a database handle.
 
-The pipeline builds a 40,000-example base corpus, adds 1,650 rows from 55 audited Qwen rankings over project-authored candidates, trains three sparse INT8 heads, and scores 432 reviewed atoms across 18 protected speech acts and 20 styles. The runtime overgenerates five candidates, validates exact placeholders, rejects unsafe literals and exact recent replies, applies style/novelty and bounded local-preference ranking, and retains deterministic templates as the final fallback.
+The pipeline builds a 40,000-example base corpus, adds 1,650 rows from 55 audited Qwen rankings over project-authored candidates, trains three sparse INT8 heads, and scores 528 reviewed atoms across 22 protected speech acts and 20 styles. The four new boundary acts distinguish a conversational clarification, unavailable optional runtime, unverifiable offline fact, and genuine policy boundary. The runtime overgenerates five candidates, validates exact placeholders, rejects unsafe literals and exact recent replies, applies style/novelty and bounded local-preference ranking, and retains deterministic templates as the final fallback.
 
 ```bash
 python ml/remindspeak/pipeline.py all

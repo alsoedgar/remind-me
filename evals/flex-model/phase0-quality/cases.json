@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "suiteVersion": "0.1.0",
+  "trainingExcluded": true,
+  "syntheticPromptsOnly": true,
+  "cases": [
+    {
+      "id": "plan.two-events.shared-range",
+      "type": "plan",
+      "text": "Can you add my Calculus III exam on October 31, 2026 and my Physics exam on November 1, 2026, both from 6 PM to 7:30 PM?",
+      "expect": {
+        "actionCount": 2,
+        "operations": ["event.create", "event.create"],
+        "titlesAll": ["Calculus III exam", "Physics exam"]
+      }
+    },
+    {
+      "id": "plan.mixed-event-reminder",
+      "type": "plan",
+      "text": "Add a dentist visit tomorrow at 10 AM and remind me to submit the insurance form Friday at 4 PM.",
+      "expect": {
+        "actionCount": 2,
+        "operations": ["event.create", "reminder.create"],
+        "titlesAll": ["dentist visit", "submit the insurance form"]
+      }
+    },
+    {
+      "id": "plan.update-location",
+      "type": "plan",
+      "text": "Could you change Design review's location to Room 204?",
+      "expect": {
+        "actionCount": 1,
+        "operations": ["event.update"],
+        "targetsAll": ["Design review"],
+        "locationsAll": ["Room 204"]
+      }
+    },
+    {
+      "id": "plan.delete-reminder",
+      "type": "plan",
+      "text": "Please remove the grocery reminder.",
+      "expect": {
+        "actionCount": 1,
+        "operations": ["reminder.delete"],
+        "targetsAll": ["grocery reminder"]
+      }
+    },
+    {
+      "id": "plan.noisy-two-events",
+      "type": "plan",
+      "text": "plz add calc study tmr at 6pm, and also add chem review friday at 7:30 pm",
+      "expect": {
+        "actionCount": 2,
+        "operations": ["event.create", "event.create"],
+        "titlesAll": ["calc study", "chem review"]
+      }
+    },
+    {
+      "id": "chat.greeting-capabilities",
+      "type": "chat",
+      "text": "Hello—what can you help me with?",
+      "turns": [],
+      "calendarContext": "",
+      "expect": {
+        "textAny": ["calendar", "schedule", "reminder", "plans"],
+        "textNone": ["safe local action"],
+        "maxWords": 55
+      }
+    },
+    {
+      "id": "chat.general-study-advice",
+      "type": "chat",
+      "text": "Give me one warm, practical sentence about starting a difficult study session.",
+      "turns": [],
+      "calendarContext": "",
+      "expect": {
+        "textNone": ["safe local action", "could not map that request"],
+        "maxWords": 45
+      }
+    },
+    {
+      "id": "chat.contextual-times",
+      "type": "chat",
+      "text": "What times are those classes?",
+      "turns": [
+        { "role": "user", "text": "Do I have anything tomorrow?" },
+        { "role": "assistant", "text": "Linear Algebra and Data Structures." }
+      ],
+      "calendarContext": "DIALOGUE_FOCUS={\"requestedRange\":\"tomorrow\",\"focusedItems\":[\"event:linear\",\"event:data\"]}\nCALENDAR={\"events\":[{\"id\":\"event:linear\",\"title\":\"Linear Algebra\",\"start\":\"September 3, 2026 at 9:00 AM\",\"end\":\"September 3, 2026 at 9:50 AM\"},{\"id\":\"event:data\",\"title\":\"Data Structures\",\"start\":\"September 3, 2026 at 11:00 AM\",\"end\":\"September 3, 2026 at 11:50 AM\"}],\"reminders\":[],\"truncated\":false}",
+      "expect": {
+        "textAll": ["Linear Algebra", "9:00", "Data Structures", "11:00"],
+        "textNone": ["not specified", "safe local action"],
+        "maxWords": 55
+      }
+    },
+    {
+      "id": "chat.contextual-locations",
+      "type": "chat",
+      "text": "Where are both of them?",
+      "turns": [
+        { "role": "user", "text": "What classes are tomorrow?" },
+        { "role": "assistant", "text": "Linear Algebra and Data Structures." }
+      ],
+      "calendarContext": "DIALOGUE_FOCUS={\"focusedItems\":[\"event:linear\",\"event:data\"]}\nCALENDAR={\"events\":[{\"id\":\"event:linear\",\"title\":\"Linear Algebra\",\"location\":\"Science Hall 130\"},{\"id\":\"event:data\",\"title\":\"Data Structures\",\"location\":\"Learning Center 1426\"}],\"reminders\":[],\"truncated\":false}",
+      "expect": {
+        "textAll": ["Science Hall 130", "Learning Center 1426"],
+        "textNone": ["not specified", "safe local action"],
+        "maxWords": 55
+      }
+    },
+    {
+      "id": "chat.offline-current-fact",
+      "type": "chat",
+      "text": "What is the live weather in Chicago right now?",
+      "turns": [],
+      "calendarContext": "",
+      "expect": {
+        "textAny": [
+          "offline",
+          "live",
+          "real-time",
+          "current",
+          "latest",
+          "verify",
+          "can't",
+          "cannot"
+        ],
+        "textNone": ["safe local action"],
+        "maxWords": 55
+      }
+    },
+    {
+      "id": "chat.future-planning",
+      "type": "chat",
+      "text": "How can I prepare for a busy week without feeling overwhelmed?",
+      "turns": [],
+      "calendarContext": "",
+      "expect": {
+        "textNone": ["safe local action", "could not map that request"],
+        "maxWords": 55
+      }
+    },
+    {
+      "id": "chat.concise-follow-up",
+      "type": "chat",
+      "text": "Can you make that shorter?",
+      "turns": [
+        { "role": "user", "text": "How should I start planning my week?" },
+        {
+          "role": "assistant",
+          "text": "Choose your three priorities, place them first, and leave open space around them."
+        }
+      ],
+      "calendarContext": "",
+      "expect": {
+        "textNone": ["safe local action"],
+        "maxWords": 30
+      }
+    }
+  ]
+}

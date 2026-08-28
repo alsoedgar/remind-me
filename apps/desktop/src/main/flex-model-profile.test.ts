@@ -98,4 +98,57 @@ describe('optional flex-model hardware profiles', () => {
       }).id
     ).toBe('compact')
   })
+
+  it('prefers a packaged CUDA or Vulkan backend while retaining a CPU override', () => {
+    const hardware = {
+      platform: 'win32' as const,
+      arch: 'x64',
+      logicalThreads: 16,
+      totalMemoryBytes: 32 * GiB,
+      freeMemoryBytes: 8 * GiB
+    }
+    expect(
+      selectFlexModelRuntimeProfile({
+        ...hardware,
+        availableBackends: ['cpu', 'vulkan']
+      }).backend
+    ).toBe('vulkan')
+    expect(
+      selectFlexModelRuntimeProfile({
+        ...hardware,
+        availableBackends: ['cpu', 'vulkan', 'cuda']
+      }).backend
+    ).toBe('cuda')
+    expect(
+      selectFlexModelRuntimeProfile({
+        ...hardware,
+        availableBackends: ['cpu', 'vulkan', 'cuda'],
+        accelerationPreference: 'cpu'
+      }).backend
+    ).toBe('cpu')
+  })
+
+  it('applies memory-aware warmth settings without pinning the model on small machines', () => {
+    const hardware = {
+      platform: 'win32' as const,
+      arch: 'x64',
+      logicalThreads: 8,
+      totalMemoryBytes: 16 * GiB,
+      freeMemoryBytes: 5 * GiB
+    }
+    expect(
+      selectFlexModelRuntimeProfile({ ...hardware, warmthPolicy: 'memory-saver' }).idleUnloadMs
+    ).toBe(30_000)
+    expect(
+      selectFlexModelRuntimeProfile({ ...hardware, warmthPolicy: 'keep-warm' }).idleUnloadMs
+    ).toBe(60 * 60_000)
+    expect(
+      selectFlexModelRuntimeProfile({
+        ...hardware,
+        totalMemoryBytes: 8 * GiB,
+        freeMemoryBytes: 2 * GiB,
+        warmthPolicy: 'keep-warm'
+      }).idleUnloadMs
+    ).toBe(90_000)
+  })
 })

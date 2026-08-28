@@ -1,4 +1,5 @@
 const globalVocabulary = [
+  'and',
   'today',
   'tomorrow',
   'yesterday',
@@ -39,6 +40,7 @@ const globalVocabulary = [
   'building',
   'calendar',
   'schedule',
+  'scheduled',
   'agenda',
   'event',
   'events',
@@ -65,9 +67,13 @@ const globalVocabulary = [
 ] as const
 
 const leadingVocabulary = [
+  'can',
+  'could',
+  'would',
   'add',
   'create',
   'schedule',
+  'scheduled',
   'book',
   'remind',
   'remember',
@@ -106,7 +112,11 @@ const leadingVocabulary = [
   'hello',
   'help',
   'you',
-  'the'
+  'the',
+  'have',
+  'anything',
+  'does',
+  'through'
 ] as const
 
 const actionWords = new Set([
@@ -143,12 +153,15 @@ const actionWords = new Set([
 
 const exactRepairs: Readonly<Record<string, string>> = {
   ad: 'add',
+  adn: 'and',
+  anythng: 'anything',
   calandar: 'calendar',
   calednaar: 'calendar',
   calednar: 'calendar',
   calender: 'calendar',
   calss: 'class',
   cancle: 'cancel',
+  cna: 'can',
   chnage: 'change',
   cler: 'clear',
   craete: 'create',
@@ -157,15 +170,18 @@ const exactRepairs: Readonly<Record<string, string>> = {
   delte: 'delete',
   delet: 'delete',
   detials: 'details',
+  dose: 'does',
   duplciate: 'duplicate',
   enxt: 'next',
   entier: 'entire',
   evnt: 'event',
   eveent: 'event',
+  evrything: 'everything',
   firday: 'friday',
   fisrt: 'first',
   frist: 'first',
   helo: 'hello',
+  hav: 'have',
   loaction: 'location',
   modfy: 'modify',
   modnay: 'monday',
@@ -181,6 +197,7 @@ const exactRepairs: Readonly<Record<string, string>> = {
   scheduel: 'schedule',
   secnd: 'second',
   shedule: 'schedule',
+  shwo: 'show',
   sudnay: 'sunday',
   teh: 'the',
   thrusday: 'thursday',
@@ -188,6 +205,7 @@ const exactRepairs: Readonly<Record<string, string>> = {
   tommorow: 'tomorrow',
   tomorow: 'tomorrow',
   udpate: 'update',
+  thru: 'through',
   waht: 'what',
   wahts: 'whats',
   wednsday: 'wednesday',
@@ -341,12 +359,26 @@ const targetedMutationWords = new Set([
 /** Canonicalizes only high-confidence references to titles already on device. */
 export function repairKnownMutationTargets(text: string, knownTitles: readonly string[]): string {
   const sourceWords = wordSpans(text)
-  const actionIndex = sourceWords.findIndex((word) =>
+  const canonicalActionIndex = sourceWords.findIndex((word) =>
     actionWords.has(word.value.toLocaleLowerCase())
   )
+  const colloquialAction =
+    /\b(?:take|drop|call\s+off|scrap|ditch|bump|postpone|push\s+back|bring\s+forward|cross|tick|check|make\s+(?:a|another)\s+copy)\b/iu.exec(
+      text
+    )
+  const colloquialActionIndex =
+    colloquialAction?.index === undefined
+      ? -1
+      : sourceWords.findIndex((word) => word.start >= (colloquialAction.index ?? 0))
+  const actionIndex = canonicalActionIndex >= 0 ? canonicalActionIndex : colloquialActionIndex
   const firstAction =
     actionIndex >= 0 ? sourceWords[actionIndex]?.value.toLocaleLowerCase() : undefined
-  if (!firstAction || !targetedMutationWords.has(firstAction)) return text
+  if (
+    !firstAction ||
+    (!targetedMutationWords.has(firstAction) && colloquialActionIndex !== actionIndex)
+  ) {
+    return text
+  }
 
   const candidates: Array<{
     title: string

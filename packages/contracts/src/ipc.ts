@@ -3,12 +3,15 @@ import {
   assistantConfirmRequestSchema,
   assistantConversationRequestSchema,
   assistantConversationResponseSchema,
+  assistantCancelRequestSchema,
+  assistantCancelResponseSchema,
   assistantClearRequestSchema,
   assistantExchangeSchema,
   assistantFeedbackRequestSchema,
   assistantFeedbackResponseSchema,
   assistantRejectRequestSchema,
-  assistantSendRequestSchema
+  assistantSendRequestSchema,
+  type AssistantStreamEvent
 } from './assistant-api'
 import { calendarIRDraftSchema, calendarIRResolvedSchema } from './calendar-ir'
 import type { calendarBatchItemSchema } from './calendar-api'
@@ -32,6 +35,7 @@ import {
 import { preferencesEntitySchema } from './entities'
 import {
   flexModelCancelRequestSchema,
+  flexModelConfigureRequestSchema,
   flexModelInstallRequestSchema,
   flexModelRemoveRequestSchema,
   flexModelSetEnabledRequestSchema,
@@ -43,6 +47,10 @@ import {
   documentCommitResponseSchema,
   documentDiscardRequestSchema,
   documentDiscardResponseSchema,
+  documentFallbackRequestSchema,
+  documentFallbackResponseSchema,
+  documentRepairRequestSchema,
+  documentRepairResponseSchema,
   documentSelectRequestSchema,
   documentSelectResponseSchema,
   type ReviewedDocumentItem
@@ -91,8 +99,12 @@ export const ipcChannels = {
   documentSelect: 'document:select',
   documentCommit: 'document:commit',
   documentDiscard: 'document:discard',
+  documentRepair: 'document:repair',
+  documentFallback: 'document:fallback',
   assistantGetConversation: 'assistant:get-conversation',
   assistantSend: 'assistant:send',
+  assistantStream: 'assistant:stream',
+  assistantCancel: 'assistant:cancel',
   assistantConfirm: 'assistant:confirm',
   assistantReject: 'assistant:reject',
   assistantClear: 'assistant:clear',
@@ -102,6 +114,7 @@ export const ipcChannels = {
   flexModelCancel: 'flex-model:cancel',
   flexModelRemove: 'flex-model:remove',
   flexModelSetEnabled: 'flex-model:set-enabled',
+  flexModelConfigure: 'flex-model:configure',
   flexModelProgress: 'flex-model:progress',
   voiceGetInfo: 'voice:get-info',
   voiceWarm: 'voice:warm',
@@ -363,6 +376,14 @@ export const ipcContracts = {
     request: documentDiscardRequestSchema,
     response: documentDiscardResponseSchema
   },
+  [ipcChannels.documentRepair]: {
+    request: documentRepairRequestSchema,
+    response: documentRepairResponseSchema.nullable()
+  },
+  [ipcChannels.documentFallback]: {
+    request: documentFallbackRequestSchema,
+    response: documentFallbackResponseSchema.nullable()
+  },
   [ipcChannels.assistantGetConversation]: {
     request: assistantConversationRequestSchema,
     response: assistantConversationResponseSchema
@@ -370,6 +391,10 @@ export const ipcContracts = {
   [ipcChannels.assistantSend]: {
     request: assistantSendRequestSchema,
     response: assistantExchangeSchema
+  },
+  [ipcChannels.assistantCancel]: {
+    request: assistantCancelRequestSchema,
+    response: assistantCancelResponseSchema
   },
   [ipcChannels.assistantConfirm]: {
     request: assistantConfirmRequestSchema,
@@ -405,6 +430,10 @@ export const ipcContracts = {
   },
   [ipcChannels.flexModelSetEnabled]: {
     request: flexModelSetEnabledRequestSchema,
+    response: flexModelStatusSchema
+  },
+  [ipcChannels.flexModelConfigure]: {
+    request: flexModelConfigureRequestSchema,
     response: flexModelStatusSchema
   },
   [ipcChannels.voiceGetInfo]: {
@@ -510,12 +539,22 @@ export interface RemindMeBridge {
   discardDocumentSelection: (
     selectionId: string
   ) => Promise<z.infer<typeof documentDiscardResponseSchema>>
+  repairDocumentDisagreement: (
+    input: z.infer<typeof documentRepairRequestSchema>
+  ) => Promise<z.infer<typeof documentRepairResponseSchema> | null>
+  groupDocumentCoverageGap: (
+    input: z.infer<typeof documentFallbackRequestSchema>
+  ) => Promise<z.infer<typeof documentFallbackResponseSchema> | null>
   getAssistantConversation: (
     conversationId?: string | null
   ) => Promise<z.infer<typeof assistantConversationResponseSchema>>
   sendAssistantMessage: (
     input: z.infer<typeof assistantSendRequestSchema>
   ) => Promise<z.infer<typeof assistantExchangeSchema>>
+  cancelAssistantMessage: (
+    streamId: string
+  ) => Promise<z.infer<typeof assistantCancelResponseSchema>>
+  onAssistantStream: (listener: (event: AssistantStreamEvent) => void) => () => void
   confirmAssistantProposal: (
     input: z.infer<typeof assistantConfirmRequestSchema>
   ) => Promise<z.infer<typeof assistantExchangeSchema>>
@@ -533,6 +572,9 @@ export interface RemindMeBridge {
   cancelFlexModelInstall: () => Promise<z.infer<typeof flexModelStatusSchema>>
   removeFlexModel: () => Promise<z.infer<typeof flexModelStatusSchema>>
   setFlexModelEnabled: (enabled: boolean) => Promise<z.infer<typeof flexModelStatusSchema>>
+  configureFlexModel: (
+    input: z.infer<typeof flexModelConfigureRequestSchema>
+  ) => Promise<z.infer<typeof flexModelStatusSchema>>
   onFlexModelProgress: (listener: (event: FlexModelProgressEvent) => void) => () => void
   getVoiceInfo: () => Promise<z.infer<typeof voiceRuntimeInfoSchema>>
   warmVoiceModel: (jobId: string) => Promise<z.infer<typeof voiceRuntimeInfoSchema>>

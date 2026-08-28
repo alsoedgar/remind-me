@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "tiers": {
+    "compact": {
+      "fullRequestP95Ms": 180000,
+      "warmPlanP95Ms": 120000,
+      "warmChatP95Ms": 120000,
+      "firstTokenP95Ms": 100000,
+      "peakWorkerRssMiB": 3584
+    },
+    "balanced": {
+      "fullRequestP95Ms": 150000,
+      "warmPlanP95Ms": 90000,
+      "warmChatP95Ms": 90000,
+      "firstTokenP95Ms": 75000,
+      "peakWorkerRssMiB": 3584
+    },
+    "performance": {
+      "fullRequestP95Ms": 120000,
+      "warmPlanP95Ms": 60000,
+      "warmChatP95Ms": 60000,
+      "firstTokenP95Ms": 45000,
+      "peakWorkerRssMiB": 3584
+    }
+  }
+}

@@ -54,6 +54,40 @@ TIME_EXPRESSION_PATTERN = re.compile(
 ROUTES = ["calendar", "conversation", "memory", "broad-chat", "app", "document"]
 COUNT_LABELS = ["1", "2", "3"]
 CONTEXT_LABELS = ["standalone", "contextual"]
+DIALOGUE_RELATION_LABELS = ["standalone", "follow-up", "new-topic"]
+REQUESTED_ATTRIBUTE_LABELS = [
+    "none",
+    "name",
+    "time",
+    "start",
+    "end",
+    "date",
+    "location",
+    "duration",
+    "notes",
+    "recurrence",
+    "details",
+]
+SCOPE_LABELS = ["none", "singular", "plural", "all"]
+SELECTION_LABELS = ["none", "first", "second", "third", "last", "next", "subset"]
+TURN_KIND_LABELS = [
+    "calendar-read",
+    "calendar-write",
+    "conversation",
+    "memory",
+    "unclear",
+]
+ASSISTANT_HEAD_NAMES = (
+    "route",
+    "capability",
+    "count",
+    "context",
+    "dialogue_relation",
+    "attribute",
+    "scope",
+    "selection",
+    "turn_kind",
+)
 MARKER_PATTERN = re.compile(r"<([A-Z][A-Z0-9_]*)>")
 CAPABILITY_ROUTE_BY_ID: dict[str, str] = {}
 CAPABILITY_CUES_BY_ID: dict[str, list[str]] = {}
@@ -459,6 +493,18 @@ def metadata_examples(capability: dict[str, Any]) -> list[str]:
     return list(dict.fromkeys(normalize_text(value) for value in values if value.strip()))
 
 
+def turn_kind_for_capability(capability_id: str) -> str:
+    if capability_id in {"assistant.clarify", "assistant.reject", "assistant.unsupported"}:
+        return "unclear"
+    if capability_id.startswith("assistant.memory."):
+        return "memory"
+    if capability_id.startswith("calendar.query.") or capability_id == "calendar.export.file":
+        return "calendar-read"
+    if capability_id.startswith("calendar."):
+        return "calendar-write"
+    return "conversation"
+
+
 def load_teacher_training_surfaces(
     metadata: Sequence[dict[str, Any]],
     *,
@@ -642,6 +688,20 @@ def build_training_items(
             output["context"].append(
                 (turn_ids, indexes["context"]["contextual" if row.get("context") else "standalone"])
             )
+            semantics = row["semantics"]
+            output["dialogue_relation"].append(
+                (turn_ids, indexes["dialogue_relation"][semantics["dialogueRelation"]])
+            )
+            output["attribute"].append(
+                (turn_ids, indexes["attribute"][semantics["requestedAttribute"]])
+            )
+            output["scope"].append((turn_ids, indexes["scope"][semantics["scope"]]))
+            output["selection"].append(
+                (turn_ids, indexes["selection"][semantics["selection"]])
+            )
+            output["turn_kind"].append(
+                (turn_ids, indexes["turn_kind"][semantics["turnKind"]])
+            )
             segments = action_segments(text, expected_count)
             for action_index, (segment, action) in enumerate(zip(segments, row["actions"], strict=True)):
                 ids = feature_ids(
@@ -662,6 +722,12 @@ def build_training_items(
         for text in metadata_examples(capability):
             turn_ids = feature_ids(turn_feature_names(text, None, **flags), buckets)
             output["route"].append((turn_ids, indexes["route"][capability["route"]]))
+            output["turn_kind"].append(
+                (
+                    turn_ids,
+                    indexes["turn_kind"][turn_kind_for_capability(capability["id"])],
+                )
+            )
             capability_ids = feature_ids(
                 capability_feature_names(text, text, 0, 1, None, **flags), buckets
             )
@@ -682,7 +748,7 @@ def train_candidate(
     print(f"training candidate buckets={buckets} flags={flags}")
     items = build_training_items(rows, metadata, labels, buckets, flags)
     arrays: dict[str, np.ndarray] = {}
-    for head_index, name in enumerate(("route", "capability", "count", "context")):
+    for head_index, name in enumerate(ASSISTANT_HEAD_NAMES):
         print(f" {name} head ({len(items[name])} raw examples)")
         weights, bias = train_ensemble(
             items[name],
@@ -714,6 +780,11 @@ def calibrate(
             ("route", row["route"]),
             ("count", str(count)),
             ("context", "contextual" if row.get("context") else "standalone"),
+            ("dialogue_relation", row["semantics"]["dialogueRelation"]),
+            ("attribute", row["semantics"]["requestedAttribute"]),
+            ("scope", row["semantics"]["scope"]),
+            ("selection", row["semantics"]["selection"]),
+            ("turn_kind", row["semantics"]["turnKind"]),
         ):
             logits[name].append(scores(arrays[f"{name}_weights"], arrays[f"{name}_bias"], turn_ids))
             expected[name].append(indexes[name][label])
@@ -732,7 +803,7 @@ def calibrate(
             expected["capability"].append(indexes["capability"][action["capabilityId"]])
     return {
         name: calibrate_temperature(logits[name], expected[name])
-        for name in ("route", "capability", "count", "context")
+        for name in ASSISTANT_HEAD_NAMES
     }
 
 
@@ -760,6 +831,15 @@ def evaluate(
         context_index, context_confidence, context_probabilities = predict_head(
             arrays["context_weights"], arrays["context_bias"], turn_ids, temperatures["context"]
         )
+        semantic_predictions: dict[str, tuple[int, float]] = {}
+        for name in ("dialogue_relation", "attribute", "scope", "selection", "turn_kind"):
+            index, confidence, _ = predict_head(
+                arrays[f"{name}_weights"],
+                arrays[f"{name}_bias"],
+                turn_ids,
+                temperatures[name],
+            )
+            semantic_predictions[name] = (index, confidence)
         learned_action_count = int(labels["count"][count_index])
         action_count = deterministic_action_count(row["text"]) or learned_action_count
         capabilities: list[str] = []
@@ -835,6 +915,21 @@ def evaluate(
                 "context": labels["context"][context_index],
                 "contextConfidence": context_confidence,
                 "contextRequiredProbability": float(context_probabilities[1]),
+                "dialogueRelation": labels["dialogue_relation"][
+                    semantic_predictions["dialogue_relation"][0]
+                ],
+                "dialogueRelationConfidence": semantic_predictions["dialogue_relation"][1],
+                "requestedAttribute": labels["attribute"][semantic_predictions["attribute"][0]],
+                "requestedAttributeConfidence": semantic_predictions["attribute"][1],
+                "scope": labels["scope"][semantic_predictions["scope"][0]],
+                "scopeConfidence": semantic_predictions["scope"][1],
+                "selection": labels["selection"][semantic_predictions["selection"][0]],
+                "selectionConfidence": semantic_predictions["selection"][1],
+                "turnKind": labels["turn_kind"][semantic_predictions["turn_kind"][0]],
+                "turnKindConfidence": semantic_predictions["turn_kind"][1],
+                "semanticConfidence": min(
+                    confidence for _, confidence in semantic_predictions.values()
+                ),
                 "confidence": confidence,
                 "planConfidence": plan_confidence,
                 "correct": correct,
@@ -869,6 +964,26 @@ def evaluate(
             for value, row in zip(predictions, rows, strict=True)
         ) / total,
         "contextRecall": sum(predictions[index]["context"] == "contextual" for index in contextual) / max(1, len(contextual)),
+        "dialogueRelationAccuracy": sum(
+            value["dialogueRelation"] == row["semantics"]["dialogueRelation"]
+            for value, row in zip(predictions, rows, strict=True)
+        ) / total,
+        "requestedAttributeAccuracy": sum(
+            value["requestedAttribute"] == row["semantics"]["requestedAttribute"]
+            for value, row in zip(predictions, rows, strict=True)
+        ) / total,
+        "scopeAccuracy": sum(
+            value["scope"] == row["semantics"]["scope"]
+            for value, row in zip(predictions, rows, strict=True)
+        ) / total,
+        "selectionAccuracy": sum(
+            value["selection"] == row["semantics"]["selection"]
+            for value, row in zip(predictions, rows, strict=True)
+        ) / total,
+        "turnKindAccuracy": sum(
+            value["turnKind"] == row["semantics"]["turnKind"]
+            for value, row in zip(predictions, rows, strict=True)
+        ) / total,
         "selectiveExamples": len(eligible),
         "selectivePrecision": sum(predictions[index]["routingCorrect"] for index in eligible) / max(1, len(eligible)),
         "selectiveCoverage": len(eligible) / total,
@@ -905,7 +1020,7 @@ def choose_routing_threshold(
 
 def dequantized_arrays(arrays: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
     output: dict[str, np.ndarray] = {}
-    for name in ("route", "capability", "count", "context"):
+    for name in ASSISTANT_HEAD_NAMES:
         quantized, scale = quantize(arrays[f"{name}_weights"])
         output[f"{name}_weights"] = quantized.astype(np.float32) * scale[:, None]
         output[f"{name}_bias"] = arrays[f"{name}_bias"]
@@ -1024,6 +1139,31 @@ def gate_results(
             gates["minimumChallengeSelectiveCoverage"],
             ">=",
         ),
+        "challengeDialogueRelationAccuracy": (
+            challenge["dialogueRelationAccuracy"],
+            gates["minimumChallengeDialogueRelationAccuracy"],
+            ">=",
+        ),
+        "challengeRequestedAttributeAccuracy": (
+            challenge["requestedAttributeAccuracy"],
+            gates["minimumChallengeRequestedAttributeAccuracy"],
+            ">=",
+        ),
+        "challengeScopeAccuracy": (
+            challenge["scopeAccuracy"],
+            gates["minimumChallengeScopeAccuracy"],
+            ">=",
+        ),
+        "challengeSelectionAccuracy": (
+            challenge["selectionAccuracy"],
+            gates["minimumChallengeSelectionAccuracy"],
+            ">=",
+        ),
+        "challengeTurnKindAccuracy": (
+            challenge["turnKindAccuracy"],
+            gates["minimumChallengeTurnKindAccuracy"],
+            ">=",
+        ),
         "quantizedExactAccuracyReduction": (
             max(0.0, challenge["exactSequenceAccuracy"] - quantized["exactSequenceAccuracy"]),
             gates["maximumQuantizedExactAccuracyReduction"],
@@ -1059,14 +1199,14 @@ def build_artifact(
         len(head["labels"]) * int(head["buckets"]) for head in base_artifact["heads"].values()
     )
     next_parameter_count = sum(
-        int(arrays[f"{name}_weights"].size) for name in ("route", "capability", "count", "context")
+        int(arrays[f"{name}_weights"].size) for name in ASSISTANT_HEAD_NAMES
     )
     payload = json.loads(json.dumps(base_artifact))
     payload["id"] = config["modelId"]
     payload["version"] = config["version"]
     payload["architecture"] = {
         **payload["architecture"],
-        "name": "HashFrame Next joint semantic and AssistantPlan advisory planner",
+        "name": "HashFrame Context joint semantic and AssistantPlan advisory planner",
         "parameterCount": base_parameter_count + next_parameter_count,
         "heads": [
             "operation",
@@ -1078,6 +1218,11 @@ def build_artifact(
             "assistant-capability",
             "assistant-action-count",
             "assistant-context",
+            "assistant-dialogue-relation",
+            "assistant-requested-attribute",
+            "assistant-scope",
+            "assistant-selection",
+            "assistant-turn-kind",
         ],
     }
     corpus_manifest_sha = sha256_bytes(CORPUS_MANIFEST_PATH.read_bytes())
@@ -1092,7 +1237,7 @@ def build_artifact(
         "assistantStudentInitialization": "all added tables initialized to exact zeros",
     }
     payload["assistant"] = {
-        "schemaVersion": 1,
+        "schemaVersion": 2,
         "buckets": buckets,
         "maximumActions": int(config["maximumActions"]),
         "routes": labels["route"],
@@ -1122,12 +1267,48 @@ def build_artifact(
             "context": head_payload(
                 "assistant-context", labels["context"], arrays["context_weights"], arrays["context_bias"], temperatures["context"]
             ),
+            "dialogueRelation": head_payload(
+                "assistant-dialogue-relation",
+                labels["dialogue_relation"],
+                arrays["dialogue_relation_weights"],
+                arrays["dialogue_relation_bias"],
+                temperatures["dialogue_relation"],
+            ),
+            "requestedAttribute": head_payload(
+                "assistant-requested-attribute",
+                labels["attribute"],
+                arrays["attribute_weights"],
+                arrays["attribute_bias"],
+                temperatures["attribute"],
+            ),
+            "scope": head_payload(
+                "assistant-scope",
+                labels["scope"],
+                arrays["scope_weights"],
+                arrays["scope_bias"],
+                temperatures["scope"],
+            ),
+            "selection": head_payload(
+                "assistant-selection",
+                labels["selection"],
+                arrays["selection_weights"],
+                arrays["selection_bias"],
+                temperatures["selection"],
+            ),
+            "turnKind": head_payload(
+                "assistant-turn-kind",
+                labels["turn_kind"],
+                arrays["turn_kind_weights"],
+                arrays["turn_kind_bias"],
+                temperatures["turn_kind"],
+            ),
         },
         "thresholds": {
             "routingAssistanceConfidence": routing_threshold,
             "safeAdvisoryRoutes": ["calendar"],
             "minimumDevelopmentPrecision": config["minimumDevelopmentSelectivePrecision"],
             "contextRequiredNeedsTypedContext": True,
+            "semanticOutputsAdvisoryOnly": True,
             "neverCreatesPlans": True,
             "neverWritesDatabase": True,
         },
@@ -1147,6 +1328,7 @@ def build_artifact(
             "pretrainedWeightsUsed": False,
             "personalDataUsed": False,
             "humanBlindExamplesUsed": 0,
+            "semanticCoverage": corpus_manifest["semanticCoverage"],
         },
         "metrics": metrics,
     }
@@ -1289,8 +1471,8 @@ def write_report(report: dict[str, Any]) -> None:
             [
                 "# RemindCore Next model card",
                 "",
-                f"**Status:** {status}  ",
-                f"**Version:** {report['version']}  ",
+                f"**Status:** {status}",
+                f"**Version:** {report['version']}",
                 f"**Selected capacity:** {selected['buckets']} hash buckets",
                 "",
                 "The added student heads are project-owned, zero-initialized classifiers trained from scratch. Qwen supplied only deterministically curated wording; no Qwen weights, private user data, or conversation logs were used.",
@@ -1302,6 +1484,11 @@ def write_report(report: dict[str, Any]) -> None:
                 f"- Exact ordered sequence accuracy: {challenge['exactSequenceAccuracy']:.1%}",
                 f"- Multi-action exact accuracy: {challenge['multiActionExactAccuracy']:.1%}",
                 f"- Selective routing precision/coverage: {challenge['selectivePrecision']:.1%} / {challenge['selectiveCoverage']:.1%}",
+                f"- Dialogue relation accuracy: {challenge['dialogueRelationAccuracy']:.1%}",
+                f"- Requested attribute accuracy: {challenge['requestedAttributeAccuracy']:.1%}",
+                f"- Scope accuracy: {challenge['scopeAccuracy']:.1%}",
+                f"- Selection accuracy: {challenge['selectionAccuracy']:.1%}",
+                f"- Turn-kind accuracy: {challenge['turnKindAccuracy']:.1%}",
                 "",
                 f"The challenge was evaluated in {report['provenance']['developerChallengeEvaluationRounds']} recorded engineering rounds while the generic multi-action decoder and runtime parity were corrected. It is not untouched or independently human-blind. The honest human-blind count remains zero until Phase 8. The model is advisory only and cannot resolve, confirm, execute, or persist an action.",
                 "",
@@ -1347,6 +1534,11 @@ def main() -> None:
         "capability": capability_labels,
         "count": COUNT_LABELS,
         "context": CONTEXT_LABELS,
+        "dialogue_relation": DIALOGUE_RELATION_LABELS,
+        "attribute": REQUESTED_ATTRIBUTE_LABELS,
+        "scope": SCOPE_LABELS,
+        "selection": SELECTION_LABELS,
+        "turn_kind": TURN_KIND_LABELS,
     }
     train_rows = read_jsonl(CORPUS_ROOT / "train.jsonl")
     development_rows = read_jsonl(CORPUS_ROOT / "development.jsonl")

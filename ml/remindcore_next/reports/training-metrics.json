@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
-  "modelId": "remindcore-hashframe-next-en-qwen-assisted",
-  "version": "0.3.0",
+  "modelId": "remindcore-hashframe-context-en-qwen-assisted",
+  "version": "0.4.0",
   "promoted": true,
   "selection": {
-    "buckets": 8192,
+    "buckets": 4096,
     "featureProfile": "no-character-ngrams",
     "featureFlags": {
       "include_char": false,
@@ -12,21 +12,26 @@
       "include_context": true
     },
     "development": {
-      "examples": 199,
-      "routeAccuracy": 0.9095477386934674,
-      "firstCapabilityAccuracy": 0.7185929648241206,
-      "actionCountAccuracy": 0.9597989949748744,
-      "exactSequenceAccuracy": 0.7035175879396985,
-      "exactPlanAccuracy": 0.7035175879396985,
+      "examples": 263,
+      "routeAccuracy": 0.9049429657794676,
+      "firstCapabilityAccuracy": 0.7224334600760456,
+      "actionCountAccuracy": 0.9657794676806084,
+      "exactSequenceAccuracy": 0.7110266159695817,
+      "exactPlanAccuracy": 0.7110266159695817,
       "multiActionExactAccuracy": 1.0,
-      "contextAccuracy": 0.9698492462311558,
-      "contextRecall": 0.5,
+      "contextAccuracy": 0.9695817490494296,
+      "contextRecall": 0.8181818181818182,
+      "dialogueRelationAccuracy": 0.9277566539923955,
+      "requestedAttributeAccuracy": 0.8479087452471483,
+      "scopeAccuracy": 0.9277566539923955,
+      "selectionAccuracy": 0.9771863117870723,
+      "turnKindAccuracy": 0.8783269961977186,
       "selectiveExamples": 0,
       "selectivePrecision": 0.0,
       "selectiveCoverage": 0.0,
       "latencyMs": {
-        "median": 1.789500005543232,
-        "p95": 3.9907899918034673
+        "median": 1.9131000153720379,
+        "p95": 4.812160052824763
       }
     },
     "developmentSelectiveViable": true
@@ -35,63 +40,78 @@
     {
       "buckets": 4096,
       "development": {
-        "examples": 199,
-        "routeAccuracy": 0.8994974874371859,
-        "firstCapabilityAccuracy": 0.7085427135678392,
-        "actionCountAccuracy": 0.9698492462311558,
-        "exactSequenceAccuracy": 0.6934673366834171,
-        "exactPlanAccuracy": 0.6934673366834171,
+        "examples": 263,
+        "routeAccuracy": 0.908745247148289,
+        "firstCapabilityAccuracy": 0.7300380228136882,
+        "actionCountAccuracy": 0.9657794676806084,
+        "exactSequenceAccuracy": 0.714828897338403,
+        "exactPlanAccuracy": 0.714828897338403,
         "multiActionExactAccuracy": 1.0,
-        "contextAccuracy": 0.9597989949748744,
-        "contextRecall": 0.5,
+        "contextAccuracy": 0.9315589353612167,
+        "contextRecall": 0.5909090909090909,
+        "dialogueRelationAccuracy": 0.908745247148289,
+        "requestedAttributeAccuracy": 0.8555133079847909,
+        "scopeAccuracy": 0.935361216730038,
+        "selectionAccuracy": 0.9809885931558935,
+        "turnKindAccuracy": 0.9049429657794676,
         "selectiveExamples": 0,
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 2.2595999762415886,
-          "p95": 4.2357900412753215
+          "median": 2.287300070747733,
+          "p95": 4.835450032260269
         }
       }
     },
     {
       "buckets": 8192,
       "development": {
-        "examples": 199,
-        "routeAccuracy": 0.9095477386934674,
-        "firstCapabilityAccuracy": 0.7236180904522613,
-        "actionCountAccuracy": 0.9698492462311558,
-        "exactSequenceAccuracy": 0.7085427135678392,
-        "exactPlanAccuracy": 0.7085427135678392,
+        "examples": 263,
+        "routeAccuracy": 0.9163498098859315,
+        "firstCapabilityAccuracy": 0.7262357414448669,
+        "actionCountAccuracy": 0.9657794676806084,
+        "exactSequenceAccuracy": 0.7072243346007605,
+        "exactPlanAccuracy": 0.7072243346007605,
         "multiActionExactAccuracy": 1.0,
-        "contextAccuracy": 0.9597989949748744,
-        "contextRecall": 0.5,
+        "contextAccuracy": 0.935361216730038,
+        "contextRecall": 0.6363636363636364,
+        "dialogueRelationAccuracy": 0.9201520912547528,
+        "requestedAttributeAccuracy": 0.8479087452471483,
+        "scopeAccuracy": 0.908745247148289,
+        "selectionAccuracy": 0.9695817490494296,
+        "turnKindAccuracy": 0.870722433460076,
         "selectiveExamples": 0,
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 2.7127000503242016,
-          "p95": 5.80664004664868
+          "median": 2.389799919910729,
+          "p95": 4.841509915422639
         }
       }
     },
     {
       "buckets": 16384,
       "development": {
-        "examples": 199,
-        "routeAccuracy": 0.9246231155778895,
-        "firstCapabilityAccuracy": 0.7286432160804021,
-        "actionCountAccuracy": 0.9698492462311558,
-        "exactSequenceAccuracy": 0.7185929648241206,
-        "exactPlanAccuracy": 0.7185929648241206,
+        "examples": 263,
+        "routeAccuracy": 0.9277566539923955,
+        "firstCapabilityAccuracy": 0.7300380228136882,
+        "actionCountAccuracy": 0.9657794676806084,
+        "exactSequenceAccuracy": 0.7186311787072244,
+        "exactPlanAccuracy": 0.7186311787072244,
         "multiActionExactAccuracy": 1.0,
-        "contextAccuracy": 0.9597989949748744,
-        "contextRecall": 0.5,
+        "contextAccuracy": 0.9543726235741445,
+        "contextRecall": 0.7272727272727273,
+        "dialogueRelationAccuracy": 0.9201520912547528,
+        "requestedAttributeAccuracy": 0.8555133079847909,
+        "scopeAccuracy": 0.9201520912547528,
+        "selectionAccuracy": 0.9695817490494296,
+        "turnKindAccuracy": 0.8517110266159695,
         "selectiveExamples": 0,
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 2.359400037676096,
-          "p95": 4.612359951715916
+          "median": 2.584800007753074,
+          "p95": 6.211599952075622
         }
       }
     }
@@ -100,154 +120,184 @@
     {
       "name": "no-character-ngrams",
       "development": {
-        "examples": 199,
-        "routeAccuracy": 0.9095477386934674,
-        "firstCapabilityAccuracy": 0.7185929648241206,
-        "actionCountAccuracy": 0.9597989949748744,
-        "exactSequenceAccuracy": 0.7035175879396985,
-        "exactPlanAccuracy": 0.7035175879396985,
+        "examples": 263,
+        "routeAccuracy": 0.9049429657794676,
+        "firstCapabilityAccuracy": 0.7224334600760456,
+        "actionCountAccuracy": 0.9657794676806084,
+        "exactSequenceAccuracy": 0.7110266159695817,
+        "exactPlanAccuracy": 0.7110266159695817,
         "multiActionExactAccuracy": 1.0,
-        "contextAccuracy": 0.9698492462311558,
-        "contextRecall": 0.5,
+        "contextAccuracy": 0.9695817490494296,
+        "contextRecall": 0.8181818181818182,
+        "dialogueRelationAccuracy": 0.9277566539923955,
+        "requestedAttributeAccuracy": 0.8479087452471483,
+        "scopeAccuracy": 0.9277566539923955,
+        "selectionAccuracy": 0.9771863117870723,
+        "turnKindAccuracy": 0.8783269961977186,
         "selectiveExamples": 0,
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 1.789500005543232,
-          "p95": 3.9907899918034673
+          "median": 1.9131000153720379,
+          "p95": 4.812160052824763
         }
       }
     },
     {
       "name": "no-project-signals",
       "development": {
-        "examples": 199,
-        "routeAccuracy": 0.9246231155778895,
-        "firstCapabilityAccuracy": 0.7336683417085427,
-        "actionCountAccuracy": 0.9698492462311558,
-        "exactSequenceAccuracy": 0.7236180904522613,
-        "exactPlanAccuracy": 0.7236180904522613,
+        "examples": 263,
+        "routeAccuracy": 0.9125475285171103,
+        "firstCapabilityAccuracy": 0.7110266159695817,
+        "actionCountAccuracy": 0.9505703422053232,
+        "exactSequenceAccuracy": 0.6844106463878327,
+        "exactPlanAccuracy": 0.6844106463878327,
         "multiActionExactAccuracy": 1.0,
-        "contextAccuracy": 0.9597989949748744,
-        "contextRecall": 0.3333333333333333,
+        "contextAccuracy": 0.9429657794676806,
+        "contextRecall": 0.6590909090909091,
+        "dialogueRelationAccuracy": 0.9125475285171103,
+        "requestedAttributeAccuracy": 0.8517110266159695,
+        "scopeAccuracy": 0.9201520912547528,
+        "selectionAccuracy": 0.9695817490494296,
+        "turnKindAccuracy": 0.9049429657794676,
         "selectiveExamples": 0,
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 2.040299936197698,
-          "p95": 3.9406900759786367
+          "median": 2.213100087828934,
+          "p95": 4.942910058889534
         }
       }
     },
     {
       "name": "no-typed-context",
       "development": {
-        "examples": 199,
-        "routeAccuracy": 0.9246231155778895,
-        "firstCapabilityAccuracy": 0.7386934673366834,
-        "actionCountAccuracy": 0.9698492462311558,
-        "exactSequenceAccuracy": 0.7236180904522613,
-        "exactPlanAccuracy": 0.7236180904522613,
+        "examples": 263,
+        "routeAccuracy": 0.9049429657794676,
+        "firstCapabilityAccuracy": 0.7262357414448669,
+        "actionCountAccuracy": 0.9657794676806084,
+        "exactSequenceAccuracy": 0.7110266159695817,
+        "exactPlanAccuracy": 0.7110266159695817,
         "multiActionExactAccuracy": 1.0,
-        "contextAccuracy": 0.9246231155778895,
-        "contextRecall": 0.08333333333333333,
+        "contextAccuracy": 0.8973384030418251,
+        "contextRecall": 0.5,
+        "dialogueRelationAccuracy": 0.8821292775665399,
+        "requestedAttributeAccuracy": 0.8479087452471483,
+        "scopeAccuracy": 0.908745247148289,
+        "selectionAccuracy": 0.9619771863117871,
+        "turnKindAccuracy": 0.8973384030418251,
         "selectiveExamples": 0,
         "selectivePrecision": 0.0,
         "selectiveCoverage": 0.0,
         "latencyMs": {
-          "median": 2.2761999862268567,
-          "p95": 4.510570003185421
+          "median": 2.4933000095188618,
+          "p95": 5.943380005192004
         }
       }
     }
   ],
   "development": {
-    "examples": 199,
-    "routeAccuracy": 0.9095477386934674,
-    "firstCapabilityAccuracy": 0.7185929648241206,
-    "actionCountAccuracy": 0.9597989949748744,
-    "exactSequenceAccuracy": 0.7035175879396985,
-    "exactPlanAccuracy": 0.7035175879396985,
+    "examples": 263,
+    "routeAccuracy": 0.9049429657794676,
+    "firstCapabilityAccuracy": 0.7224334600760456,
+    "actionCountAccuracy": 0.9657794676806084,
+    "exactSequenceAccuracy": 0.7110266159695817,
+    "exactPlanAccuracy": 0.7110266159695817,
     "multiActionExactAccuracy": 1.0,
-    "contextAccuracy": 0.9698492462311558,
-    "contextRecall": 0.5,
-    "selectiveExamples": 31,
+    "contextAccuracy": 0.9695817490494296,
+    "contextRecall": 0.8181818181818182,
+    "dialogueRelationAccuracy": 0.9277566539923955,
+    "requestedAttributeAccuracy": 0.8479087452471483,
+    "scopeAccuracy": 0.9277566539923955,
+    "selectionAccuracy": 0.9771863117870723,
+    "turnKindAccuracy": 0.8783269961977186,
+    "selectiveExamples": 60,
     "selectivePrecision": 1.0,
-    "selectiveCoverage": 0.15577889447236182,
+    "selectiveCoverage": 0.22813688212927757,
     "latencyMs": {
-      "median": 1.690999954007566,
-      "p95": 3.382690018042922
+      "median": 1.8458000849932432,
+      "p95": 3.5931199206970623
     }
   },
   "challenge": {
-    "examples": 293,
-    "routeAccuracy": 0.9044368600682594,
-    "firstCapabilityAccuracy": 0.6416382252559727,
-    "actionCountAccuracy": 0.8805460750853242,
-    "exactSequenceAccuracy": 0.5255972696245734,
-    "exactPlanAccuracy": 0.5255972696245734,
-    "multiActionExactAccuracy": 0.6956521739130435,
-    "contextAccuracy": 0.9897610921501706,
-    "contextRecall": 0.625,
-    "selectiveExamples": 32,
+    "examples": 390,
+    "routeAccuracy": 0.8948717948717949,
+    "firstCapabilityAccuracy": 0.6025641025641025,
+    "actionCountAccuracy": 0.9102564102564102,
+    "exactSequenceAccuracy": 0.5102564102564102,
+    "exactPlanAccuracy": 0.5102564102564102,
+    "multiActionExactAccuracy": 0.6071428571428571,
+    "contextAccuracy": 0.9871794871794872,
+    "contextRecall": 0.927536231884058,
+    "dialogueRelationAccuracy": 0.958974358974359,
+    "requestedAttributeAccuracy": 0.8717948717948718,
+    "scopeAccuracy": 0.9717948717948718,
+    "selectionAccuracy": 0.9358974358974359,
+    "turnKindAccuracy": 0.8589743589743589,
+    "selectiveExamples": 60,
     "selectivePrecision": 1.0,
-    "selectiveCoverage": 0.10921501706484642,
+    "selectiveCoverage": 0.15384615384615385,
     "latencyMs": {
-      "median": 1.64020003285259,
-      "p95": 3.7536399671807827
+      "median": 1.7616499681025743,
+      "p95": 4.047664953395715
     }
   },
   "quantizedChallenge": {
-    "examples": 293,
-    "routeAccuracy": 0.9044368600682594,
-    "firstCapabilityAccuracy": 0.6382252559726962,
-    "actionCountAccuracy": 0.8805460750853242,
-    "exactSequenceAccuracy": 0.5221843003412969,
-    "exactPlanAccuracy": 0.5221843003412969,
-    "multiActionExactAccuracy": 0.6956521739130435,
-    "contextAccuracy": 0.9897610921501706,
-    "contextRecall": 0.625,
-    "selectiveExamples": 32,
+    "examples": 390,
+    "routeAccuracy": 0.8923076923076924,
+    "firstCapabilityAccuracy": 0.6,
+    "actionCountAccuracy": 0.9102564102564102,
+    "exactSequenceAccuracy": 0.5076923076923077,
+    "exactPlanAccuracy": 0.5076923076923077,
+    "multiActionExactAccuracy": 0.6071428571428571,
+    "contextAccuracy": 0.9871794871794872,
+    "contextRecall": 0.927536231884058,
+    "dialogueRelationAccuracy": 0.958974358974359,
+    "requestedAttributeAccuracy": 0.8717948717948718,
+    "scopeAccuracy": 0.9717948717948718,
+    "selectionAccuracy": 0.9358974358974359,
+    "turnKindAccuracy": 0.8589743589743589,
+    "selectiveExamples": 60,
     "selectivePrecision": 1.0,
-    "selectiveCoverage": 0.10921501706484642,
+    "selectiveCoverage": 0.15384615384615385,
     "latencyMs": {
-      "median": 1.6533000161871314,
-      "p95": 3.566319961100814
+      "median": 1.7363500082865357,
+      "p95": 4.1346299229189745
     }
   },
   "shippedBaseline": {
-    "routeAccuracy": 0.5187713310580204,
-    "firstCapabilityAccuracy": 0.2832764505119454,
-    "exactSequenceAccuracy": 0.26621160409556316
+    "routeAccuracy": 0.5307692307692308,
+    "firstCapabilityAccuracy": 0.24871794871794872,
+    "exactSequenceAccuracy": 0.2358974358974359
   },
   "routingThreshold": 0.85,
   "gates": {
     "challengeRouteAccuracy": {
-      "actual": 0.9044368600682594,
+      "actual": 0.8948717948717949,
       "required": 0.8,
       "comparison": ">=",
       "passed": true
     },
     "challengeFirstCapabilityAccuracy": {
-      "actual": 0.6416382252559727,
+      "actual": 0.6025641025641025,
       "required": 0.6,
       "comparison": ">=",
       "passed": true
     },
     "challengeExactSequenceAccuracy": {
-      "actual": 0.5255972696245734,
+      "actual": 0.5102564102564102,
       "required": 0.5,
       "comparison": ">=",
       "passed": true
     },
     "challengeMultiActionExactAccuracy": {
-      "actual": 0.6956521739130435,
+      "actual": 0.6071428571428571,
       "required": 0.4,
       "comparison": ">=",
       "passed": true
     },
     "gainOverShippedBaseline": {
-      "actual": 0.25938566552901027,
+      "actual": 0.27435897435897433,
       "required": 0.18,
       "comparison": ">=",
       "passed": true
@@ -259,13 +309,43 @@
       "passed": true
     },
     "challengeSelectiveCoverage": {
-      "actual": 0.10921501706484642,
+      "actual": 0.15384615384615385,
       "required": 0.04,
       "comparison": ">=",
       "passed": true
     },
+    "challengeDialogueRelationAccuracy": {
+      "actual": 0.958974358974359,
+      "required": 0.85,
+      "comparison": ">=",
+      "passed": true
+    },
+    "challengeRequestedAttributeAccuracy": {
+      "actual": 0.8717948717948718,
+      "required": 0.75,
+      "comparison": ">=",
+      "passed": true
+    },
+    "challengeScopeAccuracy": {
+      "actual": 0.9717948717948718,
+      "required": 0.8,
+      "comparison": ">=",
+      "passed": true
+    },
+    "challengeSelectionAccuracy": {
+      "actual": 0.9358974358974359,
+      "required": 0.8,
+      "comparison": ">=",
+      "passed": true
+    },
+    "challengeTurnKindAccuracy": {
+      "actual": 0.8589743589743589,
+      "required": 0.85,
+      "comparison": ">=",
+      "passed": true
+    },
     "quantizedExactAccuracyReduction": {
-      "actual": 0.0034129692832765013,
+      "actual": 0.002564102564102555,
       "required": 0.005,
       "comparison": "<=",
       "passed": true
@@ -307,23 +387,23 @@
   "artifacts": {
     "model": {
       "path": "models/remindcore/remindcore-v0.1-int8.json",
-      "bytes": 6537010,
-      "sha256": "06224cfce739861a5061e00b3a08ce61b05e0bafc5e27c1bdfaf711fae0d20ba"
+      "bytes": 6414443,
+      "sha256": "089d61f77873a5d27b298f30471304cd0a0f3df77e28df2155e705c928e5bc31"
     },
     "tokenizer": {
       "path": "models/remindcore/tokenizer.json",
       "bytes": 781,
-      "sha256": "8070d0e391130975ae1548548e824ba916d570a5d75dbb1fecb9d3e9b82bbcaf"
+      "sha256": "838579a468183434ec4c729eadd1a9b7223cd753367b55f4e4fb6440c587517c"
     },
     "thresholds": {
       "path": "models/remindcore/thresholds.json",
-      "bytes": 2267,
-      "sha256": "bb8b59f7f90c984d1358642959cc347e4c0d87f6c6e27846826c5c28536b67cf"
+      "bytes": 2309,
+      "sha256": "c1c7995df57f2222bc56107c6a1ff02c7649e05242f47b00ac1419586532e753"
     },
     "onnx": {
       "path": "models/remindcore/remindcore-v0.1-int8.onnx",
-      "bytes": 4901827,
-      "sha256": "3957ed9704183cf6e6b4efeef6942fc2b431051a0e51c23d642ee81f3c5ba02f"
+      "bytes": 4814754,
+      "sha256": "9610569024912a8de7a1b4cf4ab8c96689a7c43f58ae02f2641c7b7b146395f9"
     }
   }
 }

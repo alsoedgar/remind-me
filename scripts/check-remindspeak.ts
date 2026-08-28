@@ -157,10 +157,10 @@ const coveredSpeechActs = new Set(
     (key) => key.split(':')[0]
   )
 )
-assert(coveredSpeechActs.size === 18, 'Phase 6 must cover all 18 protected speech acts')
+assert(coveredSpeechActs.size === 22, 'Phase 5 must cover all 22 protected speech acts')
 assert(
-  artifact.training.projectAuthoredSurfaceAtoms === 432,
-  'Phase 6 project-authored phrase inventory must contain 432 atoms'
+  artifact.training.projectAuthoredSurfaceAtoms === 528,
+  'Phase 5 project-authored phrase inventory must contain 528 atoms'
 )
 assert(
   artifact.safety.localPreferenceBiasBounded === true,

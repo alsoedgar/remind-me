@@ -8,8 +8,8 @@ describe('PlanScan installation status', () => {
   it('loads the bundled scratch-model metadata used by app info', async () => {
     await expect(loadPlanScanInfo(modelRoot)).resolves.toMatchObject({
       available: true,
-      id: 'planscan-spatialhashgraph-5m-en',
-      version: '0.1.0',
+      id: 'planscan-spatialhashgraph-5m-en-phase6',
+      version: '0.2.0',
       architecture: 'SpatialHashGraph',
       parameterCount: 5_242_880,
       workingSetBytes: 5_242_880,

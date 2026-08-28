@@ -49,9 +49,10 @@ A workflow definition is not release certification. The artifact audit checks in
 ```bash
 pnpm verify
 pnpm package:dir
+pnpm documents:release:package
 pnpm package:audit
 pnpm package:installer
 pnpm package:artifacts:audit
 ```
 
-`verify` is the source/runtime gate. `package:audit` is the installed-layout gate. The packaged executable's `--smoke-test --offline-smoke` path exercises startup attestation, calendar and assistant writes, restore/undo, ASR cancellation/restart/idle unload, document assets, secure erase, and database health with Chromium networking disabled.
+`verify` is the source/runtime gate. `package:audit` is the installed-layout gate. The packaged executable's `--smoke-test --offline-smoke` path exercises startup attestation, calendar and assistant writes, restore/undo, ASR cancellation/restart/idle unload, document assets, secure erase, and database health with Chromium networking disabled. `documents:release:package` adds the document-specific installed-app gate: the real packaged worker must extract native PDF, offline OCR PDF/image, and multi-page recurrence cases; render aligned evidence; survive review edits; preserve the explicit confirmation boundary; reconcile repeat imports; commit atomically; and undo the batch on each supported platform.

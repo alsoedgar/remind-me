@@ -1,16 +1,16 @@
-# Model card — RemindSpeak PhraseLattice 28M English v0.3
+# Model card — RemindSpeak PhraseLattice 32M English v0.4
 
 ## Summary
 
 RemindSpeak is a compact conditional surface generator for calendar-assistant replies. It selects compatible lead, body, and close atoms from verified `ResponsePlan` metadata, composes candidates, and leaves all user/calendar values behind protected placeholders until independent validation succeeds.
 
-- Model ID: `remindspeak-phrase-lattice-28m-en-phase6`
-- Version: `0.3.0`
-- Parameters: 28,311,984 logical trainable table entries and biases
+- Model ID: `remindspeak-phrase-lattice-32m-en-context-boundaries`
+- Version: `0.4.0`
+- Parameters: 32,440,848 logical trainable table entries and biases
 - Initialization: zero
 - Quantization: symmetric INT8 per output channel
-- Installed JSON and compressed weights: 223,187 bytes
-- Decompressed weight memory: 28,311,552 bytes (27.0 MiB)
+- Installed JSON and compressed weights: 272,708 bytes
+- Decompressed weight memory: 32,440,320 bytes (30.9 MiB)
 - Teacher: Qwen3 1.7B Q4_K_M preference indices over protected project-authored candidates
 - Imported teacher or pretrained weights: none
 - Qwen-authored surface atoms admitted: 0
@@ -22,7 +22,7 @@ The logical parameter count includes the complete sparse hashed table. Most entr
 
 ## Intended use
 
-- Phrase 18 verified proposal, mutation receipt, availability, schedule, next-item, item-detail, empty-schedule, conversation, memory, undo, rejected-draft, clarification, conflict, unsupported, and error speech acts.
+- Phrase 22 verified proposal, mutation receipt, availability, schedule, next-item, item-detail, empty-schedule, conversation, memory, undo, rejected-draft, clarification, conflict, runtime-unavailable, offline-fact-limit, policy-boundary, unsupported, and error speech acts.
 - Respect local warmth, brevity, formality, playfulness, contraction, and proactivity controls.
 - Produce five candidates for validation, novelty, style, and optional private-preference reranking.
 - Fall back to grounded project-authored templates when loading, compatibility, validation, or selection fails.
@@ -31,17 +31,17 @@ It must not calculate calendar facts, infer missing facts, retrieve storage, alt
 
 ## Training data and architecture
 
-The reproducible base corpus contains 30,000 training, 5,000 development, and 5,000 test examples across all 18 `ResponsePlan` speech acts. The promoted training set adds 1,650 replay rows from 55 accepted teacher preference cases; 11 disjoint cases remain challenge-only.
+The reproducible base corpus contains 30,000 training, 5,000 development, and 5,000 test examples across all 22 `ResponsePlan` speech acts. The promoted training set adds 1,650 replay rows from 55 accepted teacher preference cases; 11 disjoint cases remain challenge-only.
 
-All surface vocabulary comes from 432 project-authored atoms and 20 explicit style profiles. Qwen selects indices among already-valid candidates; zero Qwen-written surface atoms enter the model. The pipeline uses no pretrained weights, personal calendars, conversation logs, or independently human-authored training examples.
+All surface vocabulary comes from 528 project-authored atoms and 20 explicit style profiles. Qwen selects indices among already-valid candidates; zero Qwen-written surface atoms enter the model. The pipeline uses no pretrained weights, personal calendars, conversation logs, or independently human-authored training examples.
 
-Three mistake-driven multiclass heads share 65,536 deterministic FNV-1a feature buckets:
+Three mistake-driven multiclass heads share 61,440 deterministic FNV-1a feature buckets:
 
 | Head  | Options | Runtime constraint                              |
 | ----- | ------: | ----------------------------------------------- |
-| Lead  |      90 | Must match the verified speech act              |
-| Body  |     252 | Must match speech act and exact placeholder set |
-| Close |      90 | Must match the verified speech act              |
+| Lead  |     110 | Must match the verified speech act              |
+| Body  |     308 | Must match speech act and exact placeholder set |
+| Close |     110 | Must match the verified speech act              |
 
 Single-signature acts have 350 compatible compositions; each clarification signature has 175. The runtime rejects invalid or recently identical candidates, penalizes trigram similarity and style mismatch, applies only a capped local phrase-preference score, and returns the best five. The renderer repeats exact-placeholder and static-literal validation before deterministic fact insertion.
 
@@ -49,8 +49,8 @@ Single-signature acts have 350 compatible compositions; each clarification signa
 
 The 5,000-example generated test split reports:
 
-- 75.66% mean INT8 head-label accuracy;
-- 0.04 percentage-point maximum head reduction from quantization;
+- 74.95% mean INT8 head-label accuracy;
+- 0.36 percentage-point reported reduction from quantization;
 - 100% structurally valid candidate rate and protected-fact retention;
 - 0% unsupported static factual-literal introduction.
 
@@ -58,9 +58,9 @@ The tracked 250-example TypeScript fixture reports:
 
 - 100% exact-placeholder validity and protected-fact retention;
 - 0% unsafe unprotected date/number literals;
-- 43.6% exact top-reference selection and 83.2% reference coverage among five candidates;
+- 38.0% exact top-reference selection and 79.6% reference coverage among five candidates;
 - 0% exact repetition when the previous reply is supplied;
-- approximately 8 ms warm p95 in the latest development-machine run.
+- approximately 11.3 ms warm p95 in the latest development-machine run.
 
 The 11-case teacher challenge is a small teacher-family diagnostic, not a human-quality claim. Exact current metrics live in `ml/remindspeak/reports/`.
 

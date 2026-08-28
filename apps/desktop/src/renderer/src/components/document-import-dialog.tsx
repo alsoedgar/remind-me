@@ -6,9 +6,21 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode
 } from 'react'
-import { planDocumentExtraction } from '@remind-me/importers/document'
+import {
+  createEventDocumentImportIdentity,
+  createReminderDocumentImportIdentity,
+  reconcileDocumentEvent,
+  reconcileDocumentReminder
+} from '@remind-me/calendar-engine'
+import {
+  applyDocumentFallbackResponse,
+  applyDocumentRepairResponse,
+  buildDocumentFallbackRequests,
+  planDocumentExtraction
+} from '@remind-me/importers/document'
 import {
   reviewedDocumentItemSchema,
   type DocumentAnalysis,
@@ -28,14 +40,28 @@ import {
   documentWeekdays,
   formatDocumentTime
 } from './document-week-preview'
+import {
+  buildDocumentChronology,
+  buildDocumentMonthPreview,
+  summarizeDocumentReview
+} from './document-review-preview'
+import {
+  canMergeDocumentDrafts,
+  canReclassifyDocumentDraft,
+  canSplitDocumentDraft,
+  mergeDocumentDrafts,
+  reclassifyDocumentDraft,
+  splitDocumentDraft
+} from './document-review-operations'
 
 type DialogPhase = 'choosing' | 'processing' | 'review' | 'saving' | 'error'
 type EvidenceField = keyof DocumentFieldEvidence
-type ReviewView = 'week' | 'details' | 'source'
+type ReviewView = 'week' | 'timeline' | 'month' | 'details' | 'source'
 
 interface EditableDraft {
   draft: DocumentImportDraft
   selected: boolean
+  selectionMode: 'recommended' | 'user'
 }
 
 function errorMessage(error: unknown): string {
@@ -55,19 +81,75 @@ function formatBytes(bytes: number): string {
     : `${Math.max(1, Math.round(bytes / 1024))} KB`
 }
 
+function formatDocumentDate(date: string, locale: string): string {
+  const parsed = Temporal.PlainDate.from(date)
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC'
+  }).format(new Date(Date.UTC(parsed.year, parsed.month - 1, parsed.day)))
+}
+
+function recurrenceSummary(draft: DocumentImportDraft): string {
+  const recurrence = draft.form.recurrence
+  if (!recurrence) return 'One time'
+  const interval = recurrence.interval === 1 ? '' : ` every ${recurrence.interval}`
+  const days =
+    recurrence.frequency === 'weekly' && recurrence.byWeekday.length > 0
+      ? ` · ${recurrence.byWeekday.map((day) => day.slice(0, 3)).join(', ')}`
+      : ''
+  const ending =
+    recurrence.end.kind === 'until'
+      ? ` · through ${recurrence.end.date}`
+      : recurrence.end.kind === 'count'
+        ? ` · ${recurrence.end.count} times`
+        : ''
+  return `${recurrence.frequency}${interval}${days}${ending}`
+}
+
+const reconciliationCopy = {
+  new: {
+    label: 'New item',
+    message: 'No matching calendar item was found.'
+  },
+  'same-source': {
+    label: 'Already imported',
+    message: 'This exact document row is already on your calendar and cannot be added twice.'
+  },
+  'likely-duplicate': {
+    label: 'Possible duplicate',
+    message: 'A very similar item exists. Compare it below, then select this one only if needed.'
+  },
+  'protected-distinct': {
+    label: 'Distinct class',
+    message: 'A similar class exists, but its CRN, section, or component is different.'
+  }
+} as const
+
+const reconciliationRelationshipCopy = {
+  'same-source-row': 'same imported source row',
+  'same-semantic-item': 'same course/date identity',
+  'likely-semantic-overlap': 'matching title, date, and time',
+  'protected-distinct-course': 'different CRN, section, or component'
+} as const
+
 function EvidenceLink({
   field,
   ids,
+  confidence,
   onShow
 }: {
   field: EvidenceField
   ids: readonly string[]
+  confidence: number | null
   onShow: (field: EvidenceField) => void
 }): ReactNode {
   if (ids.length === 0) return null
   return (
     <button className="evidence-link" type="button" onClick={() => onShow(field)}>
-      Show evidence
+      Evidence {confidence === null ? '' : `${Math.round(confidence * 100)}%`}
     </button>
   )
 }
@@ -88,7 +170,12 @@ function EventDraftEditor({
       <div className="document-field full-field">
         <div className="document-field-heading">
           <label htmlFor={fieldId('title')}>Title</label>
-          <EvidenceLink field="title" ids={draft.fieldEvidence.title} onShow={onShowEvidence} />
+          <EvidenceLink
+            field="title"
+            ids={draft.fieldEvidence.title}
+            confidence={draft.fieldConfidence.title}
+            onShow={onShowEvidence}
+          />
         </div>
         <input
           id={fieldId('title')}
@@ -112,7 +199,9 @@ function EventDraftEditor({
           <span>
             {draft.schedule.verification === 'layout-and-planscan'
               ? 'Layout + PlanScan agree'
-              : 'Layout checked'}
+              : draft.schedule.verification === 'fallback-grouping'
+                ? 'Qwen grouped · code verified'
+                : 'Layout checked'}
           </span>
         </div>
       ) : null}
@@ -120,7 +209,12 @@ function EventDraftEditor({
         <div className="document-field">
           <div className="document-field-heading">
             <label htmlFor={fieldId('start-date')}>Starts</label>
-            <EvidenceLink field="when" ids={draft.fieldEvidence.when} onShow={onShowEvidence} />
+            <EvidenceLink
+              field="when"
+              ids={draft.fieldEvidence.when}
+              confidence={draft.fieldConfidence.when}
+              onShow={onShowEvidence}
+            />
           </div>
           <input
             id={fieldId('start-date')}
@@ -240,6 +334,7 @@ function EventDraftEditor({
           <EvidenceLink
             field="location"
             ids={draft.fieldEvidence.location}
+            confidence={draft.fieldConfidence.location}
             onShow={onShowEvidence}
           />
         </div>
@@ -251,8 +346,16 @@ function EventDraftEditor({
           placeholder="Optional"
         />
       </div>
-      <label className="document-field full-field" htmlFor={fieldId('notes')}>
-        Notes
+      <div className="document-field full-field">
+        <div className="document-field-heading">
+          <label htmlFor={fieldId('notes')}>Notes</label>
+          <EvidenceLink
+            field="description"
+            ids={draft.fieldEvidence.description}
+            confidence={draft.fieldConfidence.description}
+            onShow={onShowEvidence}
+          />
+        </div>
         <textarea
           id={fieldId('notes')}
           rows={2}
@@ -261,7 +364,7 @@ function EventDraftEditor({
           onChange={(event) => onChange({ ...form, description: event.target.value })}
           placeholder="Optional"
         />
-      </label>
+      </div>
     </div>
   )
 }
@@ -282,7 +385,12 @@ function ReminderDraftEditor({
       <div className="document-field full-field">
         <div className="document-field-heading">
           <label htmlFor={fieldId('title')}>Reminder</label>
-          <EvidenceLink field="title" ids={draft.fieldEvidence.title} onShow={onShowEvidence} />
+          <EvidenceLink
+            field="title"
+            ids={draft.fieldEvidence.title}
+            confidence={draft.fieldConfidence.title}
+            onShow={onShowEvidence}
+          />
         </div>
         <input
           id={fieldId('title')}
@@ -296,7 +404,12 @@ function ReminderDraftEditor({
         <div className="document-field">
           <div className="document-field-heading">
             <label htmlFor={fieldId('due-date')}>Due</label>
-            <EvidenceLink field="when" ids={draft.fieldEvidence.when} onShow={onShowEvidence} />
+            <EvidenceLink
+              field="when"
+              ids={draft.fieldEvidence.when}
+              confidence={draft.fieldConfidence.when}
+              onShow={onShowEvidence}
+            />
           </div>
           <input
             id={fieldId('due-date')}
@@ -317,8 +430,16 @@ function ReminderDraftEditor({
           />
         </label>
       </div>
-      <label className="document-field full-field" htmlFor={fieldId('notes')}>
-        Notes
+      <div className="document-field full-field">
+        <div className="document-field-heading">
+          <label htmlFor={fieldId('notes')}>Notes</label>
+          <EvidenceLink
+            field="description"
+            ids={draft.fieldEvidence.description}
+            confidence={draft.fieldConfidence.description}
+            onShow={onShowEvidence}
+          />
+        </div>
         <textarea
           id={fieldId('notes')}
           rows={2}
@@ -327,7 +448,7 @@ function ReminderDraftEditor({
           onChange={(event) => onChange({ ...form, notes: event.target.value })}
           placeholder="Optional"
         />
-      </label>
+      </div>
     </div>
   )
 }
@@ -342,13 +463,20 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
   const [analysis, setAnalysis] = useState<DocumentAnalysis | null>(null)
   const [drafts, setDrafts] = useState<EditableDraft[]>([])
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
+  const [activeSkippedId, setActiveSkippedId] = useState<string | null>(null)
   const [evidenceField, setEvidenceField] = useState<EvidenceField | null>(null)
   const [reviewView, setReviewView] = useState<ReviewView>('details')
+  const [reviewMonth, setReviewMonth] = useState(new Date().toISOString().slice(0, 7))
+  const [sourcePageNumber, setSourcePageNumber] = useState(1)
+  const [sourceZoom, setSourceZoom] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [reviewError, setReviewError] = useState<string | null>(null)
+  const [reviewNotice, setReviewNotice] = useState<string | null>(null)
   const processorRef = useRef<LocalDocumentProcessor | null>(null)
   const selectionIdRef = useRef<string | null>(null)
   const committedRef = useRef(false)
+  const sourceFrameRef = useRef<HTMLDivElement | null>(null)
+  const sourcePanRef = useRef({ active: false, x: 0, y: 0, left: 0, top: 0 })
 
   const close = useCallback(() => {
     processorRef.current?.cancel()
@@ -400,7 +528,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
           .toZonedDateTimeISO(snapshot.preferences.timezone)
           .toPlainDate()
           .toString()
-        const planned = planDocumentExtraction(extraction, {
+        const planningContext = {
           selectionId: selection.source.id,
           nowUtc,
           localDate,
@@ -410,13 +538,81 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
           defaultEventDurationMinutes: 60,
           events: snapshot.events,
           reminders: snapshot.reminders
-        })
+        }
+        const planned = planDocumentExtraction(extraction, planningContext)
         if (!mounted) return
-        const editable = planned.drafts.map((draft) => ({ draft, selected: true }))
-        setAnalysis(planned)
+        let reviewedPlan = planned
+        if (planned.repairSession) {
+          setProgressState({
+            stage: 'planning',
+            progress: 0.98,
+            message: 'Checking parser disagreements against quoted source text…',
+            currentPage: null,
+            totalPages: extraction.pages.length
+          })
+          try {
+            const repair = await window.remindMe.repairDocumentDisagreement(
+              planned.repairSession.request
+            )
+            if (!mounted) return
+            if (repair) reviewedPlan = applyDocumentRepairResponse(planned, repair)
+          } catch {
+            // The optional model is advisory. Deterministic proposals remain
+            // reviewable if the pack is unavailable or cannot ground a choice.
+          }
+        }
+        const fallbackRequests = buildDocumentFallbackRequests(reviewedPlan)
+        if (fallbackRequests.length > 0) {
+          setProgressState({
+            stage: 'planning',
+            progress: 0.99,
+            message: 'Checking ungrouped source fields with the installed local fallback…',
+            currentPage: fallbackRequests[0]?.page ?? null,
+            totalPages: extraction.pages.length
+          })
+          try {
+            for (const request of fallbackRequests) {
+              const fallback = await window.remindMe.groupDocumentCoverageGap(request)
+              if (!mounted) return
+              if (!fallback) break
+              reviewedPlan = applyDocumentFallbackResponse(
+                reviewedPlan,
+                request,
+                fallback,
+                planningContext
+              )
+            }
+          } catch {
+            // The optional model can add only grounded review candidates. The
+            // deterministic result remains intact if the pack is unavailable.
+          }
+        }
+        const editable = reviewedPlan.drafts.map((draft) => ({
+          draft,
+          selected: draft.reconciliation.recommendedSelected,
+          selectionMode: 'recommended' as const
+        }))
+        setAnalysis(reviewedPlan)
         setDrafts(editable)
         setActiveDraftId(editable[0]?.draft.id ?? null)
-        setReviewView(planned.drafts.some((draft) => draft.schedule) ? 'week' : 'details')
+        setActiveSkippedId(
+          editable.length === 0 ? (reviewedPlan.skippedItems[0]?.id ?? null) : null
+        )
+        setSourcePageNumber(editable[0]?.draft.page ?? reviewedPlan.skippedItems[0]?.page ?? 1)
+        setReviewMonth(
+          (
+            reviewedPlan.drafts
+              .map((draft) => (draft.kind === 'event' ? draft.form.startDate : draft.form.dueDate))
+              .sort()[0] ?? localDate
+          ).slice(0, 7)
+        )
+        setReviewView(
+          reviewedPlan.drafts.length === 0
+            ? 'details'
+            : reviewedPlan.drafts.some((draft) => draft.schedule)
+              ? 'week'
+              : 'timeline'
+        )
         setPhase('review')
         setProgressState({
           stage: 'complete',
@@ -449,11 +645,13 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
   }, [close, phase])
 
   const active = drafts.find((item) => item.draft.id === activeDraftId) ?? null
+  const activeSkipped = analysis?.skippedItems.find((item) => item.id === activeSkippedId) ?? null
   const allBlocks = useMemo(
     () => analysis?.extraction.pages.flatMap((page) => page.blocks) ?? [],
     [analysis]
   )
   const activeEvidenceIds = useMemo(() => {
+    if (activeSkipped) return activeSkipped.evidenceIds
     if (!active) return []
     if (evidenceField) return active.draft.fieldEvidence[evidenceField]
     return [
@@ -464,56 +662,332 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
         ...active.draft.fieldEvidence.description
       ])
     ]
-  }, [active, evidenceField])
+  }, [active, activeSkipped, evidenceField])
   const activeEvidence = useMemo(
     () => allBlocks.filter((block) => activeEvidenceIds.includes(block.id)),
     [activeEvidenceIds, allBlocks]
   )
-  const activePageNumber = activeEvidence[0]?.page ?? active?.draft.page ?? 1
+  const activePageNumber = analysis?.extraction.pages.some((page) => page.page === sourcePageNumber)
+    ? sourcePageNumber
+    : (activeEvidence[0]?.page ?? active?.draft.page ?? activeSkipped?.page ?? 1)
   const activePage =
     analysis?.extraction.pages.find((page) => page.page === activePageNumber) ?? null
-  const selectedCount = drafts.filter((item) => item.selected).length
+  const selectedDrafts = useMemo(
+    () => drafts.filter((item) => item.selected).map((item) => item.draft),
+    [drafts]
+  )
+  const selectedCount = selectedDrafts.length
+  const reconciliationCounts = useMemo(
+    () => ({
+      sameSource: drafts.filter((item) => item.draft.reconciliation.state === 'same-source').length,
+      likelyDuplicate: drafts.filter(
+        (item) => item.draft.reconciliation.state === 'likely-duplicate'
+      ).length,
+      protectedDistinct: drafts.filter(
+        (item) => item.draft.reconciliation.state === 'protected-distinct'
+      ).length
+    }),
+    [drafts]
+  )
   const weekPreview = useMemo(
     () => buildDocumentWeekPreview(drafts.map((item) => item.draft)),
     [drafts]
   )
   const selectedWeekPreview = useMemo(
-    () =>
-      buildDocumentWeekPreview(drafts.filter((item) => item.selected).map((item) => item.draft)),
-    [drafts]
+    () => buildDocumentWeekPreview(selectedDrafts),
+    [selectedDrafts]
   )
+  const chronology = useMemo(() => buildDocumentChronology(selectedDrafts), [selectedDrafts])
+  const monthPreview = useMemo(
+    () =>
+      buildDocumentMonthPreview(
+        selectedDrafts,
+        reviewMonth,
+        snapshot?.preferences.locale ?? 'en-US'
+      ),
+    [reviewMonth, selectedDrafts, snapshot?.preferences.locale]
+  )
+  const reviewTotals = useMemo(
+    () =>
+      summarizeDocumentReview(
+        drafts.map((item) => item.draft),
+        analysis?.skippedItems ?? []
+      ),
+    [analysis?.skippedItems, drafts]
+  )
+  const draftGroups = useMemo(() => {
+    const groups = new Map<
+      string,
+      { key: string; label: string; detail: string; items: EditableDraft[] }
+    >()
+    for (const item of drafts) {
+      const schedule = item.draft.schedule
+      const key = schedule ? `course:${schedule.courseCode.toLocaleLowerCase()}` : 'other-plans'
+      const current = groups.get(key) ?? {
+        key,
+        label: schedule?.courseCode ?? 'Other dated plans',
+        detail: schedule ? 'Course components stay separate' : 'Events and reminders',
+        items: []
+      }
+      current.items.push(item)
+      groups.set(key, current)
+    }
+    return [...groups.values()].map((group) => ({
+      ...group,
+      detail: group.key.startsWith('course:')
+        ? `${[
+            ...new Set(
+              group.items
+                .map((item) => item.draft.schedule?.component)
+                .filter((component): component is NonNullable<typeof component> =>
+                  Boolean(component)
+                )
+                .map((component) => componentLabels[component])
+            )
+          ].join(' · ')} · ${group.items.length} series`
+        : `${group.items.length} item${group.items.length === 1 ? '' : 's'}`
+    }))
+  }, [drafts])
 
   function updateEventForm(draftId: string, update: (form: EventForm) => EventForm): void {
     setDrafts((current) =>
-      current.map((item) =>
-        item.draft.id === draftId && item.draft.kind === 'event'
-          ? { ...item, draft: { ...item.draft, form: update(item.draft.form) } }
-          : item
-      )
+      current.map((item) => {
+        if (item.draft.id !== draftId || item.draft.kind !== 'event') return item
+        const form = update(item.draft.form)
+        let importIdentity: typeof item.draft.importIdentity
+        let reconciliation: typeof item.draft.reconciliation
+        try {
+          importIdentity = createEventDocumentImportIdentity(
+            {
+              sourceSha256: item.draft.importIdentity.sourceSha256,
+              sourceRowId: item.draft.importIdentity.sourceRowId
+            },
+            form,
+            item.draft.schedule
+          )
+          reconciliation = reconcileDocumentEvent(
+            importIdentity,
+            form,
+            snapshot?.events ?? [],
+            snapshot?.reminders ?? []
+          )
+        } catch {
+          return { ...item, draft: { ...item.draft, form } }
+        }
+        return {
+          ...item,
+          selected:
+            reconciliation.state === 'same-source'
+              ? false
+              : item.selectionMode === 'recommended'
+                ? reconciliation.recommendedSelected
+                : item.selected,
+          draft: { ...item.draft, form, importIdentity, reconciliation }
+        }
+      })
     )
   }
 
   function updateReminderForm(draftId: string, update: (form: ReminderForm) => ReminderForm): void {
     setDrafts((current) =>
-      current.map((item) =>
-        item.draft.id === draftId && item.draft.kind === 'reminder'
-          ? { ...item, draft: { ...item.draft, form: update(item.draft.form) } }
-          : item
-      )
+      current.map((item) => {
+        if (item.draft.id !== draftId || item.draft.kind !== 'reminder') return item
+        const form = update(item.draft.form)
+        let importIdentity: typeof item.draft.importIdentity
+        let reconciliation: typeof item.draft.reconciliation
+        try {
+          importIdentity = createReminderDocumentImportIdentity(
+            {
+              sourceSha256: item.draft.importIdentity.sourceSha256,
+              sourceRowId: item.draft.importIdentity.sourceRowId
+            },
+            form
+          )
+          reconciliation = reconcileDocumentReminder(
+            importIdentity,
+            form,
+            snapshot?.reminders ?? [],
+            snapshot?.events ?? []
+          )
+        } catch {
+          return { ...item, draft: { ...item.draft, form } }
+        }
+        return {
+          ...item,
+          selected:
+            reconciliation.state === 'same-source'
+              ? false
+              : item.selectionMode === 'recommended'
+                ? reconciliation.recommendedSelected
+                : item.selected,
+          draft: { ...item.draft, form, importIdentity, reconciliation }
+        }
+      })
     )
   }
 
   function toggleDraft(draftId: string): void {
     setDrafts((current) =>
       current.map((item) =>
-        item.draft.id === draftId ? { ...item, selected: !item.selected } : item
+        item.draft.id === draftId && item.draft.reconciliation.state !== 'same-source'
+          ? { ...item, selected: !item.selected, selectionMode: 'user' }
+          : item
       )
     )
   }
 
+  function activateDraft(draftId: string, nextView?: ReviewView): void {
+    const draft = drafts.find((item) => item.draft.id === draftId)?.draft
+    setActiveDraftId(draftId)
+    setActiveSkippedId(null)
+    setEvidenceField(null)
+    if (draft) setSourcePageNumber(draft.page)
+    if (nextView) setReviewView(nextView)
+  }
+
   function showEvidence(field: EvidenceField): void {
+    const ids = active?.draft.fieldEvidence[field] ?? []
+    const page = allBlocks.find((block) => ids.includes(block.id))?.page
     setEvidenceField(field)
+    setActiveSkippedId(null)
+    if (page) setSourcePageNumber(page)
     setReviewView('source')
+  }
+
+  function showSkippedEvidence(skippedId: string): void {
+    const skipped = analysis?.skippedItems.find((item) => item.id === skippedId)
+    if (!skipped) return
+    setActiveDraftId(null)
+    setActiveSkippedId(skipped.id)
+    setEvidenceField(null)
+    setSourcePageNumber(skipped.page)
+    setReviewView('source')
+  }
+
+  function splitDraft(draftId: string): void {
+    const editable = drafts.find((item) => item.draft.id === draftId)
+    if (!editable || !canSplitDocumentDraft(editable.draft)) return
+    const split = splitDocumentDraft(
+      editable.draft,
+      snapshot?.events ?? [],
+      snapshot?.reminders ?? []
+    )
+    setDrafts((current) =>
+      current.flatMap((item) =>
+        item.draft.id === draftId
+          ? split.map((draft) => ({
+              draft,
+              selected: editable.selected && draft.reconciliation.state !== 'same-source',
+              selectionMode: 'user' as const
+            }))
+          : [item]
+      )
+    )
+    setActiveDraftId(split[0]?.id ?? null)
+    setReviewNotice(
+      `Split “${editable.draft.form.title}” into ${split.length} independently editable weekday series.`
+    )
+    setReviewError(null)
+  }
+
+  function mergeMatchingDrafts(draftId: string): void {
+    const editable = drafts.find((item) => item.draft.id === draftId)
+    if (!editable) return
+    const matches = drafts
+      .filter(
+        (item) =>
+          item.selected &&
+          item.draft.id !== draftId &&
+          canMergeDocumentDrafts(editable.draft, item.draft)
+      )
+      .map((item) => item.draft)
+    if (matches.length === 0) {
+      setReviewError(
+        'No other selected weekly series is safe to merge. Titles, times, locations, term bounds, CRNs, sections, and components must agree.'
+      )
+      return
+    }
+    const merged = mergeDocumentDrafts(
+      editable.draft,
+      matches,
+      snapshot?.events ?? [],
+      snapshot?.reminders ?? []
+    )
+    const removedIds = new Set([editable.draft.id, ...matches.map((draft) => draft.id)])
+    setDrafts((current) =>
+      current.flatMap((item) => {
+        if (item.draft.id === editable.draft.id) {
+          return [
+            {
+              draft: merged,
+              selected: merged.reconciliation.state !== 'same-source',
+              selectionMode: 'user' as const
+            }
+          ]
+        }
+        return removedIds.has(item.draft.id) ? [] : [item]
+      })
+    )
+    setActiveDraftId(merged.id)
+    setReviewNotice(`Merged ${matches.length + 1} matching weekly series into one review item.`)
+    setReviewError(null)
+  }
+
+  function reclassifyDraft(draftId: string): void {
+    const editable = drafts.find((item) => item.draft.id === draftId)
+    if (!editable || !canReclassifyDocumentDraft(editable.draft)) return
+    const draft = reclassifyDocumentDraft(
+      editable.draft,
+      snapshot?.events ?? [],
+      snapshot?.reminders ?? []
+    )
+    setDrafts((current) =>
+      current.map((item) =>
+        item.draft.id === draftId
+          ? {
+              draft,
+              selected: draft.reconciliation.state !== 'same-source' && item.selected,
+              selectionMode: 'user'
+            }
+          : item
+      )
+    )
+    setReviewNotice(
+      `Reclassified “${draft.form.title}” as ${draft.kind === 'event' ? 'an event' : 'a reminder'}.`
+    )
+    setReviewError(null)
+  }
+
+  function moveReviewMonth(months: number): void {
+    setReviewMonth((current) => Temporal.PlainYearMonth.from(current).add({ months }).toString())
+  }
+
+  function beginSourcePan(event: ReactPointerEvent<HTMLDivElement>): void {
+    const frame = sourceFrameRef.current
+    if (!frame || sourceZoom <= 1) return
+    sourcePanRef.current = {
+      active: true,
+      x: event.clientX,
+      y: event.clientY,
+      left: frame.scrollLeft,
+      top: frame.scrollTop
+    }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+
+  function moveSourcePan(event: ReactPointerEvent<HTMLDivElement>): void {
+    const frame = sourceFrameRef.current
+    const pan = sourcePanRef.current
+    if (!frame || !pan.active) return
+    frame.scrollLeft = pan.left - (event.clientX - pan.x)
+    frame.scrollTop = pan.top - (event.clientY - pan.y)
+  }
+
+  function endSourcePan(event: ReactPointerEvent<HTMLDivElement>): void {
+    sourcePanRef.current.active = false
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
   }
 
   async function commit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -523,12 +997,26 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
     const items: ReviewedDocumentItem[] = []
     try {
       for (const item of drafts.filter((candidate) => candidate.selected)) {
+        const sourceIdentity = {
+          sourceSha256: item.draft.importIdentity.sourceSha256,
+          sourceRowId: item.draft.importIdentity.sourceRowId
+        }
         items.push(
-          reviewedDocumentItemSchema.parse({
-            draftId: item.draft.id,
-            kind: item.draft.kind,
-            form: item.draft.form
-          })
+          item.draft.kind === 'event'
+            ? reviewedDocumentItemSchema.parse({
+                draftId: item.draft.id,
+                kind: 'event',
+                sourceIdentity,
+                schedule: item.draft.schedule,
+                form: item.draft.form
+              })
+            : reviewedDocumentItemSchema.parse({
+                draftId: item.draft.id,
+                kind: 'reminder',
+                sourceIdentity,
+                schedule: null,
+                form: item.draft.form
+              })
         )
       }
     } catch (validationError) {
@@ -559,6 +1047,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
     >
       <section
         className="document-dialog"
+        data-testid="document-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="document-dialog-title"
@@ -582,6 +1071,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
           </div>
           <button
             className="icon-button"
+            data-testid="document-close"
             type="button"
             aria-label="Close document planner"
             disabled={phase === 'saving'}
@@ -640,21 +1130,28 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
         ) : null}
 
         {isReview && analysis ? (
-          <form className="document-review" onSubmit={(event) => void commit(event)}>
+          <form
+            className="document-review"
+            data-testid="document-review"
+            onSubmit={(event) => void commit(event)}
+          >
             <div className="document-review-toolbar">
               <div>
                 <strong>
-                  {weekPreview.scheduleSeriesCount > 0
-                    ? `${weekPreview.scheduleSeriesCount} recurring series · ${weekPreview.meetingCount} meetings each week`
-                    : `${analysis.drafts.length} proposal${analysis.drafts.length === 1 ? '' : 's'}`}
+                  {reviewTotals.weeklyMeetingCount > 0
+                    ? `${reviewTotals.seriesCount} series · ${reviewTotals.weeklyMeetingCount} recurring meetings / week`
+                    : `${reviewTotals.seriesCount} proposal${reviewTotals.seriesCount === 1 ? '' : 's'}`}
+                  {reviewTotals.skippedRowCount > 0
+                    ? ` · ${reviewTotals.skippedRowCount} skipped row${reviewTotals.skippedRowCount === 1 ? '' : 's'}`
+                    : ''}
                 </strong>
                 <span>
-                  {selectedCount} of {analysis.drafts.length} selected ·{' '}
-                  {weekPreview.courseCount > 0 ? `${weekPreview.courseCount} courses · ` : ''}
-                  {analysis.extraction.pages.reduce(
-                    (total, page) => total + page.words.length,
-                    0
-                  )}{' '}
+                  {selectedCount} of {drafts.length} selected ·{' '}
+                  {reviewTotals.courseCount > 0 ? `${reviewTotals.courseCount} courses · ` : ''}
+                  {reviewTotals.noFixedTimeCount > 0
+                    ? `${reviewTotals.noFixedTimeCount} without fixed times · `
+                    : ''}
+                  {analysis.extraction.pages.reduce((total, page) => total + page.words.length, 0)}{' '}
                   positioned words
                 </span>
               </div>
@@ -672,18 +1169,50 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                     ? `Dual checked · ${drafts.filter((item) => item.draft.schedule?.verification === 'layout-and-planscan').length}`
                     : 'Rules fallback'}
                 </span>
+                {reconciliationCounts.sameSource > 0 ? (
+                  <span className="document-duplicate-chip" data-kind="same-source">
+                    {reconciliationCounts.sameSource} already imported
+                  </span>
+                ) : null}
+                {reconciliationCounts.likelyDuplicate > 0 ? (
+                  <span className="document-duplicate-chip" data-kind="likely-duplicate">
+                    {reconciliationCounts.likelyDuplicate} to compare
+                  </span>
+                ) : null}
+                {reconciliationCounts.protectedDistinct > 0 ? (
+                  <span className="document-duplicate-chip" data-kind="protected-distinct">
+                    {reconciliationCounts.protectedDistinct} distinct
+                  </span>
+                ) : null}
+                {analysis.skippedItems.length > 0 ? (
+                  <span className="document-duplicate-chip" data-kind="skipped">
+                    {analysis.skippedItems.length} skipped safely
+                  </span>
+                ) : null}
                 <button
                   type="button"
                   onClick={() =>
-                    setDrafts((current) => current.map((item) => ({ ...item, selected: true })))
+                    setDrafts((current) =>
+                      current.map((item) => ({
+                        ...item,
+                        selected: item.draft.reconciliation.recommendedSelected,
+                        selectionMode: 'recommended'
+                      }))
+                    )
                   }
                 >
-                  Select all
+                  Select recommended
                 </button>
                 <button
                   type="button"
                   onClick={() =>
-                    setDrafts((current) => current.map((item) => ({ ...item, selected: false })))
+                    setDrafts((current) =>
+                      current.map((item) => ({
+                        ...item,
+                        selected: false,
+                        selectionMode: 'user'
+                      }))
+                    )
                   }
                 >
                   Select none
@@ -695,6 +1224,8 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
               {(
                 [
                   ['week', 'Week preview', `${selectedWeekPreview.meetingCount} selected meetings`],
+                  ['timeline', 'Chronological', `${chronology.length} dated series`],
+                  ['month', 'Month', `${monthPreview.occurrenceCount} visible meetings`],
                   ['details', 'Edit details', `${selectedCount} selected series`],
                   [
                     'source',
@@ -706,6 +1237,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                 <button
                   key={view}
                   type="button"
+                  data-review-view={view}
                   data-active={reviewView === view}
                   aria-current={reviewView === view ? 'page' : undefined}
                   onClick={() => setReviewView(view)}
@@ -730,6 +1262,15 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
               </details>
             ) : null}
 
+            {reviewNotice ? (
+              <div className="document-review-notice" role="status">
+                <span>{reviewNotice}</span>
+                <button type="button" onClick={() => setReviewNotice(null)}>
+                  Dismiss
+                </button>
+              </div>
+            ) : null}
+
             <div className="document-review-grid" data-view={reviewView}>
               <section
                 className="document-week-preview"
@@ -750,7 +1291,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                       <strong>{weekPreview.seriesCount}</strong>series
                     </span>
                     <span>
-                      <strong>{weekPreview.meetingCount}</strong>meetings / week
+                      <strong>{reviewTotals.weeklyMeetingCount}</strong>recurring / week
                     </span>
                     <span>
                       <strong>{weekPreview.courseCount || '—'}</strong>courses
@@ -772,6 +1313,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                               className="document-week-meeting"
                               data-color={meeting.colorIndex}
                               data-selected={editable?.selected ?? false}
+                              data-reconciliation={editable?.draft.reconciliation.state ?? 'new'}
                               key={`${meeting.draftId}:${day.weekday}`}
                             >
                               <div className="document-week-meeting-heading">
@@ -780,6 +1322,9 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                                   <input
                                     type="checkbox"
                                     checked={editable?.selected ?? false}
+                                    disabled={
+                                      editable?.draft.reconciliation.state === 'same-source'
+                                    }
                                     onChange={() => toggleDraft(meeting.draftId)}
                                   />
                                   <span className="visually-hidden">
@@ -789,11 +1334,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                               </div>
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setActiveDraftId(meeting.draftId)
-                                  setEvidenceField(null)
-                                  setReviewView('details')
-                                }}
+                                onClick={() => activateDraft(meeting.draftId, 'details')}
                               >
                                 <strong>{meeting.title}</strong>
                                 <span>
@@ -822,89 +1363,349 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                 </div>
               </section>
 
+              <section
+                className="document-chronology-preview"
+                aria-label="Chronological document confirmation"
+                hidden={reviewView !== 'timeline'}
+              >
+                <div className="document-preview-heading">
+                  <div>
+                    <p className="eyebrow">Actual dates, not weekday buckets</p>
+                    <h3>Read every proposal in date order</h3>
+                    <p>
+                      One-off plans from different weeks stay on their printed dates. Recurring
+                      series show their full range without expanding into a wall of duplicates.
+                    </p>
+                  </div>
+                  <span>{chronology.length} selected series</span>
+                </div>
+                <div className="document-chronology-list">
+                  {chronology.map((item) => {
+                    const editable = drafts.find((draft) => draft.draft.id === item.draftId)
+                    return (
+                      <button
+                        type="button"
+                        className="document-chronology-item"
+                        data-reconciliation={editable?.draft.reconciliation.state ?? 'new'}
+                        key={item.draftId}
+                        onClick={() => activateDraft(item.draftId, 'details')}
+                      >
+                        <time dateTime={item.date}>
+                          <strong>
+                            {formatDocumentDate(item.date, snapshot?.preferences.locale ?? 'en-US')}
+                          </strong>
+                          <span>{formatDocumentTime(item.startTime)}</span>
+                        </time>
+                        <span>
+                          <strong>{item.title}</strong>
+                          <small>
+                            {item.schedule
+                              ? `${item.schedule.courseCode} · ${componentLabels[item.schedule.component]}`
+                              : item.kind}
+                          </small>
+                          <small>{editable ? recurrenceSummary(editable.draft) : 'One time'}</small>
+                        </span>
+                        <span>
+                          {item.endTime
+                            ? `${formatDocumentTime(item.startTime)}–${formatDocumentTime(item.endTime)}`
+                            : formatDocumentTime(item.startTime)}
+                          {item.location ? <small>{item.location}</small> : null}
+                        </span>
+                      </button>
+                    )
+                  })}
+                  {chronology.length === 0 ? (
+                    <div className="document-empty-drafts">
+                      <h3>No selected dates to preview</h3>
+                      <p>Select at least one proposal, then return to this view.</p>
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+
+              <section
+                className="document-month-preview"
+                aria-label="Monthly calendar confirmation"
+                hidden={reviewView !== 'month'}
+              >
+                <div className="document-month-heading">
+                  <div>
+                    <p className="eyebrow">Occurrence-level preview</p>
+                    <h3>{monthPreview.label}</h3>
+                    <p>
+                      {monthPreview.occurrenceCount} selected meetings and reminders this month.
+                    </p>
+                  </div>
+                  <div className="document-month-actions">
+                    <button
+                      type="button"
+                      aria-label="Previous month"
+                      onClick={() => moveReviewMonth(-1)}
+                    >
+                      ←
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setReviewMonth(
+                          (
+                            chronology.map((item) => item.date).sort()[0] ??
+                            new Date().toISOString().slice(0, 10)
+                          ).slice(0, 7)
+                        )
+                      }
+                    >
+                      First date
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next month"
+                      onClick={() => moveReviewMonth(1)}
+                    >
+                      →
+                    </button>
+                  </div>
+                </div>
+                <div className="document-month-weekdays" aria-hidden="true">
+                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((weekday) => (
+                    <span key={weekday}>{weekday}</span>
+                  ))}
+                </div>
+                <div className="document-month-grid">
+                  {monthPreview.cells.map((cell) => (
+                    <section data-in-month={cell.inMonth} key={cell.date}>
+                      <time dateTime={cell.date}>{cell.day}</time>
+                      <div>
+                        {cell.items.slice(0, 4).map((item) => (
+                          <button
+                            type="button"
+                            key={`${cell.date}:${item.draftId}`}
+                            onClick={() => activateDraft(item.draftId, 'details')}
+                            title={`${formatDocumentTime(item.startTime)} · ${item.title}${item.location ? ` · ${item.location}` : ''}`}
+                          >
+                            <span>{formatDocumentTime(item.startTime)}</span>
+                            <strong>{item.title}</strong>
+                          </button>
+                        ))}
+                        {cell.items.length > 4 ? (
+                          <small>+{cell.items.length - 4} more</small>
+                        ) : null}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </section>
+
               <div
                 className="document-draft-list"
                 aria-label="Editable proposed calendar items"
                 hidden={reviewView !== 'details'}
               >
-                {drafts.map((item, index) => {
-                  const draft = item.draft
-                  const isActive = draft.id === activeDraftId
-                  return (
-                    <article
-                      className="document-draft-card"
-                      data-active={isActive}
-                      data-selected={item.selected}
-                      key={draft.id}
-                    >
-                      <div className="document-draft-heading">
-                        <label className="document-draft-select">
-                          <input
-                            type="checkbox"
-                            checked={item.selected}
-                            onChange={() => toggleDraft(draft.id)}
-                          />
-                          <span className="visually-hidden">Select proposal {index + 1}</span>
-                        </label>
-                        <button
-                          className="document-draft-summary"
-                          type="button"
-                          aria-expanded={isActive}
-                          onClick={() => {
-                            setActiveDraftId(draft.id)
-                            setEvidenceField(null)
-                          }}
-                        >
-                          <span>
-                            <i>
-                              {draft.schedule
-                                ? componentLabels[draft.schedule.component]
-                                : draft.kind}
-                            </i>
-                            <strong>{draft.form.title}</strong>
-                          </span>
-                          <small>
-                            {draft.schedule
-                              ? [
-                                  draft.schedule.courseCode,
-                                  draft.schedule.sectionCode,
-                                  draft.schedule.crn
-                                ]
-                                  .filter(Boolean)
-                                  .join(' · ')
-                              : `Page ${draft.page}`}{' '}
-                            · {Math.round(draft.confidence * 100)}% ·{' '}
-                            {confidenceLabel(draft.confidence)}
-                          </small>
-                        </button>
+                {draftGroups.map((group) => (
+                  <section className="document-draft-group" key={group.key}>
+                    <header>
+                      <div>
+                        <strong>{group.label}</strong>
+                        <span>{group.detail}</span>
                       </div>
-                      {isActive ? (
-                        <>
-                          {draft.kind === 'event' ? (
-                            <EventDraftEditor
-                              draft={draft}
-                              onChange={(form) => updateEventForm(draft.id, () => form)}
-                              onShowEvidence={showEvidence}
-                            />
-                          ) : (
-                            <ReminderDraftEditor
-                              draft={draft}
-                              onChange={(form) => updateReminderForm(draft.id, () => form)}
-                              onShowEvidence={showEvidence}
-                            />
-                          )}
-                          {draft.warnings.length > 0 ? (
-                            <ul className="document-draft-warnings">
-                              {draft.warnings.map((warning) => (
-                                <li key={warning}>{warning}</li>
-                              ))}
-                            </ul>
+                      <span>{group.items.filter((item) => item.selected).length} selected</span>
+                    </header>
+                    {group.items.map((item) => {
+                      const draft = item.draft
+                      const isActive = draft.id === activeDraftId
+                      const index = drafts.findIndex((candidate) => candidate.draft.id === draft.id)
+                      return (
+                        <article
+                          className="document-draft-card"
+                          data-testid="document-draft-card"
+                          data-active={isActive}
+                          data-selected={item.selected}
+                          data-reconciliation={draft.reconciliation.state}
+                          data-draft-kind={draft.kind}
+                          data-draft-title={draft.form.title}
+                          data-draft-recurrence={
+                            draft.form.recurrence ? JSON.stringify(draft.form.recurrence) : ''
+                          }
+                          data-draft-schedule={draft.schedule ? JSON.stringify(draft.schedule) : ''}
+                          key={draft.id}
+                        >
+                          <div className="document-draft-heading">
+                            <label className="document-draft-select">
+                              <input
+                                type="checkbox"
+                                checked={item.selected}
+                                disabled={draft.reconciliation.state === 'same-source'}
+                                onChange={() => toggleDraft(draft.id)}
+                              />
+                              <span className="visually-hidden">Select proposal {index + 1}</span>
+                            </label>
+                            <button
+                              className="document-draft-summary"
+                              type="button"
+                              aria-expanded={isActive}
+                              onClick={() => activateDraft(draft.id)}
+                            >
+                              <span>
+                                <i>
+                                  {draft.schedule
+                                    ? componentLabels[draft.schedule.component]
+                                    : draft.kind}
+                                </i>
+                                <strong>{draft.form.title}</strong>
+                              </span>
+                              <small>
+                                {draft.schedule
+                                  ? [
+                                      draft.schedule.courseCode,
+                                      draft.schedule.sectionCode,
+                                      draft.schedule.crn
+                                    ]
+                                      .filter(Boolean)
+                                      .join(' · ')
+                                  : `Page ${draft.page}`}{' '}
+                                · {Math.round(draft.confidence * 100)}% ·{' '}
+                                {confidenceLabel(draft.confidence)}
+                              </small>
+                            </button>
+                          </div>
+                          {draft.reconciliation.state !== 'new' ? (
+                            <div
+                              className="document-reconciliation"
+                              data-kind={draft.reconciliation.state}
+                              role={
+                                draft.reconciliation.state === 'likely-duplicate' ? 'alert' : 'note'
+                              }
+                            >
+                              <div>
+                                <strong>
+                                  {reconciliationCopy[draft.reconciliation.state].label}
+                                </strong>
+                                <span>
+                                  {reconciliationCopy[draft.reconciliation.state].message}
+                                </span>
+                              </div>
+                              {draft.reconciliation.matches.length > 0 ? (
+                                <ul>
+                                  {draft.reconciliation.matches.map((match) => (
+                                    <li
+                                      key={`${match.entityKind}:${match.entityId}:${match.relationship}`}
+                                    >
+                                      <strong>{match.title}</strong>
+                                      <span>{match.detail}</span>
+                                      <small>
+                                        {reconciliationRelationshipCopy[match.relationship]}
+                                      </small>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : null}
+                            </div>
                           ) : null}
-                        </>
-                      ) : null}
-                    </article>
-                  )
-                })}
+                          {isActive ? (
+                            <>
+                              <div
+                                className="document-structure-actions"
+                                aria-label="Proposal structure tools"
+                              >
+                                <div>
+                                  <strong>Structure tools</strong>
+                                  <span>
+                                    Explicit review edits; source evidence stays attached.
+                                  </span>
+                                </div>
+                                <div>
+                                  <button
+                                    type="button"
+                                    disabled={!canSplitDocumentDraft(draft)}
+                                    onClick={() => splitDraft(draft.id)}
+                                  >
+                                    Split weekdays
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={
+                                      !drafts.some(
+                                        (candidate) =>
+                                          candidate.selected &&
+                                          canMergeDocumentDrafts(draft, candidate.draft)
+                                      )
+                                    }
+                                    onClick={() => mergeMatchingDrafts(draft.id)}
+                                  >
+                                    Merge matching selected
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={!canReclassifyDocumentDraft(draft)}
+                                    onClick={() => reclassifyDraft(draft.id)}
+                                  >
+                                    Make {draft.kind === 'event' ? 'reminder' : 'event'}
+                                  </button>
+                                </div>
+                              </div>
+                              {draft.kind === 'event' ? (
+                                <EventDraftEditor
+                                  draft={draft}
+                                  onChange={(form) => updateEventForm(draft.id, () => form)}
+                                  onShowEvidence={showEvidence}
+                                />
+                              ) : (
+                                <ReminderDraftEditor
+                                  draft={draft}
+                                  onChange={(form) => updateReminderForm(draft.id, () => form)}
+                                  onShowEvidence={showEvidence}
+                                />
+                              )}
+                              {draft.warnings.length > 0 ? (
+                                <ul className="document-draft-warnings">
+                                  {draft.warnings.map((warning) => (
+                                    <li key={warning}>{warning}</li>
+                                  ))}
+                                </ul>
+                              ) : null}
+                            </>
+                          ) : null}
+                        </article>
+                      )
+                    })}
+                  </section>
+                ))}
+                {analysis.skippedItems.length > 0 ? (
+                  <section
+                    className="document-skipped-group"
+                    aria-label="Safely skipped source rows"
+                  >
+                    <header>
+                      <div>
+                        <strong>Not added on purpose</strong>
+                        <span>
+                          These rows stay visible because guessing a missing time would create a
+                          false event.
+                        </span>
+                      </div>
+                      <span>{analysis.skippedItems.length} skipped</span>
+                    </header>
+                    <div>
+                      {analysis.skippedItems.map((item) => (
+                        <article key={item.id} data-kind={item.category}>
+                          <span aria-hidden="true">
+                            {item.category === 'no-fixed-time' ? '∅' : '?'}
+                          </span>
+                          <div>
+                            <strong>{item.title}</strong>
+                            <small>
+                              Page {item.page} · {Math.round(item.confidence * 100)}% source clarity
+                            </small>
+                            <p>{item.reason}</p>
+                          </div>
+                          <button type="button" onClick={() => showSkippedEvidence(item.id)}>
+                            Review source
+                          </button>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
                 {drafts.length === 0 ? (
                   <div className="document-empty-drafts">
                     <span aria-hidden="true">⌁</span>
@@ -919,39 +1720,128 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
 
               <aside
                 className="document-evidence-panel"
+                data-testid="document-evidence-panel"
+                data-extraction={activePage?.extraction ?? ''}
                 aria-label="Visible source evidence"
                 hidden={reviewView !== 'source'}
               >
                 <div className="document-evidence-heading">
                   <div>
-                    <p className="eyebrow">Visible evidence</p>
+                    <p className="eyebrow">
+                      {activeSkipped ? 'Skipped row evidence' : 'Visible field evidence'}
+                    </p>
                     <h3>
                       Page {activePageNumber}
                       {evidenceField ? ` · ${evidenceField}` : ''}
                     </h3>
+                    <p>
+                      {activeSkipped?.title ?? active?.draft.form.title ?? 'Choose a review item'}
+                    </p>
                   </div>
-                  {activePage ? <span>{activePage.extraction.replace('-', ' ')}</span> : null}
+                  <div className="document-source-controls">
+                    {activePage ? (
+                      <span>
+                        {activePage.extraction.replace('-', ' ')} ·{' '}
+                        {activePage.reviewImageDataUrl ? 'high-resolution local view' : 'thumbnail'}
+                      </span>
+                    ) : null}
+                    <div>
+                      <button
+                        type="button"
+                        aria-label="Previous source page"
+                        disabled={activePageNumber <= 1}
+                        onClick={() => {
+                          setSourcePageNumber((page) => Math.max(1, page - 1))
+                          setSourceZoom(1)
+                        }}
+                      >
+                        ← Page
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Zoom out"
+                        disabled={sourceZoom <= 1}
+                        onClick={() => setSourceZoom((zoom) => Math.max(1, zoom - 0.5))}
+                      >
+                        −
+                      </button>
+                      <button type="button" onClick={() => setSourceZoom(1)}>
+                        {Math.round(sourceZoom * 100)}%
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Zoom in"
+                        disabled={sourceZoom >= 4}
+                        onClick={() => setSourceZoom((zoom) => Math.min(4, zoom + 0.5))}
+                      >
+                        +
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Next source page"
+                        disabled={activePageNumber >= analysis.extraction.pages.length}
+                        onClick={() => {
+                          setSourcePageNumber((page) =>
+                            Math.min(analysis.extraction.pages.length, page + 1)
+                          )
+                          setSourceZoom(1)
+                        }}
+                      >
+                        Page →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="document-page-strip" aria-label="Source pages">
+                  {analysis.extraction.pages.map((page) => (
+                    <button
+                      type="button"
+                      data-active={page.page === activePageNumber}
+                      aria-label={`Show source page ${page.page}`}
+                      key={page.page}
+                      onClick={() => {
+                        setSourcePageNumber(page.page)
+                        setSourceZoom(1)
+                      }}
+                    >
+                      <img src={page.thumbnailDataUrl} alt="" />
+                      <span>Page {page.page}</span>
+                    </button>
+                  ))}
                 </div>
                 {activePage ? (
-                  <div className="document-page-frame">
-                    <img
-                      src={activePage.thumbnailDataUrl}
-                      alt={`Source preview, page ${activePage.page}`}
-                    />
-                    <div className="document-evidence-overlay" aria-hidden="true">
-                      {activeEvidence
-                        .filter((block) => block.page === activePage.page)
-                        .map((block) => (
-                          <span
-                            key={block.id}
-                            style={{
-                              left: `${block.boundingBox.x * 100}%`,
-                              top: `${block.boundingBox.y * 100}%`,
-                              width: `${block.boundingBox.width * 100}%`,
-                              height: `${block.boundingBox.height * 100}%`
-                            }}
-                          />
-                        ))}
+                  <div
+                    className="document-page-frame"
+                    data-testid="document-page-frame"
+                    data-pannable={sourceZoom > 1}
+                    ref={sourceFrameRef}
+                    onPointerDown={beginSourcePan}
+                    onPointerMove={moveSourcePan}
+                    onPointerUp={endSourcePan}
+                    onPointerCancel={endSourcePan}
+                  >
+                    <div className="document-page-canvas" style={{ width: `${sourceZoom * 100}%` }}>
+                      <img
+                        data-testid="document-source-image"
+                        src={activePage.reviewImageDataUrl ?? activePage.thumbnailDataUrl}
+                        alt={`Source preview, page ${activePage.page}`}
+                        draggable={false}
+                      />
+                      <div className="document-evidence-overlay" aria-hidden="true">
+                        {activeEvidence
+                          .filter((block) => block.page === activePage.page)
+                          .map((block) => (
+                            <span
+                              key={block.id}
+                              style={{
+                                left: `${block.boundingBox.x * 100}%`,
+                                top: `${block.boundingBox.y * 100}%`,
+                                width: `${block.boundingBox.width * 100}%`,
+                                height: `${block.boundingBox.height * 100}%`
+                              }}
+                            />
+                          ))}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -973,8 +1863,9 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                   )}
                 </div>
                 <p className="document-evidence-note">
-                  Highlights are normalized bounding boxes from PDF text or local OCR. Edits stay
-                  editable and are never written back to the source file.
+                  Drag to pan after zooming. Highlights are normalized boxes from PDF text or local
+                  OCR. The high-resolution review image stays in memory and is discarded with this
+                  dialog.
                 </p>
               </aside>
             </div>
@@ -1000,6 +1891,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                 </button>
                 <button
                   className="retro-button"
+                  data-testid="document-confirm"
                   type="submit"
                   disabled={phase === 'saving' || selectedCount === 0}
                 >

@@ -1,40 +1,82 @@
 {
-  "schemaVersion": 1,
-  "corpusVersion": "0.1.0",
+  "schemaVersion": 2,
+  "corpusVersion": "0.2.0",
   "generator": "scripts/build-assistant-corpus.ts curate",
   "seed": 260826,
   "registrySha256": "7da27bed9f18b097f40db8f09a6f9c8b0bcdfb0b9866dcdbc947a620bcd6163f",
   "acceptedTemplatesPath": "ml/assistant_corpus/accepted/templates.json",
-  "acceptedTemplatesSha256": "f90bc522b78cfd763e72fa39526a15c8b5712aac925d1100ac1f3241d5fb2687",
-  "rows": 772,
-  "generatedMaterializations": 1176,
-  "deduplicatedMaterializations": 404,
+  "acceptedTemplatesSha256": "5fa80e426a1d523e8aba0cd31ea7334d8125718f0327070b50079c2f91f6b8db",
+  "rows": 1033,
+  "generatedMaterializations": 1976,
+  "deduplicatedMaterializations": 943,
   "countsBySplit": {
-    "train": 280,
-    "development": 199,
-    "challenge": 293
+    "train": 380,
+    "development": 263,
+    "challenge": 390
   },
   "countsBySource": {
-    "project-seed": 497,
-    "qwen-paraphrase": 140,
-    "project-composition": 70,
-    "project-dialogue": 37,
+    "project-seed": 564,
+    "qwen-paraphrase": 160,
+    "project-composition": 88,
+    "project-dialogue": 193,
     "project-hard-negative": 28
   },
   "countsByNoise": {
-    "clean": 344,
-    "typo": 129,
-    "extra-space": 131,
-    "asr": 103,
-    "punctuation": 65
+    "clean": 625,
+    "typo": 159,
+    "extra-space": 165,
+    "asr": 53,
+    "punctuation": 31
+  },
+  "semanticCoverage": {
+    "dialogueRelation": {
+      "standalone": 840,
+      "follow-up": 151,
+      "new-topic": 42
+    },
+    "requestedAttribute": {
+      "none": 850,
+      "name": 11,
+      "time": 7,
+      "start": 7,
+      "end": 7,
+      "date": 61,
+      "location": 27,
+      "duration": 6,
+      "notes": 7,
+      "recurrence": 7,
+      "details": 43
+    },
+    "scope": {
+      "none": 882,
+      "singular": 64,
+      "plural": 56,
+      "all": 31
+    },
+    "selection": {
+      "none": 962,
+      "first": 8,
+      "second": 11,
+      "third": 7,
+      "last": 7,
+      "next": 9,
+      "subset": 29
+    },
+    "turnKind": {
+      "calendar-read": 259,
+      "calendar-write": 465,
+      "conversation": 223,
+      "memory": 79,
+      "unclear": 7
+    }
   },
   "coverageBySplit": {
     "train": 42,
     "development": 42,
     "challenge": 42
   },
-  "multiActionRows": 70,
-  "contextualRows": 37,
+  "multiActionRows": 88,
+  "contextualRows": 193,
   "maximumActions": 3,
   "familySplitOverlap": 0,
   "evaluation": {
@@ -51,21 +93,22 @@
     "teacherSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5",
     "teacherAuthoredLabels": 0,
     "teacherAuthoredSlotValues": 0,
+    "semanticTargetsProjectAuthored": true,
     "pretrainedWeightsUsed": false,
     "personalDataUsed": false
   },
   "files": {
     "ml/assistant_corpus/data/train.jsonl": {
-      "rows": 280,
-      "sha256": "e786f9c199072892d0cee1a4a5373464c2c2ad40fb247fc47b79ff4156560494"
+      "rows": 380,
+      "sha256": "f0db5a7308d910bfc7042c4abddaf002484db5be24f397c7760897ff180d3455"
     },
     "ml/assistant_corpus/data/development.jsonl": {
-      "rows": 199,
-      "sha256": "517134c0c80f3a6c55b0ed1ab6c98fd2b2ec475e548f49692973d231e62e1de0"
+      "rows": 263,
+      "sha256": "bb0bd6536d2a918ac3d6af8ac6fca0b13105e4eddc0448661805fc7b965917bc"
     },
     "ml/assistant_corpus/data/challenge.jsonl": {
-      "rows": 293,
-      "sha256": "df7ed1435fa7eb0f8a7754ab82d1cb078ed30b24160e7ab9bcb1cb6e5594aa4c"
+      "rows": 390,
+      "sha256": "fe319ed4ce386569590c7cca71195abc31bc933b157c89b6e65bbab99c2a701f"
     }
   }
 }

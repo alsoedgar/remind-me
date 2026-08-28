@@ -2,62 +2,103 @@
   "schemaVersion": 1,
   "generatedAt": "deterministic-pipeline",
   "dev": {
-    "pages": 2000,
+    "pages": 2500,
     "blockRoleAccuracy": 1.0,
-    "entityMicroF1": 0.999962033486465,
-    "relationMicroF1": 0.8688672619644828,
-    "groupLinkMicroF1": 0.918827660723933,
-    "documentTypeAccuracy": 0.865,
-    "executionEquivalence": {
-      "bornDigital": 0.999000999000999,
+    "entityMicroF1": 1.0,
+    "relationMicroF1": 0.9691962959963284,
+    "groupLinkMicroF1": 0.9871004299856672,
+    "documentTypeAccuracy": 0.8616,
+    "criticalRolePageEquivalence": {
+      "bornDigital": 1.0,
       "scanned": 1.0,
-      "overall": 0.9995
+      "overall": 1.0
     },
+    "challengeCriticalRolePageEquivalence": {
+      "baseline": 1.0,
+      "ocr-corruption": 1.0,
+      "neighboring-row-negatives": 1.0,
+      "repeated-titles": 1.0,
+      "unfamiliar-column-order": 1.0,
+      "header-footer-distractions": 1.0
+    },
+    "hardNegativeFalseLinkRate": 0.06771240370659819,
+    "distractorFalseEntityRate": 0.0,
     "evidenceCoverage": 1.0
   },
   "testFloat32": {
-    "pages": 2000,
+    "pages": 2500,
     "blockRoleAccuracy": 1.0,
     "entityMicroF1": 1.0,
-    "relationMicroF1": 0.8930703200500256,
-    "groupLinkMicroF1": 0.94429789853161,
-    "documentTypeAccuracy": 0.8525,
-    "executionEquivalence": {
+    "relationMicroF1": 0.977866473149492,
+    "groupLinkMicroF1": 0.9908014602265792,
+    "documentTypeAccuracy": 0.7964,
+    "criticalRolePageEquivalence": {
       "bornDigital": 1.0,
       "scanned": 1.0,
       "overall": 1.0
     },
+    "challengeCriticalRolePageEquivalence": {
+      "baseline": 1.0,
+      "ocr-corruption": 1.0,
+      "neighboring-row-negatives": 1.0,
+      "repeated-titles": 1.0,
+      "unfamiliar-column-order": 1.0,
+      "header-footer-distractions": 1.0
+    },
+    "hardNegativeFalseLinkRate": 0.04996676522496504,
+    "distractorFalseEntityRate": 0.0,
     "evidenceCoverage": 1.0
   },
   "testInt8": {
-    "pages": 2000,
+    "pages": 2500,
     "blockRoleAccuracy": 1.0,
     "entityMicroF1": 1.0,
-    "relationMicroF1": 0.892320009149654,
-    "groupLinkMicroF1": 0.9426476739833998,
-    "documentTypeAccuracy": 0.849,
-    "executionEquivalence": {
+    "relationMicroF1": 0.9775440505334422,
+    "groupLinkMicroF1": 0.9909003033232225,
+    "documentTypeAccuracy": 0.7996,
+    "criticalRolePageEquivalence": {
       "bornDigital": 1.0,
       "scanned": 1.0,
       "overall": 1.0
     },
+    "challengeCriticalRolePageEquivalence": {
+      "baseline": 1.0,
+      "ocr-corruption": 1.0,
+      "neighboring-row-negatives": 1.0,
+      "repeated-titles": 1.0,
+      "unfamiliar-column-order": 1.0,
+      "header-footer-distractions": 1.0
+    },
+    "hardNegativeFalseLinkRate": 0.049416672396800296,
+    "distractorFalseEntityRate": 0.0,
     "evidenceCoverage": 1.0
   },
   "textOnlyInferenceAblation": {
-    "pages": 2000,
-    "blockRoleAccuracy": 0.9894342494219569,
-    "entityMicroF1": 0.9996530989824237,
-    "relationMicroF1": 0.3982829413960433,
-    "groupLinkMicroF1": 0.6505598114319388,
-    "documentTypeAccuracy": 0.9265,
-    "executionEquivalence": {
+    "pages": 2500,
+    "blockRoleAccuracy": 1.0,
+    "entityMicroF1": 0.9958674958080828,
+    "relationMicroF1": 0.47398826401419236,
+    "groupLinkMicroF1": 0.8124278264674778,
+    "documentTypeAccuracy": 0.878,
+    "criticalRolePageEquivalence": {
       "bornDigital": 1.0,
-      "scanned": 0.991,
-      "overall": 0.9955
+      "scanned": 1.0,
+      "overall": 1.0
     },
+    "challengeCriticalRolePageEquivalence": {
+      "baseline": 1.0,
+      "ocr-corruption": 1.0,
+      "neighboring-row-negatives": 1.0,
+      "repeated-titles": 1.0,
+      "unfamiliar-column-order": 1.0,
+      "header-footer-distractions": 1.0
+    },
+    "hardNegativeFalseLinkRate": 0.6097320589516148,
+    "distractorFalseEntityRate": 0.0,
     "evidenceCoverage": 1.0
   },
-  "maximumQuantizationDelta": 0.0035000000000000586,
+  "maximumQuantizationDelta": 0.0031999999999999806,
+  "phase6ChallengeMinimumCriticalRolePageEquivalence": 1.0,
   "splitDisjoint": {
     "templateFamilies": true,
     "fonts": true,
@@ -69,12 +110,19 @@
     "OCR recognition quality remains bounded by the bundled Tesseract model.",
     "Handwriting and unusually visual pages are outside this checkpoint."
   ],
+  "promotionGates": {
+    "allChallengeSlicesPresent": true,
+    "hardNegativeFalseLinkRateAtMostFivePercent": true,
+    "distractorFalseEntityRateAtMostTwoPercent": true,
+    "everyCriticalValueEvidenceBacked": true,
+    "quantizationDeltaAtMostHalfPoint": true
+  },
   "export": {
     "configurationPath": "models/planscan/planscan-v0.1-int8.json",
     "weightsPath": "models/planscan/planscan-v0.1-int8.bin.gz",
-    "compressedBytes": 22667,
+    "compressedBytes": 30438,
     "uncompressedBytes": 5242880,
     "parameterCount": 5242880,
-    "sha256Uncompressed": "1b934e6b34d8c091dee96bdc53f1cf940110406ccf5b238653fa6f99406255ac"
+    "sha256Uncompressed": "86ecc3768e6c6595be7459b8497b3b674216a9cbae8cbbcf4c03daea7de12612"
   }
 }

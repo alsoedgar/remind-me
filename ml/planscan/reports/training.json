@@ -1,21 +1,21 @@
 {
-  "durationSeconds": 394.065,
-  "epochs": 2,
+  "durationSeconds": 614.552,
+  "epochs": 3,
   "examples": {
-    "blockRole": 399754,
-    "entityRole": 399754,
-    "confidence": 399754,
-    "documentType": 24000,
-    "relation": 624000,
-    "groupLink": 624000
+    "blockRole": 918522,
+    "entityRole": 918522,
+    "confidence": 918522,
+    "documentType": 48000,
+    "relation": 2040039,
+    "groupLink": 2040039
   },
   "mistakeUpdates": {
-    "blockRole": 46,
-    "entityRole": 52,
-    "confidence": 103,
-    "documentType": 55,
-    "relation": 32112,
-    "groupLink": 34930
+    "blockRole": 62,
+    "entityRole": 77,
+    "confidence": 125,
+    "documentType": 70,
+    "relation": 20062,
+    "groupLink": 21584
   },
   "parameterInitialization": "zero"
 }

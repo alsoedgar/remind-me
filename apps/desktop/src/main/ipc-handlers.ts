@@ -12,6 +12,7 @@ import { basename, extname } from 'node:path'
 import {
   appInfoRequestSchema,
   appInfoResponseSchema,
+  assistantStreamEventSchema,
   calendarBackupSchema,
   ipcChannels,
   ipcContracts,
@@ -121,9 +122,10 @@ async function chooseImportPath(event: IpcMainInvokeEvent): Promise<string | nul
 }
 
 async function chooseDocumentPath(event: IpcMainInvokeEvent): Promise<string | null> {
-  const smokeDocumentPath = process.argv.includes('--smoke-test')
-    ? process.env.REMIND_ME_SMOKE_DOCUMENT
-    : undefined
+  const smokeDocumentPath =
+    process.argv.includes('--smoke-test') || process.argv.includes('--document-release-gate')
+      ? process.env.REMIND_ME_SMOKE_DOCUMENT
+      : undefined
   if (smokeDocumentPath) return smokeDocumentPath
 
   const options: OpenDialogOptions = {
@@ -284,9 +286,43 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
   ipcMain.handle(ipcChannels.assistantSend, async (event, payload: unknown) => {
     validate(event)
     const request = ipcContracts[ipcChannels.assistantSend].request.parse(payload)
-    const response = await assistantService.send(request)
+    const response = await assistantService.send(
+      request,
+      request.streamId
+        ? {
+            onFlexibleChatChunk: (text) => {
+              const chunk = assistantStreamEventSchema.safeParse({
+                type: 'chunk',
+                streamId: request.streamId,
+                text
+              })
+              if (chunk.success && !event.sender.isDestroyed()) {
+                event.sender.send(ipcChannels.assistantStream, chunk.data)
+              }
+            },
+            onFlexibleModelStatus: (status) => {
+              const update = assistantStreamEventSchema.safeParse({
+                type: 'status',
+                streamId: request.streamId,
+                status
+              })
+              if (update.success && !event.sender.isDestroyed()) {
+                event.sender.send(ipcChannels.assistantStream, update.data)
+              }
+            }
+          }
+        : {}
+    )
     afterMutation()
     return ipcContracts[ipcChannels.assistantSend].response.parse(response)
+  })
+
+  ipcMain.handle(ipcChannels.assistantCancel, (event, payload: unknown) => {
+    validate(event)
+    const request = ipcContracts[ipcChannels.assistantCancel].request.parse(payload)
+    return ipcContracts[ipcChannels.assistantCancel].response.parse({
+      cancelled: flexModelRuntime.cancelInference(request.streamId)
+    })
   })
 
   ipcMain.handle(ipcChannels.assistantConfirm, (event, payload: unknown) => {
@@ -357,6 +393,14 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
     const request = ipcContracts[ipcChannels.flexModelSetEnabled].request.parse(payload)
     return ipcContracts[ipcChannels.flexModelSetEnabled].response.parse(
       await flexModelRuntime.setEnabled(request.enabled)
+    )
+  })
+
+  ipcMain.handle(ipcChannels.flexModelConfigure, async (event, payload: unknown) => {
+    validate(event)
+    const request = ipcContracts[ipcChannels.flexModelConfigure].request.parse(payload)
+    return ipcContracts[ipcChannels.flexModelConfigure].response.parse(
+      await flexModelRuntime.configure(request)
     )
   })
 
@@ -464,6 +508,9 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
     pruneDocumentSelections()
     const pending = pendingDocumentSelections.get(request.selectionId)
     if (!pending) throw new Error('This document review expired. Choose the file again.')
+    if (request.items.some((item) => item.sourceIdentity.sourceSha256 !== pending.source.sha256)) {
+      throw new Error('The reviewed items do not belong to the selected document.')
+    }
     const mutation = service.importReviewedDocumentItems(
       request.items,
       pending.source.displayName,
@@ -480,6 +527,30 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
     return ipcContracts[ipcChannels.documentDiscard].response.parse({
       discarded: pendingDocumentSelections.delete(request.selectionId)
     })
+  })
+
+  ipcMain.handle(ipcChannels.documentRepair, async (event, payload: unknown) => {
+    validate(event)
+    const request = ipcContracts[ipcChannels.documentRepair].request.parse(payload)
+    pruneDocumentSelections()
+    const pending = pendingDocumentSelections.get(request.selectionId)
+    if (!pending || pending.source.sha256 !== request.sourceSha256) {
+      throw new Error('This document repair no longer belongs to an active local review.')
+    }
+    const response = await flexModelRuntime.repairDocument(request)
+    return ipcContracts[ipcChannels.documentRepair].response.parse(response)
+  })
+
+  ipcMain.handle(ipcChannels.documentFallback, async (event, payload: unknown) => {
+    validate(event)
+    const request = ipcContracts[ipcChannels.documentFallback].request.parse(payload)
+    pruneDocumentSelections()
+    const pending = pendingDocumentSelections.get(request.selectionId)
+    if (!pending || pending.source.sha256 !== request.sourceSha256) {
+      throw new Error('This document fallback no longer belongs to an active local review.')
+    }
+    const response = await flexModelRuntime.groupDocumentFallback(request)
+    return ipcContracts[ipcChannels.documentFallback].response.parse(response)
   })
 
   ipcMain.handle(ipcChannels.dataExport, async (event, payload: unknown) => {

@@ -184,6 +184,27 @@ TIMES = [
     "7:15 PM",
 ]
 
+CHALLENGE_SLICES = [
+    "baseline",
+    "ocr-corruption",
+    "neighboring-row-negatives",
+    "repeated-titles",
+    "unfamiliar-column-order",
+    "header-footer-distractions",
+]
+
+OCR_SUBSTITUTIONS = [
+    ("Room", "R0om"),
+    ("Studio", "Stud1o"),
+    ("Review", "Revlew"),
+    ("Hall", "Ha11"),
+    ("Location", "Locatlon"),
+    ("August", "Augusl"),
+    ("September", "Septernber"),
+    ("AM", "A M"),
+    ("PM", "P M"),
+]
+
 SPLIT_ASSETS = {
     "train": {
         "families": [
@@ -372,6 +393,8 @@ def lexical_flags(text: str) -> list[str]:
         flags.append("flag:pipe")
     if re.search(r"\b(?:agenda|schedule|syllabus|itinerary|rotation|important dates)\b", text, re.I):
         flags.append("flag:document-heading")
+    if re.search(r"\b(?:printed|generated|downloaded|page\s+\d+|questions\?|records?)\b", text, re.I):
+        flags.append("flag:page-chrome")
     return flags
 
 
@@ -416,6 +439,14 @@ def block_features(
         features.add(f"height:{bucket(box['height'], 6)}")
         features.add(f"column:{bucket(box['x'] + box['width'] / 2, 4)}")
         features.add(f"position:{bucket(index / max(1, len(page_blocks)), 10)}")
+        center_y = box["y"] + box["height"] / 2
+        features.add(
+            "page-margin:top"
+            if center_y < 0.08
+            else "page-margin:bottom"
+            if center_y > 0.9
+            else "page-margin:body"
+        )
     for direction, neighbor_index in (("previous", index - 1), ("next", index + 1)):
         if neighbor_index < 0 or neighbor_index >= len(page_blocks):
             continue
@@ -483,9 +514,38 @@ def pair_features(
         dy = right_y - left_y
         features.add(f"dx:{signed_bucket(dx)}")
         features.add(f"dy:{signed_bucket(dy)}")
+        features.add(f"abs-dx:{bucket(abs(dx), 16)}")
+        features.add(f"abs-dy:{bucket(abs(dy), 20)}")
+        features.add(f"abs-dx-fine:{bucket(abs(dx), 64)}")
+        features.add(f"abs-dy-fine:{bucket(abs(dy), 80)}")
+        features.add(f"from-x:{bucket(left_x, 8)}")
+        features.add(f"from-y:{bucket(left_y, 12)}")
+        features.add(f"to-x:{bucket(right_x, 8)}")
+        features.add(f"to-y:{bucket(right_y, 12)}")
+        vertical_gap = max(
+            0.0,
+            max(left_box["y"], right_box["y"])
+            - min(
+                left_box["y"] + left_box["height"],
+                right_box["y"] + right_box["height"],
+            ),
+        )
+        row_overlap = max(
+            0.0,
+            min(
+                left_box["y"] + left_box["height"],
+                right_box["y"] + right_box["height"],
+            )
+            - max(left_box["y"], right_box["y"]),
+        )
+        features.add(f"vertical-gap:{bucket(vertical_gap, 80)}")
+        features.add(f"row-overlap:{int(row_overlap > 0)}")
         features.add(f"same-row:{int(abs(dy) <= 0.035)}")
+        features.add(f"same-row-tight:{int(abs(dy) <= 0.018)}")
         features.add(f"same-column:{int(abs(dx) <= 0.12)}")
+        features.add(f"same-column-tight:{int(abs(dx) <= 0.06)}")
         features.add(f"direction:{'horizontal' if abs(dx) > abs(dy) else 'vertical'}")
+        features.add(f"same-entity-role:{int(left_entity == right_entity)}")
     for flag in lexical_flags(left["text"]):
         features.add(f"from-{flag}")
     for flag in lexical_flags(right["text"]):
@@ -525,13 +585,26 @@ def block(
     }
 
 
-def maybe_scan_text(text: str, rng: random.Random, scanned: bool) -> str:
-    if not scanned or rng.random() > 0.14:
+def maybe_scan_text(
+    text: str,
+    rng: random.Random,
+    scanned: bool,
+    challenges: Sequence[str],
+) -> str:
+    probability = 0.34 if "ocr-corruption" in challenges else 0.14
+    if not scanned or rng.random() > probability:
         return text
-    substitutions = [("Room", "R0om"), ("Studio", "Stud1o"), ("Review", "Revlew")]
-    for before, after in substitutions:
+    for before, after in OCR_SUBSTITUTIONS:
         if before in text:
             return text.replace(before, after, 1)
+    if ":" in text and rng.random() < 0.5:
+        return text.replace(":", " ", 1)
+    if " - " in text and rng.random() < 0.5:
+        return text.replace(" - ", "  -  ", 1)
+    if len(text) > 8:
+        index = rng.randrange(2, len(text) - 2)
+        if text[index].isalpha():
+            return f"{text[:index]}{text[index + 1:]}"
     return text
 
 
@@ -540,6 +613,7 @@ def layout_groups(
     family: str,
     method: str,
     rng: random.Random,
+    challenges: Sequence[str],
 ) -> list[dict[str, Any]]:
     blocks: list[dict[str, Any]] = []
     scanned = method == "ocr"
@@ -551,15 +625,34 @@ def layout_groups(
     )
     if horizontal:
         header_y = 0.12
-        headers = [("Plan", 0.06), ("Date", 0.39), ("Time", 0.62), ("Place", 0.79)]
-        for index, (text, x) in enumerate(headers):
+        columns = [
+            ("title", "Plan", 0.06, 0.29, "plan-title", "title"),
+            ("date", "Date", 0.39, 0.20, "plan-field", "date"),
+            ("time", "Time", 0.62, 0.16, "plan-field", "time"),
+            ("location", "Place", 0.79, 0.17, "plan-field", "location"),
+        ]
+        if "unfamiliar-column-order" in challenges:
+            order = [2, 0, 3, 1] if rng.random() < 0.5 else [1, 3, 0, 2]
+            slots = [(0.06, 0.20), (0.28, 0.28), (0.58, 0.19), (0.79, 0.17)]
+            columns = [
+                (
+                    columns[column_index][0],
+                    columns[column_index][1],
+                    slots[slot_index][0],
+                    slots[slot_index][1],
+                    columns[column_index][4],
+                    columns[column_index][5],
+                )
+                for slot_index, column_index in enumerate(order)
+            ]
+        for index, (_, text, x, width, _, _) in enumerate(columns):
             blocks.append(
                 block(
                     f"header:{index}",
                     text,
                     x,
                     header_y,
-                    0.15,
+                    width,
                     0.026,
                     "metadata",
                     "other",
@@ -570,19 +663,24 @@ def layout_groups(
                 )
             )
         for group_index, group in enumerate(groups):
-            y = 0.2 + group_index * 0.16
+            row_step = 0.105 if "neighboring-row-negatives" in challenges else 0.145
+            y = 0.2 + group_index * row_step
+            values_by_key = {
+                "title": group["title"],
+                "date": group["date"],
+                "time": group["time"],
+                "location": f"Room: {group['location']}",
+            }
             values = [
-                (group["title"], 0.06, 0.29, "plan-title", "title"),
-                (group["date"], 0.39, 0.2, "plan-field", "date"),
-                (group["time"], 0.62, 0.16, "plan-field", "time"),
-                (f"Room: {group['location']}", 0.79, 0.17, "plan-field", "location"),
+                (values_by_key[key], x, width, block_role, entity_role)
+                for key, _, x, width, block_role, entity_role in columns
             ]
             for field_index, (text, x, width, block_role, entity_role) in enumerate(values):
                 confidence = rng.uniform(0.72, 0.9) if scanned else 1.0
                 blocks.append(
                     block(
                         f"group:{group_index}:{field_index}",
-                        maybe_scan_text(text, rng, scanned),
+                        maybe_scan_text(text, rng, scanned, challenges),
                         x,
                         y + rng.uniform(-0.003, 0.003),
                         width,
@@ -624,12 +722,14 @@ def layout_groups(
             ]
             if title_first:
                 order[0], order[1] = order[1], order[0]
+            if "unfamiliar-column-order" in challenges:
+                order = [order[2], order[0], order[3], order[1]]
             for field_index, (text, block_role, entity_role) in enumerate(order):
                 x = 0.09 + (0.03 if field_index in {2, 3} else 0)
                 blocks.append(
                     block(
                         f"group:{group_index}:{field_index}",
-                        maybe_scan_text(text, rng, scanned),
+                        maybe_scan_text(text, rng, scanned, challenges),
                         x,
                         y,
                         0.7 if entity_role != "location" else 0.55,
@@ -687,15 +787,24 @@ def generate_page(split: str, index: int, rng: random.Random, config: dict[str, 
     assets = SPLIT_ASSETS[split]
     family = assets["families"][index % len(assets["families"])]
     document_type = DOCUMENT_TYPES[index % len(DOCUMENT_TYPES)]
-    scanned = (index // len(assets["families"])) % 2 == 1
+    configured_challenges = config["dataset"].get("challengeSlices", CHALLENGE_SLICES)
+    layout_cycle = index // len(assets["families"])
+    challenge_slice = configured_challenges[layout_cycle % len(configured_challenges)]
+    challenges = [challenge_slice]
+    scanned = (layout_cycle // len(configured_challenges)) % 2 == 1
     method = "ocr" if scanned else "native-text"
     plan_count = rng.randint(
         config["dataset"]["minimumPlansPerPage"], config["dataset"]["maximumPlansPerPage"]
     )
     groups: list[dict[str, str]] = []
+    repeated_title = TITLES[(index * 3) % len(TITLES)]
     for group_index in range(plan_count):
-        reminder = (index + group_index) % 5 == 0
-        title = TITLES[(index * 3 + group_index * 5) % len(TITLES)]
+        reminder = challenge_slice != "repeated-titles" and (index + group_index) % 5 == 0
+        title = (
+            repeated_title
+            if challenge_slice == "repeated-titles"
+            else TITLES[(index * 3 + group_index * 5) % len(TITLES)]
+        )
         if reminder:
             title = f"Reminder: {title}"
         groups.append(
@@ -755,7 +864,40 @@ def generate_page(split: str, index: int, rng: random.Random, config: dict[str, 
             "ocr-risk" if scanned else "clear",
         ),
     ]
-    blocks.extend(layout_groups(groups, family, method, rng))
+    blocks.extend(layout_groups(groups, family, method, rng, challenges))
+    if challenge_slice == "header-footer-distractions":
+        blocks.extend(
+            [
+                block(
+                    "noise:print-header",
+                    "Printed August 18, 2026 at 8:41 AM",
+                    0.58,
+                    0.012,
+                    0.34,
+                    0.018,
+                    "metadata",
+                    "other",
+                    None,
+                    method,
+                    rng.uniform(0.65, 0.86) if scanned else 1.0,
+                    "noise",
+                ),
+                block(
+                    "noise:download-footer",
+                    "Downloaded schedule - page 1 of 1 - Room 404",
+                    0.48,
+                    0.952,
+                    0.45,
+                    0.018,
+                    "other",
+                    "other",
+                    None,
+                    method,
+                    rng.uniform(0.62, 0.84) if scanned else 1.0,
+                    "noise",
+                ),
+            ]
+        )
     if index % 9 == 0:
         blocks.append(
             block(
@@ -777,6 +919,8 @@ def generate_page(split: str, index: int, rng: random.Random, config: dict[str, 
     return {
         "id": f"planscan:{split}:{index}",
         "split": split,
+        "challengeSlice": challenge_slice,
+        "challenges": challenges,
         "templateFamily": family,
         "font": assets["fonts"][index % len(assets["fonts"])],
         "scanStyle": assets["scanStyles"][index % len(assets["scanStyles"])],
@@ -828,8 +972,44 @@ def contract_page(page: dict[str, Any]) -> dict[str, Any]:
                 "wordIds": [word_id],
             }
         )
+    observed_groups = []
+    for group in page["groups"]:
+        group_blocks = [block for block in page["blocks"] if block["groupId"] == group["id"]]
+
+        def observed_block(role: str) -> dict[str, Any] | None:
+            return next((block for block in group_blocks if block["entityRole"] == role), None)
+
+        title_block = observed_block("title")
+        date_block = observed_block("date")
+        time_block = observed_block("time")
+        location_block = observed_block("location")
+        date_match = (
+            next(
+                (match for pattern in DATE_PATTERNS if (match := pattern.search(date_block["text"]))),
+                None,
+            )
+            if date_block
+            else None
+        )
+        time_match = TIME_PATTERN.search(time_block["text"]) if time_block else None
+        location_match = LOCATION_PATTERN.search(location_block["text"]) if location_block else None
+        if not title_block or not date_match or not time_match:
+            continue
+
+        observed_groups.append(
+            {
+                "id": group["id"],
+                "kind": group["kind"],
+                "title": title_block["text"],
+                "date": date_match.group(0),
+                "time": time_match.group(0),
+                "location": location_match.group(1) if location_match else "",
+            }
+        )
     return {
         "id": page["id"],
+        "challengeSlice": page["challengeSlice"],
+        "challenges": page["challenges"],
         "templateFamily": page["templateFamily"],
         "font": page["font"],
         "scanStyle": page["scanStyle"],
@@ -863,6 +1043,7 @@ def contract_page(page: dict[str, Any]) -> dict[str, Any]:
                 }
                 for group in page["groups"]
             ],
+            "observedGroups": observed_groups,
         },
     }
 
@@ -877,6 +1058,7 @@ def generate() -> dict[str, Any]:
         "test": int(config["dataset"]["testPages"]),
     }
     files: dict[str, Any] = {}
+    challenge_counts: dict[str, dict[str, int]] = {}
     heldout: list[dict[str, Any]] = []
     for split, count in split_counts.items():
         rng = random.Random(seed + {"train": 11, "dev": 23, "test": 37}[split])
@@ -890,11 +1072,20 @@ def generate() -> dict[str, Any]:
             "nativePages": sum(page["method"] == "native-text" for page in pages),
             "scannedPages": sum(page["method"] == "ocr" for page in pages),
         }
+        challenge_counts[split] = dict(Counter(page["challengeSlice"] for page in pages))
         if split == "test":
             desired = int(config["dataset"]["trackedHeldoutPages"])
-            native = [page for page in pages if page["method"] == "native-text"][: desired // 2]
-            scanned = [page for page in pages if page["method"] == "ocr"][: desired // 2]
-            heldout = [contract_page(page) for pair in zip(native, scanned) for page in pair]
+            per_slice_method = max(1, desired // (len(CHALLENGE_SLICES) * 2))
+            heldout = []
+            for challenge in CHALLENGE_SLICES:
+                for method in ("native-text", "ocr"):
+                    slice_pages = [
+                        page
+                        for page in pages
+                        if page["challengeSlice"] == challenge and page["method"] == method
+                    ][:per_slice_method]
+                    heldout.extend(contract_page(page) for page in slice_pages)
+            heldout = heldout[:desired]
     heldout_count, heldout_digest = write_jsonl(HELDOUT_FIXTURE_PATH, heldout)
     assets = {
         split: {
@@ -921,6 +1112,8 @@ def generate() -> dict[str, Any]:
         },
         "disjointAssets": assets,
         "documentTypes": DOCUMENT_TYPES,
+        "challengeSlices": CHALLENGE_SLICES,
+        "challengeCounts": challenge_counts,
     }
     manifest_digest = sha256_bytes(stable_json(manifest_core).encode("utf-8"))
     manifest = {**manifest_core, "manifestSha256": manifest_digest}
@@ -967,8 +1160,34 @@ def group_link_label(left: dict[str, Any], right: dict[str, Any]) -> str:
     return "none"
 
 
+def hard_negative_pair(left: dict[str, Any], right: dict[str, Any]) -> bool:
+    left_group = left["groupId"]
+    right_group = right["groupId"]
+    if left_group and right_group and left_group != right_group:
+        left_box = left["boundingBox"]
+        right_box = right["boundingBox"]
+        close_rows = abs(left_box["y"] - right_box["y"]) <= 0.16
+        confusable_roles = (
+            left["entityRole"] == right["entityRole"]
+            or {left["entityRole"], right["entityRole"]}
+            in ({"title", "date"}, {"date", "time"}, {"time", "location"})
+        )
+        if close_rows and confusable_roles:
+            return True
+    chrome = left if not left_group else right if not right_group else None
+    grouped = right if chrome is left else left if chrome is right else None
+    return bool(
+        chrome
+        and grouped
+        and "flag:page-chrome" in lexical_flags(chrome["text"])
+        and set(lexical_flags(chrome["text"]))
+        & {"flag:date", "flag:time", "flag:location"}
+    )
+
+
 def training_pairs(blocks: Sequence[dict[str, Any]], rng: random.Random) -> list[tuple[int, int]]:
     positives: list[tuple[int, int]] = []
+    hard_negatives: list[tuple[int, int]] = []
     negatives: list[tuple[int, int]] = []
     for left_index, left in enumerate(blocks):
         for right_index, right in enumerate(blocks):
@@ -976,12 +1195,19 @@ def training_pairs(blocks: Sequence[dict[str, Any]], rng: random.Random) -> list
                 continue
             target = relation_label(left, right)
             if target == "none" and group_link_label(left, right) == "none":
-                negatives.append((left_index, right_index))
+                (hard_negatives if hard_negative_pair(left, right) else negatives).append(
+                    (left_index, right_index)
+                )
             else:
                 positives.append((left_index, right_index))
     rng.shuffle(positives)
+    rng.shuffle(hard_negatives)
     rng.shuffle(negatives)
-    return positives[:12] + negatives[: max(8, min(14, len(positives) + 2))]
+    return (
+        positives[:18]
+        + hard_negatives[: max(14, min(28, len(positives) + 10))]
+        + negatives[: max(6, min(10, len(positives) // 2 + 2))]
+    )
 
 
 def train() -> dict[str, HashHead]:
@@ -1113,8 +1339,15 @@ def evaluate_heads(
     document_targets: list[str] = []
     document_predictions: list[str] = []
     execution_by_method: dict[str, list[bool]] = {"native-text": [], "ocr": []}
+    execution_by_challenge: dict[str, list[bool]] = {
+        challenge: [] for challenge in CHALLENGE_SLICES
+    }
     evidence_values = 0
     evidence_backed = 0
+    hard_negative_pairs = 0
+    hard_negative_false_links = 0
+    distractor_blocks = 0
+    distractor_false_entities = 0
 
     def predict(head_name: str, features: Sequence[str]) -> int:
         head = heads[head_name]
@@ -1145,6 +1378,9 @@ def evaluate_heads(
             block_predictions.append(block_prediction)
             predicted_entities.append(entity_prediction)
             predicted_blocks.append(block_prediction)
+            if source["groupId"] is None and source["quality"] == "noise":
+                distractor_blocks += 1
+                distractor_false_entities += entity_prediction != "other"
         document_targets.append(page["documentType"])
         document_predictions.append(
             heads["documentType"].labels[
@@ -1171,7 +1407,13 @@ def evaluate_heads(
                 heads["relation"].labels[predict("relation", features)]
             )
             link_targets.append(group_link_label(left, right))
-            link_predictions.append(heads["groupLink"].labels[predict("groupLink", features)])
+            link_prediction = heads["groupLink"].labels[predict("groupLink", features)]
+            link_predictions.append(link_prediction)
+            if hard_negative_pair(left, right):
+                hard_negative_pairs += 1
+                hard_negative_false_links += (
+                    relation_predictions[-1] != "none" or link_prediction != "none"
+                )
         group_success: list[bool] = []
         for group in page["groups"]:
             group_blocks = [source for source in blocks if source["groupId"] == group["id"]]
@@ -1183,6 +1425,9 @@ def evaluate_heads(
             evidence_values += len(critical)
             evidence_backed += sum(bool(source["id"] and source["boundingBox"]) for source in critical)
         execution_by_method[page["method"]].append(bool(group_success) and all(group_success))
+        execution_by_challenge.setdefault(page.get("challengeSlice", "baseline"), []).append(
+            bool(group_success) and all(group_success)
+        )
     exact = lambda targets, predictions: sum(
         target == prediction for target, prediction in zip(targets, predictions)
     ) / max(1, len(targets))
@@ -1193,7 +1438,7 @@ def evaluate_heads(
         "relationMicroF1": micro_f1(relation_targets, relation_predictions, "none"),
         "groupLinkMicroF1": micro_f1(link_targets, link_predictions, "none"),
         "documentTypeAccuracy": exact(document_targets, document_predictions),
-        "executionEquivalence": {
+        "criticalRolePageEquivalence": {
             "bornDigital": sum(execution_by_method["native-text"])
             / max(1, len(execution_by_method["native-text"])),
             "scanned": sum(execution_by_method["ocr"])
@@ -1201,6 +1446,12 @@ def evaluate_heads(
             "overall": sum(sum(values) for values in execution_by_method.values())
             / max(1, sum(len(values) for values in execution_by_method.values())),
         },
+        "challengeCriticalRolePageEquivalence": {
+            challenge: sum(values) / max(1, len(values))
+            for challenge, values in execution_by_challenge.items()
+        },
+        "hardNegativeFalseLinkRate": hard_negative_false_links / max(1, hard_negative_pairs),
+        "distractorFalseEntityRate": distractor_false_entities / max(1, distractor_blocks),
         "evidenceCoverage": evidence_backed / max(1, evidence_values),
     }
 
@@ -1208,10 +1459,18 @@ def evaluate_heads(
 def quantize_heads(
     heads: dict[str, HashHead]
 ) -> dict[str, tuple[np.ndarray, np.ndarray]]:
+    config = load_config()
+    calibrated_multipliers = config["model"].get(
+        "developmentCalibratedScaleMultiplierByHead", {}
+    )
     result: dict[str, tuple[np.ndarray, np.ndarray]] = {}
     for name, head in heads.items():
         maximum = np.max(np.abs(head.weights), axis=1)
+        multiplier = float(calibrated_multipliers.get(name, 1.0))
+        if not 0.5 <= multiplier <= 2.0:
+            raise ValueError(f"Unsafe quantization scale multiplier for {name}: {multiplier}")
         scales = np.where(maximum > 0, maximum / 127.0, 1.0).astype(np.float32)
+        scales = (scales * multiplier).astype(np.float32)
         quantized = np.clip(np.rint(head.weights / scales[:, None]), -127, 127).astype(np.int8)
         result[name] = (quantized, scales)
     return result
@@ -1225,6 +1484,8 @@ def update_model_manifest(configuration_path: Path, weights_path: Path) -> None:
         "cpuFallback": True,
         "requiresNetwork": False,
         "evidenceProjection": True,
+        "repairFallback": "optional-candidate-only-local-model",
+        "repairHasMutationAuthority": False,
     }
     manifest["artifacts"] = [
         artifact
@@ -1232,15 +1493,15 @@ def update_model_manifest(configuration_path: Path, weights_path: Path) -> None:
         if artifact.get("role") != "document-layout"
     ]
     for component, path, artifact_id in (
-        ("configuration", configuration_path, "planscan-spatialhashgraph-5m-en.configuration"),
-        ("weights", weights_path, "planscan-spatialhashgraph-5m-en.weights"),
+        ("configuration", configuration_path, "planscan-spatialhashgraph-5m-en-phase6.configuration"),
+        ("weights", weights_path, "planscan-spatialhashgraph-5m-en-phase6.weights"),
     ):
         manifest["artifacts"].append(
             {
                 "id": artifact_id,
                 "role": "document-layout",
                 "component": component,
-                "version": "0.1.0",
+                "version": "0.2.0",
                 "format": "json" if component == "configuration" else "bin",
                 "path": str(path.relative_to(WORKSPACE / "models")).replace("\\", "/"),
                 "sha256": sha256_file(path),
@@ -1286,16 +1547,17 @@ def export(heads: dict[str, HashHead], metrics: dict[str, Any]) -> dict[str, Any
             gzip_stream.write(raw_weights)
     artifact = {
         "schemaVersion": 1,
-        "id": "planscan-spatialhashgraph-5m-en",
-        "version": "0.1.0",
+        "id": "planscan-spatialhashgraph-5m-en-phase6",
+        "version": "0.2.0",
         "contractVersion": "0.1",
         "architecture": {
             "name": "SpatialHashGraph",
             "parameterCount": len(raw_weights),
             "parameterInitialization": "zero",
             "featureEncoder": "hashed lexical, OCR-quality, reading-order, and normalized 2-D box features",
-            "graphDecoder": "learned block/entity roles plus pairwise relation and event-group links",
+            "graphDecoder": "learned block/entity roles plus hard-negative-trained pairwise links with bounded row evidence",
             "quantization": config["model"]["quantization"],
+            "quantizationCalibration": "development-only per-head scale multipliers",
         },
         "featureBuckets": int(config["model"]["featureBuckets"]),
         "hashAlgorithm": "fnv1a-32-utf8",
@@ -1310,11 +1572,21 @@ def export(heads: dict[str, HashHead], metrics: dict[str, Any]) -> dict[str, Any
         "training": {
             "seed": int(config["seed"]),
             "datasetManifestSha256": data_manifest["manifestSha256"],
+            "challengeSlices": data_manifest["challengeSlices"],
+            "hardNeighborNegativeMining": True,
             "teacherUsed": False,
             "pretrainedWeightsUsed": False,
             "personalDataUsed": False,
         },
         "metrics": metrics,
+        "safety": {
+            "exactSourceProjectionRequired": True,
+            "crossPageLinksAllowed": False,
+            "deterministicSemanticCompilerRequired": True,
+            "explicitConfirmationRequired": True,
+            "repairFallbackCandidateSelectionOnly": True,
+            "repairFallbackHasMutationAuthority": False,
+        },
     }
     configuration_path = MODEL_DIRECTORY / "planscan-v0.1-int8.json"
     write_json(configuration_path, artifact)
@@ -1355,6 +1627,9 @@ def evaluate_and_export(heads: dict[str, HashHead]) -> dict[str, Any]:
         "testInt8": quantized_metrics,
         "textOnlyInferenceAblation": text_only,
         "maximumQuantizationDelta": maximum_quantization_delta,
+        "phase6ChallengeMinimumCriticalRolePageEquivalence": min(
+            quantized_metrics["challengeCriticalRolePageEquivalence"].values()
+        ),
         "splitDisjoint": {
             "templateFamilies": True,
             "fonts": True,
@@ -1366,6 +1641,22 @@ def evaluate_and_export(heads: dict[str, HashHead]) -> dict[str, Any]:
             "OCR recognition quality remains bounded by the bundled Tesseract model.",
             "Handwriting and unusually visual pages are outside this checkpoint.",
         ],
+        "promotionGates": {
+            "allChallengeSlicesPresent": set(
+                quantized_metrics["challengeCriticalRolePageEquivalence"].keys()
+            )
+            == set(CHALLENGE_SLICES),
+            "hardNegativeFalseLinkRateAtMostFivePercent": quantized_metrics[
+                "hardNegativeFalseLinkRate"
+            ]
+            <= 0.05,
+            "distractorFalseEntityRateAtMostTwoPercent": quantized_metrics[
+                "distractorFalseEntityRate"
+            ]
+            <= 0.02,
+            "everyCriticalValueEvidenceBacked": quantized_metrics["evidenceCoverage"] == 1,
+            "quantizationDeltaAtMostHalfPoint": maximum_quantization_delta <= 0.005,
+        },
     }
     export_info = export(heads, report)
     report["export"] = export_info
@@ -1386,8 +1677,8 @@ def all_steps() -> None:
         "PlanScan INT8: "
         f"entity F1 {test_metrics['entityMicroF1']:.3f}, "
         f"relation F1 {test_metrics['relationMicroF1']:.3f}, "
-        f"native execution {test_metrics['executionEquivalence']['bornDigital']:.3f}, "
-        f"scan execution {test_metrics['executionEquivalence']['scanned']:.3f}."
+        f"native critical-role pages {test_metrics['criticalRolePageEquivalence']['bornDigital']:.3f}, "
+        f"scan critical-role pages {test_metrics['criticalRolePageEquivalence']['scanned']:.3f}."
     )
     print(
         f"Exported {report['export']['parameterCount']:,} parameters in "

@@ -59,9 +59,41 @@ const assistantRouteSchema = z.enum([
   'document'
 ])
 
+const assistantDialogueRelationSchema = z.enum(['standalone', 'follow-up', 'new-topic'])
+const assistantRequestedAttributeSchema = z.enum([
+  'none',
+  'name',
+  'time',
+  'start',
+  'end',
+  'date',
+  'location',
+  'duration',
+  'notes',
+  'recurrence',
+  'details'
+])
+const assistantScopeSchema = z.enum(['none', 'singular', 'plural', 'all'])
+const assistantSelectionSchema = z.enum([
+  'none',
+  'first',
+  'second',
+  'third',
+  'last',
+  'next',
+  'subset'
+])
+const assistantTurnKindSchema = z.enum([
+  'calendar-read',
+  'calendar-write',
+  'conversation',
+  'memory',
+  'unclear'
+])
+
 const remindCoreAssistantSchema = z
   .object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     buckets: z.number().int().positive(),
     maximumActions: z.literal(3),
     routes: z.array(assistantRouteSchema).length(6),
@@ -85,7 +117,12 @@ const remindCoreAssistantSchema = z
         route: remindCoreHeadSchema,
         capability: remindCoreHeadSchema,
         actionCount: remindCoreHeadSchema,
-        context: remindCoreHeadSchema
+        context: remindCoreHeadSchema,
+        dialogueRelation: remindCoreHeadSchema,
+        requestedAttribute: remindCoreHeadSchema,
+        scope: remindCoreHeadSchema,
+        selection: remindCoreHeadSchema,
+        turnKind: remindCoreHeadSchema
       })
       .strict(),
     thresholds: z
@@ -94,6 +131,7 @@ const remindCoreAssistantSchema = z
         safeAdvisoryRoutes: z.array(assistantRouteSchema).min(1),
         minimumDevelopmentPrecision: z.number().min(0).max(1),
         contextRequiredNeedsTypedContext: z.literal(true),
+        semanticOutputsAdvisoryOnly: z.literal(true),
         neverCreatesPlans: z.literal(true),
         neverWritesDatabase: z.literal(true)
       })
@@ -216,6 +254,17 @@ export interface RemindCoreAssistantPrediction {
   capabilityConfidences: number[]
   contextRequired: boolean
   contextRequiredProbability: number
+  dialogueRelation: z.infer<typeof assistantDialogueRelationSchema>
+  dialogueRelationConfidence: number
+  requestedAttribute: z.infer<typeof assistantRequestedAttributeSchema>
+  requestedAttributeConfidence: number
+  scope: z.infer<typeof assistantScopeSchema>
+  scopeConfidence: number
+  selection: z.infer<typeof assistantSelectionSchema>
+  selectionConfidence: number
+  turnKind: z.infer<typeof assistantTurnKindSchema>
+  turnKindConfidence: number
+  semanticConfidence: number
   planConfidence: number
   eligibleForRoutingAssistance: boolean
   latencyMs: number
@@ -257,6 +306,11 @@ interface LoadedAssistant {
   capability: LoadedHead
   actionCount: LoadedHead
   context: LoadedHead
+  dialogueRelation: LoadedHead
+  requestedAttribute: LoadedHead
+  scope: LoadedHead
+  selection: LoadedHead
+  turnKind: LoadedHead
   routes: Array<z.infer<typeof assistantRouteSchema>>
   capabilityOrder: AssistantCapabilityId[]
   capabilityRoutes: Map<AssistantCapabilityId, z.infer<typeof assistantRouteSchema>>
@@ -905,11 +959,24 @@ export class RemindCorePlanner {
       const capability = loadHead(assistantArtifact.heads.capability)
       const actionCount = loadHead(assistantArtifact.heads.actionCount)
       const context = loadHead(assistantArtifact.heads.context)
+      const dialogueRelation = loadHead(assistantArtifact.heads.dialogueRelation)
+      const requestedAttribute = loadHead(assistantArtifact.heads.requestedAttribute)
+      const scope = loadHead(assistantArtifact.heads.scope)
+      const selection = loadHead(assistantArtifact.heads.selection)
+      const turnKind = loadHead(assistantArtifact.heads.turnKind)
       if (
         route.labels.join('\u0000') !== assistantArtifact.routes.join('\u0000') ||
         capability.labels.join('\u0000') !== assistantArtifact.capabilityOrder.join('\u0000') ||
         actionCount.labels.join('\u0000') !== '1\u00002\u00003' ||
-        context.labels.join('\u0000') !== 'standalone\u0000contextual'
+        context.labels.join('\u0000') !== 'standalone\u0000contextual' ||
+        dialogueRelation.labels.join('\u0000') !== 'standalone\u0000follow-up\u0000new-topic' ||
+        requestedAttribute.labels.join('\u0000') !==
+          'none\u0000name\u0000time\u0000start\u0000end\u0000date\u0000location\u0000duration\u0000notes\u0000recurrence\u0000details' ||
+        scope.labels.join('\u0000') !== 'none\u0000singular\u0000plural\u0000all' ||
+        selection.labels.join('\u0000') !==
+          'none\u0000first\u0000second\u0000third\u0000last\u0000next\u0000subset' ||
+        turnKind.labels.join('\u0000') !==
+          'calendar-read\u0000calendar-write\u0000conversation\u0000memory\u0000unclear'
       ) {
         throw new Error('RemindCore Next head labels drifted from its assistant contract')
       }
@@ -918,6 +985,11 @@ export class RemindCorePlanner {
         capability,
         actionCount,
         context,
+        dialogueRelation,
+        requestedAttribute,
+        scope,
+        selection,
+        turnKind,
         routes: [...assistantArtifact.routes],
         capabilityOrder: [...assistantArtifact.capabilityOrder],
         capabilityRoutes: new Map(
@@ -1033,6 +1105,29 @@ export class RemindCorePlanner {
     const contextProbabilities = probabilities(assistant.context, turnIds)
     const contextRequiredProbability = contextProbabilities[1] ?? 0
     const contextRequired = contextRequiredProbability >= (contextProbabilities[0] ?? 1)
+    const [rawDialogueRelation, dialogueRelationConfidence] = topPrediction(
+      assistant.dialogueRelation,
+      turnIds
+    )
+    const dialogueRelation = assistantDialogueRelationSchema.parse(rawDialogueRelation)
+    const [rawRequestedAttribute, requestedAttributeConfidence] = topPrediction(
+      assistant.requestedAttribute,
+      turnIds
+    )
+    const requestedAttribute = assistantRequestedAttributeSchema.parse(rawRequestedAttribute)
+    const [rawScope, scopeConfidence] = topPrediction(assistant.scope, turnIds)
+    const scope = assistantScopeSchema.parse(rawScope)
+    const [rawSelection, selectionConfidence] = topPrediction(assistant.selection, turnIds)
+    const selection = assistantSelectionSchema.parse(rawSelection)
+    const [rawTurnKind, turnKindConfidence] = topPrediction(assistant.turnKind, turnIds)
+    const turnKind = assistantTurnKindSchema.parse(rawTurnKind)
+    const semanticConfidence = Math.min(
+      dialogueRelationConfidence,
+      requestedAttributeConfidence,
+      scopeConfidence,
+      selectionConfidence,
+      turnKindConfidence
+    )
     const capabilities: AssistantCapabilityId[] = []
     const capabilityConfidences: number[] = []
     for (const [actionIndex, segment] of assistantActionSegments(text, actionCount).entries()) {
@@ -1096,6 +1191,17 @@ export class RemindCorePlanner {
       capabilityConfidences,
       contextRequired,
       contextRequiredProbability,
+      dialogueRelation,
+      dialogueRelationConfidence,
+      requestedAttribute,
+      requestedAttributeConfidence,
+      scope,
+      scopeConfidence,
+      selection,
+      selectionConfidence,
+      turnKind,
+      turnKindConfidence,
+      semanticConfidence,
       planConfidence,
       eligibleForRoutingAssistance,
       latencyMs: performance.now() - started

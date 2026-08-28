@@ -1,19 +1,30 @@
 {
   "seed": 731947,
   "dataset": {
-    "trainPages": 12000,
-    "devPages": 2000,
-    "testPages": 2000,
-    "trackedHeldoutPages": 96,
+    "trainPages": 16000,
+    "devPages": 2500,
+    "testPages": 2500,
+    "trackedHeldoutPages": 120,
     "minimumPlansPerPage": 2,
-    "maximumPlansPerPage": 4
+    "maximumPlansPerPage": 5,
+    "challengeSlices": [
+      "baseline",
+      "ocr-corruption",
+      "neighboring-row-negatives",
+      "repeated-titles",
+      "unfamiliar-column-order",
+      "header-footer-distractions"
+    ]
   },
   "model": {
     "featureBuckets": 131072,
-    "epochs": 2,
+    "epochs": 3,
     "learningRate": 0.42,
     "parameterInitialization": "zero",
-    "quantization": "per-output-channel symmetric INT8"
+    "quantization": "per-output-channel symmetric INT8",
+    "developmentCalibratedScaleMultiplierByHead": {
+      "documentType": 1.2
+    }
   },
   "thresholds": {
     "entity": 0.15,
@@ -25,6 +36,7 @@
     "teacherUsed": false,
     "pretrainedWeightsUsed": false,
     "personalDataUsed": false,
-    "networkRequired": false
+    "networkRequired": false,
+    "trainingCorpus": "program-first-phase6-challenge-suite"
   }
 }

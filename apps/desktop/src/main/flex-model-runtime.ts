@@ -7,19 +7,53 @@ import { utilityProcess, type UtilityProcess } from 'electron'
 import {
   flexModelChatRequestSchema,
   flexModelChatResponseSchema,
+  flexModelAccelerationPreferenceSchema,
+  flexModelBackendSchema,
+  flexModelCalendarFallbackResultSchema,
+  flexModelConfigureRequestSchema,
+  flexModelGeneralFallbackResultSchema,
+  flexModelJobStatusSchema,
   flexModelPlanSchema,
   flexModelPlanContextSchema,
   flexModelProgressEventSchema,
   flexModelRequestMetricsSchema,
   flexModelStatusSchema,
+  flexModelWarmthPolicySchema,
+  documentFallbackModelOutputSchema,
+  documentFallbackRequestSchema,
+  documentRepairModelOutputSchema,
+  documentRepairRequestSchema,
   type FlexModelChatRequest,
+  type FlexModelChatResponse,
+  type FlexModelAccelerationPreference,
+  type FlexModelBackend,
+  type FlexModelCalendarFallbackResult,
+  type FlexModelFallbackFailureKind,
+  type FlexModelGeneralFallbackResult,
+  type FlexModelJobStatus,
   type FlexModelPlan,
   type FlexModelPlanContext,
   type FlexModelProgressEvent,
   type FlexModelRequestMetrics,
-  type FlexModelStatus
+  type FlexModelStatus,
+  type FlexModelWarmthPolicy,
+  type FlexModelWorkload,
+  type DocumentFallbackRequest,
+  type DocumentFallbackResponse,
+  type DocumentRepairRequest,
+  type DocumentRepairResponse
 } from '@remind-me/contracts'
+import {
+  validateDocumentFallbackResponse,
+  validateDocumentRepairResponse
+} from '@remind-me/importers/document'
 import { currentFlexModelRuntimeProfile, type FlexModelRuntimeProfile } from './flex-model-profile'
+import {
+  FlexModelJobCancelledError,
+  FlexModelScheduler,
+  isFlexModelCancellation,
+  isFlexModelPreemption
+} from './flex-model-scheduler'
 
 const MODEL_ID = 'qwen3-1.7b-q4' as const
 const MODEL_NAME = 'Qwen3 1.7B Q4' as const
@@ -39,13 +73,37 @@ function pressureAdjustedIdleUnloadMs(profile: FlexModelRuntimeProfile): number 
 
 interface PersistedState {
   enabled: boolean
+  warmthPolicy: FlexModelWarmthPolicy
+  accelerationPreference: FlexModelAccelerationPreference
 }
 
 type RuntimeState = 'idle' | 'downloading' | 'loading' | 'ready' | 'error'
 
+function fallbackFailureFromStatus(
+  status: Pick<FlexModelStatus, 'state' | 'enabled' | 'error'>,
+  defaultKind: 'not-calendar' | 'invalid-output'
+): FlexModelFallbackFailureKind | 'not-calendar' {
+  if (status.state === 'not-installed') return 'missing'
+  if (!status.enabled) return 'disabled'
+  const error = status.error ?? ''
+  if (/tim(?:e|ed)[ -]?out/iu.test(error)) return 'timeout'
+  if (status.state === 'error' || error) {
+    return /(?:invalid|parse|schema|json|expected|unrecognized|ground)/iu.test(error)
+      ? 'invalid-output'
+      : 'unavailable'
+  }
+  return defaultKind
+}
+
 export interface FlexModelRuntimePaths {
   workerEntry: string
   runtimeEntry: string
+  backendManifest?: string
+}
+
+export interface FlexModelInferenceOptions {
+  cancellationId?: string
+  onStatus?: (status: FlexModelJobStatus) => void
 }
 
 interface WorkerPlanResult {
@@ -62,19 +120,63 @@ interface WorkerChatResult {
   metrics?: unknown
 }
 
+interface WorkerChatChunk {
+  type: 'chat-chunk'
+  jobId: string
+  text: unknown
+}
+
+interface WorkerStatusResult {
+  type: 'status'
+  jobId: string
+  phase: 'generating' | 'validating'
+}
+
+interface WorkerCancelledResult {
+  type: 'cancelled'
+  jobId: string
+}
+
+interface WorkerDocumentRepairResult {
+  type: 'document-repair-result'
+  jobId: string
+  repair: unknown
+  metrics?: unknown
+}
+
+interface WorkerDocumentFallbackResult {
+  type: 'document-fallback-result'
+  jobId: string
+  fallback: unknown
+  metrics?: unknown
+}
+
 interface WorkerErrorResult {
   type: 'error'
   jobId: string
   message: string
 }
 
-type WorkerResult = WorkerPlanResult | WorkerChatResult | WorkerErrorResult
+type WorkerResult =
+  | WorkerPlanResult
+  | WorkerChatChunk
+  | WorkerStatusResult
+  | WorkerCancelledResult
+  | WorkerChatResult
+  | WorkerDocumentRepairResult
+  | WorkerDocumentFallbackResult
+  | WorkerErrorResult
 
 interface ActiveWorkerJob {
   jobId: string
   resolve: (value: unknown) => void
   reject: (error: Error) => void
   timeout: ReturnType<typeof setTimeout>
+  onChatChunk: ((text: string) => void) | undefined
+  onStatus: ((status: FlexModelJobStatus) => void) | undefined
+  workload: FlexModelWorkload
+  signal: AbortSignal
+  removeAbortListener: () => void
 }
 
 function errorMessage(error: unknown): string {
@@ -109,7 +211,7 @@ export class OptionalFlexModelRuntime {
   private lastError: string | null = null
   private installController: AbortController | null = null
   private installPromise: Promise<FlexModelStatus> | null = null
-  private inferenceQueue: Promise<void> = Promise.resolve()
+  private readonly scheduler = new FlexModelScheduler()
   private verifiedSignature: string | null = null
   private idleTimer: ReturnType<typeof setTimeout> | null = null
   private child: UtilityProcess | null = null
@@ -117,6 +219,9 @@ export class OptionalFlexModelRuntime {
   private activeWorkerJob: ActiveWorkerJob | null = null
   private activeProfile: FlexModelRuntimeProfile | null = null
   private lastRequest: FlexModelRequestMetrics | null = null
+  private warmthPolicy: FlexModelWarmthPolicy | null = null
+  private accelerationPreference: FlexModelAccelerationPreference | null = null
+  private availableBackends: FlexModelBackend[] | null = null
 
   constructor(
     userDataPath: string,
@@ -130,7 +235,8 @@ export class OptionalFlexModelRuntime {
 
   async getStatus(): Promise<FlexModelStatus> {
     await this.loadPersistedState()
-    const profile = this.activeProfile ?? currentFlexModelRuntimeProfile()
+    await this.loadAvailableBackends()
+    const profile = this.activeProfile ?? this.currentProfile()
     const installedBytes = await this.installedBytes()
     const installed = installedBytes === MODEL_BYTES
     const state =
@@ -174,6 +280,10 @@ export class OptionalFlexModelRuntime {
         idleUnloadSeconds: Math.round(pressureAdjustedIdleUnloadMs(profile) / 1_000),
         requestTimeoutSeconds: Math.round(profile.requestTimeoutMs / 1_000)
       },
+      warmthPolicy: this.warmthPolicy ?? 'automatic',
+      accelerationPreference: this.accelerationPreference ?? 'auto',
+      availableBackends: this.availableBackends ?? ['cpu'],
+      queue: this.scheduler.snapshot(),
       lastRequest: this.lastRequest,
       error: this.lastError
     })
@@ -221,7 +331,32 @@ export class OptionalFlexModelRuntime {
     return await this.getStatus()
   }
 
-  async plan(text: string, contextValue: FlexModelPlanContext): Promise<FlexModelPlan | null> {
+  async configure(inputValue: unknown): Promise<FlexModelStatus> {
+    const input = flexModelConfigureRequestSchema.parse(inputValue)
+    await this.loadPersistedState()
+    await this.loadAvailableBackends()
+    const previousProfileKey = JSON.stringify(this.currentProfile())
+    if (input.warmthPolicy) this.warmthPolicy = input.warmthPolicy
+    if (input.accelerationPreference) {
+      this.accelerationPreference = input.accelerationPreference
+    }
+    const nextProfileKey = JSON.stringify(this.currentProfile())
+    if (previousProfileKey !== nextProfileKey) await this.unload()
+    else if (this.child) this.scheduleIdleUnload()
+    this.lastError = null
+    await this.persistState()
+    return await this.getStatus()
+  }
+
+  cancelInference(cancellationId: string): boolean {
+    return this.scheduler.cancel(cancellationId)
+  }
+
+  async plan(
+    text: string,
+    contextValue: FlexModelPlanContext,
+    options: FlexModelInferenceOptions = {}
+  ): Promise<FlexModelPlan | null> {
     if (!text.trim() || text.length > 2_000) return null
     const planContext = flexModelPlanContextSchema.parse(contextValue)
     const status = await this.getStatus()
@@ -231,41 +366,146 @@ export class OptionalFlexModelRuntime {
     // reinstall or application restart.
     if (!status.enabled) return null
 
-    let resolvePlan: (value: FlexModelPlan | null) => void = () => undefined
-    const result = new Promise<FlexModelPlan | null>((resolveResult) => {
-      resolvePlan = resolveResult
-    })
-    this.inferenceQueue = this.inferenceQueue
-      .catch(() => undefined)
-      .then(async () => resolvePlan(await this.infer(text, planContext)))
-      .catch(() => resolvePlan(null))
-    return await result
+    try {
+      return await this.scheduler.enqueue({
+        workload: 'plan',
+        ...options,
+        run: async ({ signal, queueWaitMs }) =>
+          await this.infer(text, planContext, signal, queueWaitMs, options.onStatus)
+      })
+    } catch (error) {
+      if (isFlexModelCancellation(error)) throw error
+      return null
+    }
   }
 
-  async chat(inputValue: FlexModelChatRequest): Promise<string | null> {
+  async planCalendar(
+    text: string,
+    contextValue: FlexModelPlanContext,
+    options: FlexModelInferenceOptions = {}
+  ): Promise<FlexModelCalendarFallbackResult> {
+    try {
+      const status = await this.getStatus()
+      if (status.state === 'not-installed' || !status.enabled) {
+        return flexModelCalendarFallbackResultSchema.parse({
+          kind: fallbackFailureFromStatus(status, 'not-calendar')
+        })
+      }
+      const plan = await this.plan(text, contextValue, options)
+      if (plan) return flexModelCalendarFallbackResultSchema.parse({ kind: 'plan', plan })
+      const finalStatus = await this.getStatus()
+      return flexModelCalendarFallbackResultSchema.parse({
+        kind: fallbackFailureFromStatus(finalStatus, 'not-calendar')
+      })
+    } catch (error) {
+      if (isFlexModelCancellation(error)) return { kind: 'cancelled' }
+      return { kind: 'invalid-output' }
+    }
+  }
+
+  async chat(
+    inputValue: FlexModelChatRequest,
+    onChunk?: (text: string) => void,
+    options: FlexModelInferenceOptions = {}
+  ): Promise<string | null> {
+    const response = await this.chatEnvelope(inputValue, onChunk, options)
+    return response?.text ?? null
+  }
+
+  private async chatEnvelope(
+    inputValue: FlexModelChatRequest,
+    onChunk?: (text: string) => void,
+    options: FlexModelInferenceOptions = {}
+  ): Promise<FlexModelChatResponse | null> {
     const input = flexModelChatRequestSchema.parse(inputValue)
     const status = await this.getStatus()
     if (!status.enabled) return null
 
-    let resolveResponse: (value: string | null) => void = () => undefined
-    const result = new Promise<string | null>((resolveResult) => {
-      resolveResponse = resolveResult
-    })
-    this.inferenceQueue = this.inferenceQueue
-      .catch(() => undefined)
-      .then(async () => resolveResponse(await this.inferChat(input)))
-      .catch(() => resolveResponse(null))
-    return await result
+    try {
+      return await this.scheduler.enqueue({
+        workload: 'chat',
+        ...options,
+        run: async ({ signal, queueWaitMs }) =>
+          await this.inferChat(input, signal, queueWaitMs, onChunk, options.onStatus)
+      })
+    } catch (error) {
+      if (isFlexModelCancellation(error)) throw error
+      return null
+    }
   }
 
-  async unload(): Promise<void> {
+  async respondGeneral(
+    inputValue: FlexModelChatRequest,
+    onChunk?: (text: string) => void,
+    options: FlexModelInferenceOptions = {}
+  ): Promise<FlexModelGeneralFallbackResult> {
+    try {
+      const status = await this.getStatus()
+      if (status.state === 'not-installed' || !status.enabled) {
+        const kind = fallbackFailureFromStatus(status, 'invalid-output')
+        if (kind === 'not-calendar') return { kind: 'invalid-output' }
+        return flexModelGeneralFallbackResultSchema.parse({ kind })
+      }
+      const response = await this.chatEnvelope(inputValue, onChunk, options)
+      if (response) {
+        return flexModelGeneralFallbackResultSchema.parse(response)
+      }
+      const finalStatus = await this.getStatus()
+      const kind = fallbackFailureFromStatus(finalStatus, 'invalid-output')
+      if (kind === 'not-calendar') return { kind: 'invalid-output' }
+      return flexModelGeneralFallbackResultSchema.parse({ kind })
+    } catch (error) {
+      if (isFlexModelCancellation(error)) return { kind: 'cancelled' }
+      return { kind: 'invalid-output' }
+    }
+  }
+
+  async repairDocument(inputValue: DocumentRepairRequest): Promise<DocumentRepairResponse | null> {
+    const input = documentRepairRequestSchema.parse(inputValue)
+    const status = await this.getStatus()
+    if (!status.enabled) return null
+
+    try {
+      return await this.scheduler.enqueue({
+        workload: 'document-repair',
+        cancellationId: `document-repair:${input.selectionId}`,
+        run: async ({ signal, queueWaitMs }) =>
+          await this.inferDocumentRepair(input, signal, queueWaitMs)
+      })
+    } catch {
+      return null
+    }
+  }
+
+  async groupDocumentFallback(
+    inputValue: DocumentFallbackRequest
+  ): Promise<DocumentFallbackResponse | null> {
+    const input = documentFallbackRequestSchema.parse(inputValue)
+    const status = await this.getStatus()
+    if (!status.enabled) return null
+
+    try {
+      return await this.scheduler.enqueue({
+        workload: 'document-fallback',
+        cancellationId: input.requestId,
+        run: async ({ signal, queueWaitMs }) =>
+          await this.inferDocumentFallback(input, signal, queueWaitMs)
+      })
+    } catch {
+      return null
+    }
+  }
+
+  async unload(cancelScheduled = true): Promise<void> {
     if (this.idleTimer) clearTimeout(this.idleTimer)
     this.idleTimer = null
+    if (cancelScheduled) this.scheduler.cancelAll()
     const activeJob = this.activeWorkerJob
     if (activeJob) {
       clearTimeout(activeJob.timeout)
+      activeJob.removeAbortListener()
       this.activeWorkerJob = null
-      activeJob.reject(new Error('The local language process was stopped.'))
+      activeJob.reject(new FlexModelJobCancelledError('The local language process was stopped.'))
     }
     this.child?.kill()
     this.child = null
@@ -363,11 +603,25 @@ export class OptionalFlexModelRuntime {
     }
   }
 
-  private async infer(text: string, context: FlexModelPlanContext): Promise<FlexModelPlan | null> {
+  private async infer(
+    text: string,
+    context: FlexModelPlanContext,
+    signal: AbortSignal,
+    queueWaitMs: number,
+    onStatus?: (status: FlexModelJobStatus) => void
+  ): Promise<FlexModelPlan | null> {
     try {
       await this.verifyInstalledModel()
+      if (signal.aborted) throw signal.reason
       this.runtimeState = 'loading'
-      const raw = await this.runWorker({ type: 'plan', text, context })
+      const raw = await this.runWorker(
+        { type: 'plan', text, context },
+        'plan',
+        signal,
+        queueWaitMs,
+        undefined,
+        onStatus
+      )
       this.runtimeState = 'ready'
       this.lastError = null
       this.scheduleIdleUnload()
@@ -377,26 +631,116 @@ export class OptionalFlexModelRuntime {
       }
       return flexModelPlanSchema.parse(raw)
     } catch (error) {
+      if (isFlexModelCancellation(error) || isFlexModelPreemption(error)) throw error
       this.lastError = errorMessage(error)
       this.runtimeState = 'error'
-      await this.unload()
+      await this.unload(false)
       return null
     }
   }
 
-  private async inferChat(input: FlexModelChatRequest): Promise<string | null> {
+  private async inferChat(
+    input: FlexModelChatRequest,
+    signal: AbortSignal,
+    queueWaitMs: number,
+    onChunk?: (text: string) => void,
+    onStatus?: (status: FlexModelJobStatus) => void
+  ): Promise<FlexModelChatResponse | null> {
     try {
       await this.verifyInstalledModel()
+      if (signal.aborted) throw signal.reason
       this.runtimeState = 'loading'
-      const raw = await this.runWorker({ type: 'chat', input })
+      const raw = await this.runWorker(
+        { type: 'chat', input },
+        'chat',
+        signal,
+        queueWaitMs,
+        onChunk,
+        onStatus
+      )
       this.runtimeState = 'ready'
       this.lastError = null
       this.scheduleIdleUnload()
-      return flexModelChatResponseSchema.parse(raw).text
+      return flexModelChatResponseSchema.parse(raw)
     } catch (error) {
+      if (isFlexModelCancellation(error) || isFlexModelPreemption(error)) throw error
       this.lastError = errorMessage(error)
       this.runtimeState = 'error'
-      await this.unload()
+      await this.unload(false)
+      return null
+    }
+  }
+
+  private async inferDocumentRepair(
+    input: DocumentRepairRequest,
+    signal: AbortSignal,
+    queueWaitMs: number
+  ): Promise<DocumentRepairResponse | null> {
+    try {
+      await this.verifyInstalledModel()
+      if (signal.aborted) throw signal.reason
+      this.runtimeState = 'loading'
+      const decisions = []
+      for (const disagreement of input.disagreements) {
+        const partial: DocumentRepairRequest = {
+          ...input,
+          disagreements: [disagreement]
+        }
+        const raw = documentRepairModelOutputSchema.parse(
+          await this.runWorker(
+            { type: 'document-repair', request: partial },
+            'document-repair',
+            signal,
+            queueWaitMs
+          )
+        )
+        const validated = validateDocumentRepairResponse(partial, raw)
+        if (!validated) throw new Error('The local model repair was not grounded in its source')
+        decisions.push(...validated.decisions)
+      }
+      const response = validateDocumentRepairResponse(input, { decisions })
+      if (!response) throw new Error('The combined local model repair was invalid')
+      this.runtimeState = 'ready'
+      this.lastError = null
+      this.scheduleIdleUnload()
+      return response
+    } catch (error) {
+      if (isFlexModelCancellation(error) || isFlexModelPreemption(error)) throw error
+      this.lastError = errorMessage(error)
+      this.runtimeState = 'error'
+      await this.unload(false)
+      return null
+    }
+  }
+
+  private async inferDocumentFallback(
+    input: DocumentFallbackRequest,
+    signal: AbortSignal,
+    queueWaitMs: number
+  ): Promise<DocumentFallbackResponse | null> {
+    try {
+      await this.verifyInstalledModel()
+      if (signal.aborted) throw signal.reason
+      this.runtimeState = 'loading'
+      const raw = documentFallbackModelOutputSchema.parse(
+        await this.runWorker(
+          { type: 'document-fallback', request: input },
+          'document-fallback',
+          signal,
+          queueWaitMs
+        )
+      )
+      const response = validateDocumentFallbackResponse(input, raw)
+      if (!response) throw new Error('The local document fallback was not grounded in its source')
+      this.runtimeState = 'ready'
+      this.lastError = null
+      this.scheduleIdleUnload()
+      return response
+    } catch (error) {
+      if (isFlexModelCancellation(error) || isFlexModelPreemption(error)) throw error
+      this.lastError = errorMessage(error)
+      this.runtimeState = 'error'
+      await this.unload(false)
       return null
     }
   }
@@ -444,6 +788,7 @@ export class OptionalFlexModelRuntime {
         const active = this.activeWorkerJob
         if (active) {
           clearTimeout(active.timeout)
+          active.removeAbortListener()
           this.activeWorkerJob = null
           active.reject(new Error(`The optional local language process exited (${code}).`))
         }
@@ -462,54 +807,130 @@ export class OptionalFlexModelRuntime {
     const result = message as Partial<WorkerResult>
     const active = this.activeWorkerJob
     if (!active || result.jobId !== active.jobId) return
-    if (result.type !== 'plan-result' && result.type !== 'chat-result' && result.type !== 'error')
+    if (result.type === 'status') {
+      const phase = (result as Partial<WorkerStatusResult>).phase
+      const parsed = flexModelJobStatusSchema.safeParse({
+        workload: active.workload,
+        phase,
+        queuePosition: 0,
+        queuedJobs: this.scheduler.snapshot().queuedJobs,
+        canCancel: true
+      })
+      if (parsed.success) {
+        try {
+          active.onStatus?.(parsed.data)
+        } catch {
+          // Renderer progress is best-effort.
+        }
+      }
+      return
+    }
+    if (result.type === 'chat-chunk') {
+      const text = (result as Partial<WorkerChatChunk>).text
+      if (typeof text !== 'string' || !text || text.length > 8_000) return
+      try {
+        active.onChatChunk?.(text)
+      } catch {
+        // Renderer progress is best-effort and must never interrupt local inference.
+      }
+      return
+    }
+    if (
+      result.type !== 'plan-result' &&
+      result.type !== 'chat-result' &&
+      result.type !== 'document-repair-result' &&
+      result.type !== 'document-fallback-result' &&
+      result.type !== 'cancelled' &&
+      result.type !== 'error'
+    )
       return
     clearTimeout(active.timeout)
+    active.removeAbortListener()
     this.activeWorkerJob = null
-    if (result.type === 'plan-result' || result.type === 'chat-result') {
+    if (
+      result.type === 'plan-result' ||
+      result.type === 'chat-result' ||
+      result.type === 'document-repair-result' ||
+      result.type === 'document-fallback-result'
+    ) {
       const parsedMetrics = flexModelRequestMetricsSchema.safeParse(result.metrics)
       if (parsedMetrics.success) this.lastRequest = parsedMetrics.data
     }
-    if (result.type === 'error')
+    if (result.type === 'cancelled') {
+      const reason = active.signal.reason
+      active.reject(reason instanceof Error ? reason : new FlexModelJobCancelledError())
+    } else if (result.type === 'error')
       active.reject(new Error(result.message ?? 'Local inference failed.'))
     else if (result.type === 'plan-result')
       active.resolve((result as Partial<WorkerPlanResult>).plan)
-    else active.resolve((result as Partial<WorkerChatResult>).response)
+    else if (result.type === 'chat-result')
+      active.resolve((result as Partial<WorkerChatResult>).response)
+    else if (result.type === 'document-repair-result')
+      active.resolve((result as Partial<WorkerDocumentRepairResult>).repair)
+    else active.resolve((result as Partial<WorkerDocumentFallbackResult>).fallback)
   }
 
   private async runWorker(
     request:
       | { type: 'plan'; text: string; context: FlexModelPlanContext }
       | { type: 'chat'; input: FlexModelChatRequest }
+      | { type: 'document-repair'; request: DocumentRepairRequest }
+      | { type: 'document-fallback'; request: DocumentFallbackRequest },
+    workload: FlexModelWorkload,
+    signal: AbortSignal,
+    queueWaitMs: number,
+    onChatChunk?: (text: string) => void,
+    onStatus?: (status: FlexModelJobStatus) => void
   ): Promise<unknown> {
     if (this.activeWorkerJob) throw new Error('Another local language request is already running.')
-    const runtimeProfile = this.activeProfile ?? currentFlexModelRuntimeProfile()
+    if (signal.aborted) throw signal.reason
+    const runtimeProfile = this.activeProfile ?? this.currentProfile()
     this.activeProfile = runtimeProfile
     const child = await this.ensureChild()
+    if (signal.aborted) throw signal.reason
     const jobId = `flex:${randomUUID()}`
     return await new Promise((resolvePlan, rejectPlan) => {
+      const abortListener = (): void => {
+        if (this.activeWorkerJob?.jobId !== jobId) return
+        child.postMessage({ type: 'cancel', jobId })
+      }
+      signal.addEventListener('abort', abortListener, { once: true })
+      const removeAbortListener = (): void => signal.removeEventListener('abort', abortListener)
       const timeout = setTimeout(() => {
         if (this.activeWorkerJob?.jobId !== jobId) return
         this.activeWorkerJob = null
+        removeAbortListener()
         const currentChild = this.child
         this.child = null
         currentChild?.kill()
         rejectPlan(new Error('Local model inference timed out.'))
       }, runtimeProfile.requestTimeoutMs)
-      this.activeWorkerJob = { jobId, resolve: resolvePlan, reject: rejectPlan, timeout }
+      this.activeWorkerJob = {
+        jobId,
+        resolve: resolvePlan,
+        reject: rejectPlan,
+        timeout,
+        onChatChunk,
+        onStatus,
+        workload,
+        signal,
+        removeAbortListener
+      }
       child.postMessage({
         ...request,
         jobId,
         runtimeEntry: this.paths.runtimeEntry,
         modelPath: this.modelPath,
-        runtimeProfile
+        runtimeProfile,
+        queueWaitMs
       })
+      if (signal.aborted) abortListener()
     })
   }
 
   private scheduleIdleUnload(): void {
     if (this.idleTimer) clearTimeout(this.idleTimer)
-    const profile = this.activeProfile ?? currentFlexModelRuntimeProfile()
+    const profile = this.activeProfile ?? this.currentProfile()
     this.idleTimer = setTimeout(() => void this.unload(), pressureAdjustedIdleUnloadMs(profile))
     this.idleTimer.unref?.()
   }
@@ -523,21 +944,67 @@ export class OptionalFlexModelRuntime {
     }
   }
 
+  private currentProfile(): FlexModelRuntimeProfile {
+    return currentFlexModelRuntimeProfile({
+      ...(this.availableBackends ? { availableBackends: this.availableBackends } : {}),
+      warmthPolicy: this.warmthPolicy ?? 'automatic',
+      accelerationPreference: this.accelerationPreference ?? 'auto'
+    })
+  }
+
+  private async loadAvailableBackends(): Promise<void> {
+    if (this.availableBackends) return
+    const defaults: FlexModelBackend[] =
+      process.platform === 'darwin' && process.arch === 'arm64' ? ['cpu', 'metal'] : ['cpu']
+    if (!this.paths.backendManifest) {
+      this.availableBackends = defaults
+      return
+    }
+    try {
+      const value = JSON.parse(await readFile(this.paths.backendManifest, 'utf8')) as {
+        schemaVersion?: unknown
+        backends?: unknown
+      }
+      if (value.schemaVersion !== 1 || !Array.isArray(value.backends)) {
+        throw new Error('Invalid backend manifest')
+      }
+      const parsed = value.backends
+        .map((backend) => flexModelBackendSchema.safeParse(backend))
+        .filter((result) => result.success)
+        .map((result) => result.data)
+      this.availableBackends = [...new Set<FlexModelBackend>(['cpu', ...parsed])]
+    } catch {
+      this.availableBackends = defaults
+    }
+  }
+
   private async loadPersistedState(): Promise<void> {
     if (this.enabled !== null) return
     try {
       const parsed = JSON.parse(await readFile(this.statePath, 'utf8')) as Partial<PersistedState>
       this.enabled = parsed.enabled === true
+      this.warmthPolicy = flexModelWarmthPolicySchema.catch('automatic').parse(parsed.warmthPolicy)
+      this.accelerationPreference = flexModelAccelerationPreferenceSchema
+        .catch('auto')
+        .parse(parsed.accelerationPreference)
     } catch {
       this.enabled = false
+      this.warmthPolicy = 'automatic'
+      this.accelerationPreference = 'auto'
     }
   }
 
   private async persistState(): Promise<void> {
     await mkdir(this.modelDirectory, { recursive: true })
-    await writeFile(this.statePath, `${JSON.stringify({ enabled: Boolean(this.enabled) })}\n`, {
-      encoding: 'utf8'
-    })
+    await writeFile(
+      this.statePath,
+      `${JSON.stringify({
+        enabled: Boolean(this.enabled),
+        warmthPolicy: this.warmthPolicy ?? 'automatic',
+        accelerationPreference: this.accelerationPreference ?? 'auto'
+      })}\n`,
+      { encoding: 'utf8' }
+    )
   }
 
   private emitProgress(

@@ -25,11 +25,15 @@ export const responseSpeechActSchema = z.enum([
   'item-details-answer',
   'empty-schedule-answer',
   'conversation-answer',
+  'conversation-clarification',
   'memory-answer',
   'undo-confirmed',
   'proposal-rejected',
   'clarification',
   'conflict-warning',
+  'runtime-unavailable',
+  'offline-fact-limit',
+  'policy-boundary',
   'unsupported',
   'error'
 ])

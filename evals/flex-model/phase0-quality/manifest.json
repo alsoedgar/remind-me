@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "suiteVersion": "0.1.0",
+  "path": "evals/flex-model/phase0-quality/cases.json",
+  "sha256": "ceecfee48f661faad235f00489472ebcad3e998963ea976e70bc557ab2969c99",
+  "cases": 12,
+  "planCases": 5,
+  "chatCases": 7,
+  "trainingExcluded": true,
+  "syntheticPromptsOnly": true,
+  "requiresRealModel": true,
+  "modelId": "qwen3-1.7b-q4",
+  "modelSha256": "d2387ca2dbfee2ffabce7120d3770dadca0b293052bc2f0e138fdc940d9bc7b5"
+}

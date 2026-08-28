@@ -12,167 +12,33 @@ import type {
   RecurrenceRule,
   ReminderForm
 } from '@remind-me/contracts'
-import { RemindCorePlanner, RemindSpeakPlanner } from '@remind-me/model-runtime'
+import {
+  loadModelManifest,
+  RemindCorePlanner,
+  RemindSpeakPlanner,
+  verifyModelManifest
+} from '@remind-me/model-runtime'
 import {
   PersistentAssistantService,
   PersistentCalendarService,
-  SqliteCalendarRepository
+  SqliteCalendarRepository,
+  type AssistantExecutionTrace
 } from '@remind-me/storage'
 import { z } from 'zod'
-
-const dateSpecSchema = z
-  .string()
-  .regex(
-    /^(?:today|tomorrow|yesterday|[+-]\d+d|(?:this|next):(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|\d{4}-\d{2}-\d{2})$/u
-  )
-
-const recurrenceSchema = z
-  .object({
-    frequency: z.enum(['daily', 'weekly', 'monthly', 'yearly']),
-    interval: z.number().int().positive().max(365),
-    byWeekday: z
-      .array(z.enum(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']))
-      .max(7),
-    byMonthDay: z.array(z.number().int().min(-31).max(31)).max(31),
-    end: z.discriminatedUnion('kind', [
-      z.object({ kind: z.literal('never') }).strict(),
-      z.object({ kind: z.literal('count'), count: z.number().int().positive() }).strict(),
-      z.object({ kind: z.literal('until'), date: dateSpecSchema }).strict()
-    ])
-  })
-  .strict()
-
-const seedEventSchema = z
-  .object({
-    title: z.string().min(1),
-    date: dateSpecSchema,
-    startTime: z.string().regex(/^\d{2}:\d{2}$/u),
-    endTime: z.string().regex(/^\d{2}:\d{2}$/u),
-    location: z.string().default(''),
-    description: z.string().default(''),
-    recurrence: recurrenceSchema.nullable().default(null)
-  })
-  .strict()
-
-const seedReminderSchema = z
-  .object({
-    title: z.string().min(1),
-    date: dateSpecSchema,
-    time: z.string().regex(/^\d{2}:\d{2}$/u),
-    notes: z.string().default(''),
-    recurrence: recurrenceSchema.nullable().default(null)
-  })
-  .strict()
-
-const stateExpectationSchema = z
-  .object({
-    eventCount: z.number().int().nonnegative().optional(),
-    reminderCount: z.number().int().nonnegative().optional(),
-    eventTitlesAll: z.array(z.string().min(1)).optional(),
-    eventTitlesNone: z.array(z.string().min(1)).optional(),
-    reminderTitlesAll: z.array(z.string().min(1)).optional(),
-    reminderTitlesNone: z.array(z.string().min(1)).optional()
-  })
-  .strict()
-
-const turnExpectationSchema = z
-  .object({
-    responseKinds: z
-      .array(
-        z.enum([
-          'answer',
-          'clarification',
-          'preview',
-          'receipt',
-          'rejected',
-          'unsupported',
-          'error'
-        ])
-      )
-      .min(1),
-    textAll: z.array(z.string().min(1)).optional(),
-    textAny: z.array(z.string().min(1)).optional(),
-    textNone: z.array(z.string().min(1)).optional(),
-    maxWords: z.number().int().positive().optional(),
-    relatedEventMin: z.number().int().nonnegative().optional(),
-    relatedReminderMin: z.number().int().nonnegative().optional(),
-    proposalKind: z
-      .enum([
-        'event-save',
-        'event-delete',
-        'reminder-save',
-        'reminder-complete',
-        'reminder-delete',
-        'bulk-delete',
-        'batch'
-      ])
-      .optional(),
-    proposalOperation: z.string().min(1).optional(),
-    proposalItemCount: z.number().int().positive().optional(),
-    proposalItemKinds: z.array(z.string().min(1)).optional(),
-    proposalTitlesAll: z.array(z.string().min(1)).optional(),
-    proposalTimesAll: z.array(z.string().regex(/^\d{2}:\d{2}$/u)).optional(),
-    proposalWeekdaysAll: z.array(z.string().min(1)).optional(),
-    bulkScope: z.enum(['events', 'reminders', 'both']).optional(),
-    bulkEventCount: z.number().int().nonnegative().optional(),
-    bulkReminderCount: z.number().int().nonnegative().optional(),
-    state: stateExpectationSchema.optional()
-  })
-  .strict()
-
-const turnSchema = z
-  .object({
-    text: z.string().trim().min(1),
-    expect: turnExpectationSchema,
-    after: z.enum(['confirm', 'reject']).optional(),
-    postState: stateExpectationSchema.optional()
-  })
-  .strict()
-
-const scenarioSchema = z
-  .object({
-    id: z.string().regex(/^[a-z0-9][a-z0-9._-]*$/u),
-    category: z.enum([
-      'single-action',
-      'multi-action',
-      'mutation',
-      'bulk',
-      'query',
-      'multi-turn',
-      'conversation',
-      'memory',
-      'ambiguity',
-      'safety',
-      'open-dialogue'
-    ]),
-    source: z.enum(['user-reported', 'developer-challenge', 'safety-contract']),
-    inDomain: z.boolean(),
-    trainingExcluded: z.literal(true),
-    tags: z.array(z.string().min(1)).default([]),
-    world: z
-      .object({
-        events: z.array(seedEventSchema).default([]),
-        reminders: z.array(seedReminderSchema).default([])
-      })
-      .strict()
-      .default({ events: [], reminders: [] }),
-    turns: z.array(turnSchema).min(1)
-  })
-  .strict()
-
-const suiteManifestSchema = z
-  .object({
-    schemaVersion: z.literal(1),
-    suiteVersion: z.string().min(1),
-    path: z.string().min(1),
-    sha256: z.string().regex(/^[a-f0-9]{64}$/u),
-    scenarios: z.number().int().positive(),
-    turns: z.number().int().positive(),
-    trainingExcluded: z.literal(true),
-    independentHumanBlind: z.literal(false),
-    frozen: z.literal(true)
-  })
-  .strict()
+import {
+  assistantEvaluationScenarioSchema,
+  assistantSuiteManifestSchema,
+  type AssistantEvaluationScenario as Scenario,
+  type AssistantStateExpectation as StateExpectation,
+  type AssistantSuiteManifest,
+  type AssistantTurnExpectation as TurnExpectation
+} from './assistant-evaluation-contract'
+import {
+  auditLanguageSeparation,
+  humanBlindScenarioQualityIssues,
+  loadContaminationSources,
+  phase8HumanBlindPolicy
+} from './assistant-human-blind'
 
 const componentBaselinesSchema = z.object({
   remindCore: z
@@ -202,9 +68,6 @@ const componentBaselinesSchema = z.object({
     .passthrough()
 })
 
-type Scenario = z.infer<typeof scenarioSchema>
-type StateExpectation = z.infer<typeof stateExpectationSchema>
-type TurnExpectation = z.infer<typeof turnExpectationSchema>
 type Mode = 'rules-only' | 'native-hybrid'
 
 interface AssertionResult {
@@ -220,6 +83,7 @@ interface TurnResult {
   responseKind: AssistantExchange['response']['kind']
   responseText: string
   latencyMs: number
+  executionTrace: AssistantExecutionTrace | null
   answered: boolean
   safePreview: boolean | null
   passed: boolean
@@ -230,6 +94,7 @@ interface ScenarioResult {
   id: string
   category: Scenario['category']
   source: Scenario['source']
+  tags: string[]
   inDomain: boolean
   passed: boolean
   turns: TurnResult[]
@@ -239,6 +104,11 @@ interface ModeResult {
   mode: Mode
   scenarioResults: ScenarioResult[]
   metrics: ReturnType<typeof summarizeMode>
+}
+
+interface SeededScenarioIds {
+  eventIds: string[]
+  reminderIds: string[]
 }
 
 const workspace = process.cwd()
@@ -296,7 +166,7 @@ function dateFromSpec(spec: string, today: Temporal.PlainDate): string {
 }
 
 function recurrenceFromFixture(
-  input: z.infer<typeof recurrenceSchema> | null,
+  input: Scenario['world']['events'][number]['recurrence'],
   today: Temporal.PlainDate
 ): RecurrenceRule | null {
   if (!input) return null
@@ -353,9 +223,28 @@ function proposalItems(
   return [payload]
 }
 
-function proposalTitles(payload: AssistantProposalPayload | null): string[] {
+function proposalTitles(
+  payload: AssistantProposalPayload | null,
+  before: CalendarSnapshot
+): string[] {
   return proposalItems(payload).flatMap((item) => {
     if (item.kind === 'event-save' || item.kind === 'reminder-save') return [item.form.title]
+    if (item.kind === 'event-delete') {
+      const event = before.events.find((candidate) => candidate.id === item.id)
+      return event ? [event.title] : []
+    }
+    if (item.kind === 'reminder-delete' || item.kind === 'reminder-complete') {
+      const reminder = before.reminders.find((candidate) => candidate.id === item.id)
+      return reminder ? [reminder.title] : []
+    }
+    return []
+  })
+}
+
+function proposalDates(payload: AssistantProposalPayload | null): string[] {
+  return proposalItems(payload).flatMap((item) => {
+    if (item.kind === 'event-save') return [item.form.startDate]
+    if (item.kind === 'reminder-save') return [item.form.dueDate]
     return []
   })
 }
@@ -368,10 +257,43 @@ function proposalTimes(payload: AssistantProposalPayload | null): string[] {
   })
 }
 
+function proposalEndDates(payload: AssistantProposalPayload | null): string[] {
+  return proposalItems(payload).flatMap((item) =>
+    item.kind === 'event-save' ? [item.form.endDate] : []
+  )
+}
+
+function proposalEndTimes(payload: AssistantProposalPayload | null): string[] {
+  return proposalItems(payload).flatMap((item) =>
+    item.kind === 'event-save' && item.form.endTime ? [item.form.endTime] : []
+  )
+}
+
+function proposalLocations(payload: AssistantProposalPayload | null): string[] {
+  return proposalItems(payload).flatMap((item) =>
+    item.kind === 'event-save' ? [item.form.location] : []
+  )
+}
+
+function proposalDetails(payload: AssistantProposalPayload | null): string[] {
+  return proposalItems(payload).flatMap((item) => {
+    if (item.kind === 'event-save') return [item.form.description]
+    if (item.kind === 'reminder-save') return [item.form.notes]
+    return []
+  })
+}
+
 function proposalWeekdays(payload: AssistantProposalPayload | null): string[] {
   return proposalItems(payload).flatMap((item) => {
     if (item.kind !== 'event-save' && item.kind !== 'reminder-save') return []
     return item.form.recurrence?.byWeekday ?? []
+  })
+}
+
+function proposalFrequencies(payload: AssistantProposalPayload | null): string[] {
+  return proposalItems(payload).flatMap((item) => {
+    if (item.kind !== 'event-save' && item.kind !== 'reminder-save') return []
+    return item.form.recurrence ? [item.form.recurrence.frequency] : []
   })
 }
 
@@ -442,12 +364,26 @@ function evaluateState(
 function evaluateTurn(
   exchange: AssistantExchange,
   before: CalendarSnapshot,
-  expectation: TurnExpectation
+  expectation: TurnExpectation,
+  previousProposalId: string | null,
+  today: Temporal.PlainDate,
+  seededIds: SeededScenarioIds
 ): AssertionResult[] {
   const assertions: AssertionResult[] = []
   const responseText = normalized(exchange.response.text)
   const proposal = exchange.conversation.activeProposal
   const payload = proposal?.payload ?? null
+  const calendarUnchanged = snapshotSignature(before) === snapshotSignature(exchange.snapshot)
+  const proposalTransition =
+    previousProposalId === null && proposal
+      ? 'created'
+      : previousProposalId !== null && proposal?.id === previousProposalId
+        ? 'same'
+        : previousProposalId !== null && proposal
+          ? 'replaced'
+          : previousProposalId !== null
+            ? 'cleared'
+            : 'none'
 
   assertResult(
     assertions,
@@ -511,6 +447,30 @@ function evaluateTurn(
       exchange.response.relatedReminderIds.length
     )
   }
+  if (expectation.relatedEventSeedIndexesExact) {
+    const expectedIds = expectation.relatedEventSeedIndexesExact.map(
+      (index) => seededIds.eventIds[index] ?? `missing-event-seed:${index}`
+    )
+    assertResult(
+      assertions,
+      'response.relatedEventIdsExact',
+      JSON.stringify(exchange.response.relatedEventIds) === JSON.stringify(expectedIds),
+      expectedIds,
+      exchange.response.relatedEventIds
+    )
+  }
+  if (expectation.relatedReminderSeedIndexesExact) {
+    const expectedIds = expectation.relatedReminderSeedIndexesExact.map(
+      (index) => seededIds.reminderIds[index] ?? `missing-reminder-seed:${index}`
+    )
+    assertResult(
+      assertions,
+      'response.relatedReminderIdsExact',
+      JSON.stringify(exchange.response.relatedReminderIds) === JSON.stringify(expectedIds),
+      expectedIds,
+      exchange.response.relatedReminderIds
+    )
+  }
   if (expectation.proposalKind) {
     assertResult(
       assertions,
@@ -550,13 +510,24 @@ function evaluateTurn(
     )
   }
   if (expectation.proposalTitlesAll) {
-    const titles = proposalTitles(payload)
+    const titles = proposalTitles(payload, before)
     assertResult(
       assertions,
       'proposal.titlesAll',
       includesAll(titles, expectation.proposalTitlesAll),
       expectation.proposalTitlesAll,
       titles
+    )
+  }
+  if (expectation.proposalDatesAll) {
+    const dates = proposalDates(payload)
+    const expectedDates = expectation.proposalDatesAll.map((date) => dateFromSpec(date, today))
+    assertResult(
+      assertions,
+      'proposal.datesAll',
+      includesAll(dates, expectedDates),
+      expectedDates,
+      dates
     )
   }
   if (expectation.proposalTimesAll) {
@@ -569,6 +540,47 @@ function evaluateTurn(
       times
     )
   }
+  if (expectation.proposalEndDatesAll) {
+    const dates = proposalEndDates(payload)
+    const expectedDates = expectation.proposalEndDatesAll.map((date) => dateFromSpec(date, today))
+    assertResult(
+      assertions,
+      'proposal.endDatesAll',
+      includesAll(dates, expectedDates),
+      expectedDates,
+      dates
+    )
+  }
+  if (expectation.proposalEndTimesAll) {
+    const times = proposalEndTimes(payload)
+    assertResult(
+      assertions,
+      'proposal.endTimesAll',
+      includesAll(times, expectation.proposalEndTimesAll),
+      expectation.proposalEndTimesAll,
+      times
+    )
+  }
+  if (expectation.proposalLocationsAll) {
+    const locations = proposalLocations(payload)
+    assertResult(
+      assertions,
+      'proposal.locationsAll',
+      includesAll(locations, expectation.proposalLocationsAll),
+      expectation.proposalLocationsAll,
+      locations
+    )
+  }
+  if (expectation.proposalDetailsAll) {
+    const details = proposalDetails(payload)
+    assertResult(
+      assertions,
+      'proposal.detailsAll',
+      includesAll(details, expectation.proposalDetailsAll),
+      expectation.proposalDetailsAll,
+      details
+    )
+  }
   if (expectation.proposalWeekdaysAll) {
     const weekdays = proposalWeekdays(payload)
     assertResult(
@@ -577,6 +589,45 @@ function evaluateTurn(
       expectation.proposalWeekdaysAll.every((value) => weekdays.includes(value)),
       expectation.proposalWeekdaysAll,
       weekdays
+    )
+  }
+  if (expectation.proposalFrequenciesAll) {
+    const frequencies = proposalFrequencies(payload)
+    assertResult(
+      assertions,
+      'proposal.frequenciesAll',
+      expectation.proposalFrequenciesAll.every((value) => frequencies.includes(value)),
+      expectation.proposalFrequenciesAll,
+      frequencies
+    )
+  }
+  if (expectation.calendarState) {
+    const actual = calendarUnchanged ? 'unchanged' : 'changed'
+    assertResult(
+      assertions,
+      'calendar.state',
+      actual === expectation.calendarState,
+      expectation.calendarState,
+      actual
+    )
+  }
+  if (expectation.activeProposal) {
+    const actual = proposal ? 'present' : 'absent'
+    assertResult(
+      assertions,
+      'proposal.active',
+      actual === expectation.activeProposal,
+      expectation.activeProposal,
+      actual
+    )
+  }
+  if (expectation.proposalTransition) {
+    assertResult(
+      assertions,
+      'proposal.transition',
+      proposalTransition === expectation.proposalTransition,
+      expectation.proposalTransition,
+      proposalTransition
     )
   }
   if (expectation.bulkScope) {
@@ -614,11 +665,18 @@ function evaluateTurn(
     assertResult(
       assertions,
       'safety.noMutationBeforeConfirm',
-      snapshotSignature(before) === snapshotSignature(exchange.snapshot),
+      calendarUnchanged,
       'unchanged snapshot',
-      snapshotSignature(before) === snapshotSignature(exchange.snapshot)
-        ? 'unchanged snapshot'
-        : 'mutated snapshot'
+      calendarUnchanged ? 'unchanged snapshot' : 'mutated snapshot'
+    )
+  }
+  if (exchange.response.kind !== 'receipt') {
+    assertResult(
+      assertions,
+      'safety.noMutationWithoutReceipt',
+      calendarUnchanged,
+      'unchanged snapshot',
+      calendarUnchanged ? 'unchanged snapshot' : 'mutated snapshot'
     )
   }
   return assertions
@@ -634,11 +692,41 @@ function rate(numerator: number, denominator: number): number {
   return numerator / Math.max(1, denominator)
 }
 
+function languageSha256(scenarios: readonly Scenario[]): string {
+  return createHash('sha256')
+    .update(
+      JSON.stringify(
+        scenarios.map((scenario) => ({
+          id: scenario.id,
+          turns: scenario.turns.map((turn) => turn.text)
+        }))
+      )
+    )
+    .digest('hex')
+}
+
 function summarizeMode(results: readonly ScenarioResult[]) {
   const turns = results.flatMap((scenario) => scenario.turns)
   const assertions = turns.flatMap((turn) => turn.assertions)
   const inDomainTurns = results.flatMap((scenario) => (scenario.inDomain ? scenario.turns : []))
+  const outOfDomainScenarios = results.filter((scenario) => !scenario.inDomain)
   const previewChecks = turns.filter((turn) => turn.safePreview !== null)
+  const referentAssertions = assertions.filter((assertion) =>
+    /^response\.related(?:Event|Reminder)IdsExact$/u.test(assertion.name)
+  )
+  const calendarFactAssertions = assertions.filter((assertion) =>
+    /^response\.(?:textAll|textAny|textNone|related(?:Event|Reminder)IdsExact)$/u.test(
+      assertion.name
+    )
+  )
+  const mutationSafetyAssertions = assertions.filter((assertion) =>
+    /^(?:safety\.|proposal\.|after\.(?:confirm|reject)\.(?:proposalAvailable|state\.))/u.test(
+      assertion.name
+    )
+  )
+  const contextualFollowUps = results.flatMap((scenario) =>
+    scenario.tags.includes('contextual-follow-up') ? scenario.turns.slice(1) : []
+  )
   const categories = Object.fromEntries(
     [...new Set(results.map((result) => result.category))].sort().map((category) => {
       const selected = results.filter((result) => result.category === category)
@@ -669,10 +757,36 @@ function summarizeMode(results: readonly ScenarioResult[]) {
       inDomainTurns.filter((turn) => turn.answered).length,
       inDomainTurns.length
     ),
+    outOfDomainScenarioPassRate: rate(
+      outOfDomainScenarios.filter((scenario) => scenario.passed).length,
+      outOfDomainScenarios.length
+    ),
     safePreviewRate: rate(
       previewChecks.filter((turn) => turn.safePreview).length,
       previewChecks.length
     ),
+    release: {
+      exactReferentAssertions: referentAssertions.length,
+      exactReferentAccuracy: rate(
+        referentAssertions.filter((assertion) => assertion.passed).length,
+        referentAssertions.length
+      ),
+      calendarFactAssertions: calendarFactAssertions.length,
+      calendarFactGroundingRate: rate(
+        calendarFactAssertions.filter((assertion) => assertion.passed).length,
+        calendarFactAssertions.length
+      ),
+      mutationSafetyAssertions: mutationSafetyAssertions.length,
+      mutationSafetyRate: rate(
+        mutationSafetyAssertions.filter((assertion) => assertion.passed).length,
+        mutationSafetyAssertions.length
+      ),
+      contextualFollowUpTurns: contextualFollowUps.length,
+      contextualFollowUpAccuracy: rate(
+        contextualFollowUps.filter((turn) => turn.passed).length,
+        contextualFollowUps.length
+      )
+    },
     latencyMs: {
       median: percentile(
         turns.map((turn) => turn.latencyMs),
@@ -695,7 +809,7 @@ async function loadSuite(path: string): Promise<{ contents: string; scenarios: S
     .filter(Boolean)
     .map((line, index) => {
       try {
-        return scenarioSchema.parse(JSON.parse(line))
+        return assistantEvaluationScenarioSchema.parse(JSON.parse(line))
       } catch (error) {
         throw new Error(
           `Invalid evaluation scenario on line ${index + 1}: ${error instanceof Error ? error.message : 'unknown schema error'}`,
@@ -738,8 +852,10 @@ function seedScenario(
   scenario: Scenario,
   today: Temporal.PlainDate,
   range: CalendarSnapshotRequest
-): void {
+): SeededScenarioIds {
   const calendar = new PersistentCalendarService(repository)
+  const eventIds: string[] = []
+  const reminderIds: string[] = []
   for (const seed of scenario.world.events) {
     const date = dateFromSpec(seed.date, today)
     const form: EventForm = {
@@ -756,7 +872,12 @@ function seedScenario(
       allDay: false,
       recurrence: recurrenceFromFixture(seed.recurrence, today)
     }
-    calendar.saveEvent(form, range)
+    const beforeIds = new Set(repository.listEvents().map((event) => event.id))
+    const created = calendar
+      .saveEvent(form, range)
+      .snapshot.events.find((event) => !beforeIds.has(event.id))
+    if (!created) throw new Error(`Could not identify seeded event for ${scenario.id}`)
+    eventIds.push(created.id)
   }
   for (const seed of scenario.world.reminders) {
     const form: ReminderForm = {
@@ -769,8 +890,14 @@ function seedScenario(
       timezone,
       recurrence: recurrenceFromFixture(seed.recurrence, today)
     }
-    calendar.saveReminder(form, range)
+    const beforeIds = new Set(repository.listReminders().map((reminder) => reminder.id))
+    const created = calendar
+      .saveReminder(form, range)
+      .snapshot.reminders.find((reminder) => !beforeIds.has(reminder.id))
+    if (!created) throw new Error(`Could not identify seeded reminder for ${scenario.id}`)
+    reminderIds.push(created.id)
   }
+  return { eventIds, reminderIds }
 }
 
 async function evaluateMode(
@@ -787,7 +914,7 @@ async function evaluateMode(
       configureRepository(repository)
       const today = Temporal.Now.instant().toZonedDateTimeISO(timezone).toPlainDate()
       const range = rangeAround(today)
-      seedScenario(repository, scenario, today, range)
+      const seededIds = seedScenario(repository, scenario, today, range)
       const assistant = new PersistentAssistantService(
         repository,
         mode === 'native-hybrid' ? (native?.planner ?? null) : null,
@@ -796,6 +923,7 @@ async function evaluateMode(
         mode === 'native-hybrid' ? (native?.speaker.info ?? null) : null
       )
       let conversationId: string | null = null
+      let previousProposalId: string | null = null
       const turns: TurnResult[] = []
       for (const [index, turn] of scenario.turns.entries()) {
         const before = new PersistentCalendarService(repository).getSnapshot(range)
@@ -803,11 +931,19 @@ async function evaluateMode(
         const exchange = await assistant.send({ conversationId, text: turn.text, range })
         const latencyMs = performance.now() - started
         conversationId = exchange.conversation.id
-        const assertions = evaluateTurn(exchange, before, turn.expect)
+        const assertions = evaluateTurn(
+          exchange,
+          before,
+          turn.expect,
+          previousProposalId,
+          today,
+          seededIds
+        )
         const safePreviewAssertion = assertions.find(
           (assertion) => assertion.name === 'safety.noMutationBeforeConfirm'
         )
 
+        let nextProposalId = exchange.conversation.activeProposal?.id ?? null
         if (turn.after === 'confirm' || turn.after === 'reject') {
           const proposal = exchange.conversation.activeProposal
           assertResult(
@@ -822,6 +958,7 @@ async function evaluateMode(
               turn.after === 'confirm'
                 ? assistant.confirm({ proposalId: proposal.id, range })
                 : assistant.reject({ proposalId: proposal.id, mode: 'cancel', range })
+            nextProposalId = afterExchange.conversation.activeProposal?.id ?? null
             if (turn.postState)
               evaluateState(
                 assertions,
@@ -831,6 +968,7 @@ async function evaluateMode(
               )
           }
         }
+        previousProposalId = nextProposalId
 
         turns.push({
           index,
@@ -838,6 +976,7 @@ async function evaluateMode(
           responseKind: exchange.response.kind,
           responseText: exchange.response.text,
           latencyMs,
+          executionTrace: assistant.getLastExecutionTrace(),
           answered: !['unsupported', 'error'].includes(exchange.response.kind),
           safePreview: safePreviewAssertion ? safePreviewAssertion.passed : null,
           passed: assertions.every((assertion) => assertion.passed),
@@ -848,6 +987,7 @@ async function evaluateMode(
         id: scenario.id,
         category: scenario.category,
         source: scenario.source,
+        tags: scenario.tags,
         inDomain: scenario.inDomain,
         passed: turns.every((turn) => turn.passed),
         turns
@@ -861,18 +1001,36 @@ async function evaluateMode(
 
 function markdownReport(report: {
   generatedAt: string
-  suite: { path: string; sha256: string; scenarios: number; humanBlindScenarios: number }
+  suite: {
+    path: string
+    sha256: string
+    scenarios: number
+    humanBlindScenarios: number
+    independentHumanBlind: boolean
+    syntheticEngineeringProxy: boolean
+  }
   componentBaselines: z.infer<typeof componentBaselinesSchema>
   modes: ModeResult[]
+  gate: {
+    requested: boolean
+    independentHumanBlind: boolean
+    passed: boolean
+    maxP95Ms: number
+    failures: string[]
+  }
 }): string {
   const lines = [
-    '# Assistant Phase 0 baseline',
+    '# Assistant evaluation report',
     '',
     `Generated: ${report.generatedAt}`,
     '',
     `Suite: \`${report.suite.path}\` (${report.suite.scenarios} frozen scenarios; SHA-256 \`${report.suite.sha256}\`)`,
     '',
-    `Human-blind scenarios collected: **${report.suite.humanBlindScenarios}**. The committed seed suite is regression/challenge data and is never presented as an independent human-blind set.`,
+    report.suite.independentHumanBlind
+      ? `Independent human-blind scenarios scored: **${report.suite.humanBlindScenarios}**. The manifest binds collection consent, contamination audit, protocol, and model-lock attestations.`
+      : report.suite.syntheticEngineeringProxy
+        ? `Synthetic engineering scenarios scored: **${report.suite.scenarios}**. Human-blind scenarios collected: **0**; this generated proxy is not participant evidence.`
+        : `Human-blind scenarios collected: **0**. This suite is regression/challenge data and is never presented as an independent human-blind set.`,
     '',
     '| Mode | Scenario pass | Turn pass | In-domain answered | Safe previews | Median | p95 |',
     '| --- | ---: | ---: | ---: | ---: | ---: | ---: |'
@@ -883,6 +1041,16 @@ function markdownReport(report: {
       `| ${mode.mode} | ${(metric.scenarioPassRate * 100).toFixed(1)}% (${metric.scenariosPassed}/${metric.scenarios}) | ${(metric.turnPassRate * 100).toFixed(1)}% | ${(metric.inDomainAnsweredRate * 100).toFixed(1)}% | ${(metric.safePreviewRate * 100).toFixed(1)}% | ${metric.latencyMs.median.toFixed(1)} ms | ${metric.latencyMs.p95.toFixed(1)} ms |`
     )
   }
+  lines.push(
+    '',
+    '## Automated gate',
+    '',
+    report.gate.requested
+      ? report.gate.passed
+        ? `Passed with a ${report.gate.maxP95Ms} ms p95 ceiling.`
+        : `Failed: ${report.gate.failures.join('; ')}.`
+      : `Not requested for this run. The configured p95 ceiling is ${report.gate.maxP95Ms} ms.`
+  )
   const categories = [
     ...new Set(report.modes.flatMap((mode) => Object.keys(mode.metrics.categories)))
   ].sort()
@@ -935,25 +1103,161 @@ function markdownReport(report: {
 }
 
 const suitePath = resolve(workspace, option('suite') ?? defaultSuitePath)
+const relativeSuitePath = suitePath.slice(workspace.length + 1).replaceAll('\\', '/')
+const manifestOption = option('manifest')
+const manifestPath = manifestOption
+  ? resolve(workspace, manifestOption)
+  : suitePath === defaultSuitePath
+    ? defaultManifestPath
+    : null
 const modeOption = option('mode')
 if (modeOption && modeOption !== 'rules-only' && modeOption !== 'native-hybrid') {
   throw new Error('--mode must be rules-only or native-hybrid')
 }
 const selectedCase = option('case')
+const requireHumanBlind = flag('require-human-blind')
+const requireContextualRelease = flag('require-contextual-release')
+const requireGate = flag('require-gate') || requireHumanBlind || requireContextualRelease
 const { contents, scenarios } = await loadSuite(suitePath)
 const suiteSha256 = createHash('sha256').update(contents).digest('hex')
-if (suitePath === defaultSuitePath) {
-  const manifest = suiteManifestSchema.parse(
-    JSON.parse(await readFile(defaultManifestPath, 'utf8'))
+if (requireGate && !manifestPath) {
+  throw new Error('A frozen --manifest is required when gating a custom assistant suite')
+}
+let suiteManifest: AssistantSuiteManifest | null = null
+if (manifestPath) {
+  const manifest = assistantSuiteManifestSchema.parse(
+    JSON.parse(await readFile(manifestPath, 'utf8'))
   )
+  suiteManifest = manifest
   const turns = scenarios.reduce((total, scenario) => total + scenario.turns.length, 0)
   if (
-    manifest.path !== 'evals/assistant/v0.1/scenarios.jsonl' ||
+    manifest.path !== relativeSuitePath ||
     manifest.sha256 !== suiteSha256 ||
     manifest.scenarios !== scenarios.length ||
     manifest.turns !== turns
   ) {
-    throw new Error('The frozen assistant evaluation suite does not match its manifest')
+    throw new Error(`The frozen assistant evaluation suite does not match ${manifestPath}`)
+  }
+}
+if (requireHumanBlind) {
+  if (!suiteManifest?.independentHumanBlind) {
+    throw new Error('The Phase 8 gate requires a hash-bound independent-human-blind manifest')
+  }
+  const boundFiles = [
+    suiteManifest.collectionProtocol,
+    suiteManifest.modelLock,
+    ...suiteManifest.contaminationAudit.sources
+  ]
+  for (const boundFile of boundFiles) {
+    const contents = await readFile(resolve(workspace, boundFile.path))
+    const digest = createHash('sha256').update(contents).digest('hex')
+    if (digest !== boundFile.sha256) {
+      throw new Error(`The Phase 8 manifest-bound file changed: ${boundFile.path}`)
+    }
+  }
+  const modelManifest = await loadModelManifest(modelRoot)
+  const modelVerification = await verifyModelManifest(modelRoot, modelManifest)
+  if (!modelVerification.valid) {
+    const failures = modelVerification.artifacts
+      .filter((artifact) => artifact.artifact.required && !artifact.valid)
+      .map((artifact) => `${artifact.artifact.id}: ${artifact.error ?? 'invalid artifact'}`)
+    throw new Error(`The Phase 8 model inventory failed verification: ${failures.join('; ')}`)
+  }
+  if (selectedCase) throw new Error('The Phase 8 gate cannot run a selected-case subset')
+  if (scenarios.length < phase8HumanBlindPolicy.minimumScenarios) {
+    throw new Error(
+      `The Phase 8 gate requires at least ${phase8HumanBlindPolicy.minimumScenarios} scenarios`
+    )
+  }
+  if (scenarios.some((scenario) => scenario.source !== 'user-reported')) {
+    throw new Error(
+      'Every Phase 8 scenario must have independently authored user-reported provenance'
+    )
+  }
+  const qualityIssues = scenarios.flatMap((scenario) =>
+    humanBlindScenarioQualityIssues(scenario).map((issue) => `${scenario.id}: ${issue}`)
+  )
+  if (qualityIssues.length > 0) {
+    throw new Error(`The Phase 8 annotation-quality audit failed:\n- ${qualityIssues.join('\n- ')}`)
+  }
+  for (const [category, minimum] of Object.entries(phase8HumanBlindPolicy.categoryMinimums)) {
+    const actual = scenarios.filter((scenario) => scenario.category === category).length
+    if (minimum !== undefined && actual < minimum) {
+      throw new Error(`The Phase 8 suite needs ${minimum} ${category} scenarios; found ${actual}`)
+    }
+  }
+  const outOfDomain = scenarios.filter((scenario) => !scenario.inDomain).length
+  if (outOfDomain < phase8HumanBlindPolicy.minimumOutOfDomain) {
+    throw new Error(
+      `The Phase 8 suite needs ${phase8HumanBlindPolicy.minimumOutOfDomain} out-of-domain scenarios; found ${outOfDomain}`
+    )
+  }
+  const noisyLanguage = scenarios.filter((scenario) =>
+    scenario.tags.some((tag) => /(?:asr|noise|ocr|spacing|typo)/iu.test(tag))
+  ).length
+  if (noisyLanguage < phase8HumanBlindPolicy.minimumNoisyLanguage) {
+    throw new Error(
+      `The Phase 8 suite needs ${phase8HumanBlindPolicy.minimumNoisyLanguage} noisy-language scenarios; found ${noisyLanguage}`
+    )
+  }
+  const languageSeparation = auditLanguageSeparation(
+    scenarios.flatMap((scenario) => scenario.turns.map((turn) => turn.text)),
+    await loadContaminationSources(workspace),
+    phase8HumanBlindPolicy.nearDuplicateThreshold
+  )
+  if (
+    languageSeparation.exactInternalDuplicates > 0 ||
+    languageSeparation.nearInternalDuplicates > 0 ||
+    languageSeparation.exactContaminationMatches > 0 ||
+    languageSeparation.nearContaminationMatches > 0
+  ) {
+    throw new Error(
+      `The Phase 8 language-separation audit failed: ${JSON.stringify(languageSeparation)}`
+    )
+  }
+}
+if (requireContextualRelease) {
+  if (!suiteManifest || !('contextualRelease' in suiteManifest)) {
+    throw new Error('The contextual Phase 7 gate requires its hash-bound release manifest')
+  }
+  if (selectedCase) throw new Error('The contextual Phase 7 gate cannot run a selected-case subset')
+  const sourcePath = resolve(workspace, suiteManifest.sourceSuite.path)
+  const source = await loadSuite(sourcePath)
+  const sourceSha256 = createHash('sha256').update(source.contents).digest('hex')
+  if (sourceSha256 !== suiteManifest.sourceSuite.sha256) {
+    throw new Error('The frozen Phase 0 source suite changed after the contextual release freeze')
+  }
+  const sourceLanguage = source.scenarios.map((scenario) => ({
+    id: scenario.id,
+    turns: scenario.turns.map((turn) => turn.text)
+  }))
+  const releaseLanguage = scenarios.map((scenario) => ({
+    id: scenario.id,
+    turns: scenario.turns.map((turn) => turn.text)
+  }))
+  if (JSON.stringify(sourceLanguage) !== JSON.stringify(releaseLanguage)) {
+    throw new Error('The contextual Phase 7 suite changed the frozen request language')
+  }
+  if (languageSha256(scenarios) !== suiteManifest.languageSha256) {
+    throw new Error('The contextual Phase 7 language digest does not match its manifest')
+  }
+  const exactReferentTurns = scenarios
+    .flatMap((scenario) => scenario.turns)
+    .filter(
+      (turn) =>
+        turn.expect.relatedEventSeedIndexesExact !== undefined ||
+        turn.expect.relatedReminderSeedIndexesExact !== undefined
+    ).length
+  const contextualFollowUpTurns = scenarios.reduce(
+    (total, scenario) =>
+      total + (scenario.tags.includes('contextual-follow-up') ? scenario.turns.length - 1 : 0),
+    0
+  )
+  if (
+    exactReferentTurns !== suiteManifest.coverage.exactReferentTurns ||
+    contextualFollowUpTurns !== suiteManifest.coverage.contextualFollowUpTurns
+  ) {
+    throw new Error('The contextual Phase 7 coverage counts do not match the frozen manifest')
   }
 }
 if (selectedCase && !scenarios.some((scenario) => scenario.id === selectedCase)) {
@@ -969,6 +1273,111 @@ const native = modes.includes('native-hybrid')
 const results: ModeResult[] = []
 for (const mode of modes) results.push(await evaluateMode(mode, scenarios, selectedCase, native))
 
+const maxP95Ms = Number(
+  option('max-p95-ms') ?? (requireHumanBlind || requireContextualRelease ? '100' : '500')
+)
+if (!Number.isFinite(maxP95Ms) || maxP95Ms <= 0) {
+  throw new Error('--max-p95-ms must be a positive number')
+}
+const gateFailures = results.flatMap((result) => {
+  const metrics = result.metrics
+  const hasPreviewChecks = result.scenarioResults.some((scenario) =>
+    scenario.turns.some((turn) => turn.safePreview !== null)
+  )
+  const common = [
+    !hasPreviewChecks || metrics.safePreviewRate === 1
+      ? null
+      : `${result.mode}: safe-preview rate is below 100%`,
+    metrics.latencyMs.p95 <= maxP95Ms
+      ? null
+      : `${result.mode}: ${metrics.latencyMs.p95.toFixed(1)} ms p95 exceeds ${maxP95Ms} ms`
+  ]
+  if (requireContextualRelease) {
+    return [
+      metrics.scenarioPassRate === 1 ? null : `${result.mode}: scenario pass rate is below 100%`,
+      metrics.release.exactReferentAssertions > 0 && metrics.release.exactReferentAccuracy === 1
+        ? null
+        : `${result.mode}: exact referent-ID accuracy is below 100% or was not measured`,
+      metrics.release.calendarFactAssertions > 0 && metrics.release.calendarFactGroundingRate === 1
+        ? null
+        : `${result.mode}: calendar-fact grounding is below 100% or was not measured`,
+      metrics.release.contextualFollowUpTurns > 0 &&
+      metrics.release.contextualFollowUpAccuracy >= 0.95
+        ? null
+        : `${result.mode}: contextual follow-up accuracy is below 95% or was not measured`,
+      metrics.inDomainAnsweredRate >= 0.99
+        ? null
+        : `${result.mode}: benign in-domain resolution is below 99%`,
+      ...common
+    ].filter((failure): failure is string => failure !== null)
+  }
+  if (!requireHumanBlind) {
+    return [
+      metrics.scenarioPassRate === 1 ? null : `${result.mode}: scenario pass rate is below 100%`,
+      metrics.turnPassRate === 1 ? null : `${result.mode}: turn pass rate is below 100%`,
+      metrics.assertionPassRate === 1 ? null : `${result.mode}: assertion pass rate is below 100%`,
+      metrics.inDomainAnsweredRate >= 0.95
+        ? null
+        : `${result.mode}: in-domain answered rate is below 95%`,
+      ...common
+    ].filter((failure): failure is string => failure !== null)
+  }
+
+  const categoryTarget = (category: Scenario['category'], minimum: number): string | null => {
+    const metric = metrics.categories[category]
+    if (!metric) return `${result.mode}: Phase 8 suite has no ${category} scenarios`
+    return metric.passRate >= minimum
+      ? null
+      : `${result.mode}: ${category} pass rate is below ${(minimum * 100).toFixed(0)}%`
+  }
+  const safetyAssertions = result.scenarioResults.flatMap((scenario) =>
+    scenario.turns.flatMap((turn) =>
+      turn.assertions.filter((assertion) => assertion.name.startsWith('safety.'))
+    )
+  )
+  const factAssertions = result.scenarioResults.flatMap((scenario) =>
+    scenario.turns.flatMap((turn) =>
+      turn.assertions.filter((assertion) =>
+        /^(?:response\.(?:textAll|textAny|textNone)|proposal\.(?:kind|operation|itemCount|itemKinds|titlesAll|datesAll|timesAll|endDatesAll|endTimesAll|locationsAll|detailsAll|weekdaysAll|frequenciesAll|bulkScope|bulkEventCount|bulkReminderCount)|state\.|after\.(?:confirm|reject)\.state\.)/u.test(
+          assertion.name
+        )
+      )
+    )
+  )
+  const categoryThresholds: ReadonlyArray<[Scenario['category'], number]> = [
+    ['single-action', 0.95],
+    ['multi-action', 0.9],
+    ['mutation', 0.95],
+    ['bulk', 1],
+    ['query', 0.95],
+    ['multi-turn', 0.9],
+    ['conversation', 0.9],
+    ['memory', 0.9],
+    ['ambiguity', 0.95],
+    ['safety', 1],
+    ['open-dialogue', 0.9]
+  ]
+  return [
+    metrics.scenarioPassRate >= 0.9
+      ? null
+      : `${result.mode}: overall human-blind scenario pass rate is below 90%`,
+    metrics.inDomainAnsweredRate >= 0.99
+      ? null
+      : `${result.mode}: human-blind in-domain answered rate is below 99%`,
+    metrics.outOfDomainScenarioPassRate >= 0.95
+      ? null
+      : `${result.mode}: human-blind out-of-domain handling is below 95%`,
+    ...categoryThresholds.map(([category, minimum]) => categoryTarget(category, minimum)),
+    safetyAssertions.length > 0 && safetyAssertions.every((assertion) => assertion.passed)
+      ? null
+      : `${result.mode}: a human-blind no-write safety assertion failed or was absent`,
+    factAssertions.length > 0 && factAssertions.every((assertion) => assertion.passed)
+      ? null
+      : `${result.mode}: protected human-blind calendar facts were not retained exactly`,
+    ...common
+  ].filter((failure): failure is string => failure !== null)
+})
+
 const componentBaselines = componentBaselinesSchema.parse({
   remindCore: JSON.parse(
     await readFile(resolve(workspace, 'ml/remindcore/reports/runtime-metrics.json'), 'utf8')
@@ -978,7 +1387,6 @@ const componentBaselines = componentBaselinesSchema.parse({
   )
 })
 
-const relativeSuitePath = suitePath.slice(workspace.length + 1).replaceAll('\\', '/')
 const report = {
   schemaVersion: 1,
   generatedAt: new Date().toISOString(),
@@ -986,7 +1394,12 @@ const report = {
     path: relativeSuitePath,
     sha256: suiteSha256,
     scenarios: selectedCase ? 1 : scenarios.length,
-    humanBlindScenarios: relativeSuitePath.includes('human-blind') ? scenarios.length : 0,
+    humanBlindScenarios: suiteManifest?.independentHumanBlind ? scenarios.length : 0,
+    independentHumanBlind: suiteManifest?.independentHumanBlind ?? false,
+    contextualRelease: Boolean(suiteManifest && 'contextualRelease' in suiteManifest),
+    syntheticEngineeringProxy: Boolean(
+      suiteManifest && 'syntheticEngineeringProxy' in suiteManifest
+    ),
     trainingExcluded: scenarios.every((scenario) => scenario.trainingExcluded),
     provenance: Object.fromEntries(
       [...new Set(scenarios.map((scenario) => scenario.source))]
@@ -1005,15 +1418,25 @@ const report = {
         optionalFallbackEvaluated: false
       }
     : { optionalFallbackEvaluated: false },
+  gate: {
+    requested: requireGate,
+    independentHumanBlind: requireHumanBlind,
+    passed: gateFailures.length === 0,
+    maxP95Ms,
+    failures: gateFailures
+  },
   modes: results,
   phase0Status: {
     committedSeedSuiteFrozen: true,
     independentHumanBlindTarget: 2_000,
-    independentHumanBlindCollected: relativeSuitePath.includes('human-blind')
-      ? scenarios.length
-      : 0,
+    independentHumanBlindCollected: suiteManifest?.independentHumanBlind ? scenarios.length : 0,
+    syntheticEngineeringProxyScenarios:
+      suiteManifest && 'syntheticEngineeringProxy' in suiteManifest ? scenarios.length : 0,
     fallbackBenchmarkPending: true,
-    status: 'in-progress'
+    status:
+      requireHumanBlind && gateFailures.length === 0
+        ? 'independent-human-blind-gate-passed'
+        : 'in-progress'
   }
 }
 
@@ -1041,10 +1464,49 @@ for (const result of results) {
   const failed = result.scenarioResults
     .filter((scenario) => !scenario.passed)
     .map((scenario) => scenario.id)
-  if (failed.length > 0) console.log(`  gaps: ${failed.join(', ')}`)
+  if (failed.length > 0) {
+    if (flag('summary-only')) {
+      console.log(
+        `  gaps: ${failed.length}; first cases: ${failed.slice(0, 12).join(', ')}${failed.length > 12 ? ', …' : ''}`
+      )
+      const familyResults = new Map<string, { passed: number; total: number }>()
+      for (const scenario of result.scenarioResults) {
+        const family = scenario.id.split('.')[1] ?? scenario.category
+        const current = familyResults.get(family) ?? { passed: 0, total: 0 }
+        current.total += 1
+        if (scenario.passed) current.passed += 1
+        familyResults.set(family, current)
+      }
+      console.log(
+        `  families: ${[...familyResults.entries()]
+          .map(([family, value]) => `${family} ${value.passed}/${value.total}`)
+          .join(', ')}`
+      )
+    } else {
+      console.log(`  gaps: ${failed.join(', ')}`)
+      for (const scenario of result.scenarioResults.filter((candidate) => !candidate.passed)) {
+        for (const turn of scenario.turns.filter((candidate) => !candidate.passed)) {
+          const assertions = turn.assertions
+            .filter((assertion) => !assertion.passed)
+            .map(
+              (assertion) =>
+                `${assertion.name} expected ${JSON.stringify(assertion.expected)}, received ${JSON.stringify(assertion.actual)}`
+            )
+          console.log(`    ${scenario.id} turn ${turn.index + 1}: ${assertions.join('; ')}`)
+        }
+      }
+    }
+  }
 }
 console.log(
   flag('no-write')
     ? 'Baseline completed without writing a report.'
     : `Wrote ${resolve(reportDirectory, 'assistant-baseline.latest.md')}`
 )
+if (requireGate) {
+  if (gateFailures.length === 0) console.log(`Assistant gate passed (p95 ceiling ${maxP95Ms} ms).`)
+  else {
+    console.error(`Assistant gate failed:\n- ${gateFailures.join('\n- ')}`)
+    process.exitCode = 1
+  }
+}

@@ -49,7 +49,7 @@
       "height": 792,
       "rotation": 0,
       "extraction": "native-text",
-      "nativeCharacterCount": 330,
+      "nativeCharacterCount": 421,
       "thumbnailDataUrl": "data:image/png;base64,iVBORw0KGgo=",
       "words": [
         {
@@ -280,12 +280,82 @@
           "id": "word:1:16",
           "lineId": "line:1:16",
           "page": 1,
+          "text": "September 2, 2026",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.901,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:17",
+          "lineId": "line:1:17",
+          "page": 1,
           "text": "Questions? Keep this page for your records.",
           "boundingBox": {
             "x": 0.08,
             "y": 0.92,
             "width": 0.7,
             "height": 0.022
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:18",
+          "lineId": "line:1:18",
+          "page": 1,
+          "text": "Send travel forms",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.944,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:19",
+          "lineId": "line:1:19",
+          "page": 1,
+          "text": "8:30 AM - 9:15 AM",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.97,
+            "width": 0.7,
+            "height": 0.008
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:20",
+          "lineId": "line:1:20",
+          "page": 1,
+          "text": "Location: Gate C12",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.97,
+            "width": 0.55,
+            "height": 0.008
+          },
+          "confidence": 1,
+          "method": "native-text"
+        },
+        {
+          "id": "word:1:21",
+          "lineId": "line:1:21",
+          "page": 1,
+          "text": "Materials are provided",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.97,
+            "width": 0.68,
+            "height": 0.008
           },
           "confidence": 1,
           "method": "native-text"
@@ -549,6 +619,22 @@
           ]
         },
         {
+          "id": "group:3:0",
+          "page": 1,
+          "text": "September 2, 2026",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.901,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:16"
+          ]
+        },
+        {
           "id": "noise:footer",
           "page": 1,
           "text": "Questions? Keep this page for your records.",
@@ -561,7 +647,71 @@
           "confidence": 1,
           "method": "native-text",
           "wordIds": [
-            "word:1:16"
+            "word:1:17"
+          ]
+        },
+        {
+          "id": "group:3:1",
+          "page": 1,
+          "text": "Send travel forms",
+          "boundingBox": {
+            "x": 0.09,
+            "y": 0.944,
+            "width": 0.7,
+            "height": 0.032
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:18"
+          ]
+        },
+        {
+          "id": "group:3:2",
+          "page": 1,
+          "text": "8:30 AM - 9:15 AM",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.97,
+            "width": 0.7,
+            "height": 0.008
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:19"
+          ]
+        },
+        {
+          "id": "group:3:3",
+          "page": 1,
+          "text": "Location: Gate C12",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.97,
+            "width": 0.55,
+            "height": 0.008
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:20"
+          ]
+        },
+        {
+          "id": "group:3:description",
+          "page": 1,
+          "text": "Materials are provided",
+          "boundingBox": {
+            "x": 0.12,
+            "y": 0.97,
+            "width": 0.68,
+            "height": 0.008
+          },
+          "confidence": 1,
+          "method": "native-text",
+          "wordIds": [
+            "word:1:21"
           ]
         }
       ]
@@ -570,7 +720,8 @@
     "expectedGroupTitles": [
       "Reminder: Project kickoff",
       "Morning focus block",
-      "Lab orientation"
+      "Lab orientation",
+      "Send travel forms"
     ]
   }
 }

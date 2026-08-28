@@ -1,15 +1,16 @@
 {
   "schemaVersion": 1,
-  "id": "planscan-spatialhashgraph-5m-en",
-  "version": "0.1.0",
+  "id": "planscan-spatialhashgraph-5m-en-phase6",
+  "version": "0.2.0",
   "contractVersion": "0.1",
   "architecture": {
     "name": "SpatialHashGraph",
     "parameterCount": 5242880,
     "parameterInitialization": "zero",
     "featureEncoder": "hashed lexical, OCR-quality, reading-order, and normalized 2-D box features",
-    "graphDecoder": "learned block/entity roles plus pairwise relation and event-group links",
-    "quantization": "per-output-channel symmetric INT8"
+    "graphDecoder": "learned block/entity roles plus hard-negative-trained pairwise links with bounded row evidence",
+    "quantization": "per-output-channel symmetric INT8",
+    "quantizationCalibration": "development-only per-head scale multipliers"
   },
   "featureBuckets": 131072,
   "hashAlgorithm": "fnv1a-32-utf8",
@@ -28,18 +29,18 @@
       "byteOffset": 0,
       "byteLength": 917504,
       "scale": [
-        0.002627837471663952,
-        0.003238735953345895,
-        0.004118753131479025,
-        0.0017082332633435726,
-        0.00311637157574296,
+        0.0032343524508178234,
+        0.0040603759698569775,
+        0.003504969645291567,
+        0.0017967548919841647,
+        0.0024225132074207067,
         1.0,
-        0.0005939702969044447
+        0.0014145432505756617
       ],
       "bias": [
-        -0.03359999880194664,
         0.0,
-        0.03359999880194664,
+        0.0,
+        0.0,
         0.0,
         0.0,
         0.0,
@@ -62,24 +63,24 @@
       "byteOffset": 917504,
       "byteLength": 1048576,
       "scale": [
-        0.0038143466226756573,
-        0.0024068073835223913,
-        0.0031562186777591705,
-        0.002477857982739806,
-        0.0017633094685152173,
+        0.00406777486205101,
+        0.0029712077230215073,
+        0.005715586710721254,
+        0.004842722788453102,
+        0.0018440264975652099,
         1.0,
-        0.0028920741751790047,
-        0.004050733987241983
+        0.0041742888279259205,
+        0.0037861866876482964
       ],
       "bias": [
         0.0,
         -0.03359999880194664,
         0.0,
+        -0.03359999880194664,
         0.0,
         0.0,
         0.0,
-        0.0,
-        0.03359999880194664
+        0.06719999760389328
       ],
       "temperature": 1.0
     },
@@ -96,20 +97,20 @@
       "byteOffset": 1966080,
       "byteLength": 786432,
       "scale": [
-        0.04789835587143898,
-        0.023195667192339897,
-        0.02593865990638733,
-        0.02462184801697731,
-        0.020232364535331726,
-        0.015757229179143906
+        0.06698010116815567,
+        0.01482421811670065,
+        0.023918524384498596,
+        0.023278741165995598,
+        0.03587860241532326,
+        0.020631620660424232
       ],
       "bias": [
-        0.3447111248970032,
-        -0.13439999520778656,
-        0.03360000252723694,
-        -0.2688000202178955,
-        -0.008711114525794983,
-        0.03359999880194664
+        0.54631108045578,
+        -0.10079999268054962,
+        -0.16287581622600555,
+        -0.2454483062028885,
+        -0.09567581117153168,
+        0.058488890528678894
       ],
       "temperature": 1.0
     },
@@ -124,16 +125,16 @@
       "byteOffset": 2752512,
       "byteLength": 524288,
       "scale": [
-        0.030298935249447823,
-        0.04194082319736481,
-        0.010993569158017635,
-        0.023537222295999527
+        0.05957886949181557,
+        0.05946904420852661,
+        0.01626119762659073,
+        0.02051086723804474
       ],
       "bias": [
-        0.1169777661561966,
-        -0.09208889305591583,
-        -0.06719999015331268,
-        0.042311109602451324
+        0.2688000202178955,
+        -0.2351999431848526,
+        -0.03359999880194664,
+        0.0
       ],
       "temperature": 1.0
     },
@@ -152,14 +153,14 @@
       "byteOffset": 3276800,
       "byteLength": 1048576,
       "scale": [
-        0.0028480300679802895,
-        0.003813168266788125,
-        0.003210031194612384,
-        0.0033354966435581446,
-        0.003263919847086072,
-        0.0037523903883993626,
-        0.0026979518588632345,
-        0.0028993962332606316
+        0.0043752724304795265,
+        0.004846292547881603,
+        0.004294742830097675,
+        0.003933553583920002,
+        0.005770319141447544,
+        0.005400553345680237,
+        0.0036246951203793287,
+        0.004800018388777971
       ],
       "bias": [
         0.0,
@@ -187,22 +188,22 @@
       "byteOffset": 4325376,
       "byteLength": 917504,
       "scale": [
-        0.010113409720361233,
-        0.01577642373740673,
-        0.007612813729792833,
+        0.011177503503859043,
+        0.016439164057374,
+        0.00875606294721365,
         1.0,
         1.0,
         1.0,
-        0.001009471481665969
+        0.002383200218901038
       ],
       "bias": [
-        -0.06719999015331268,
-        0.06719999015331268,
+        -0.06719999760389328,
+        0.03359999880194664,
         0.0,
         0.0,
         0.0,
         0.0,
-        0.0
+        0.03359999880194664
       ],
       "temperature": 1.0
     }
@@ -211,7 +212,7 @@
     "path": "planscan-v0.1-int8.bin.gz",
     "compression": "gzip",
     "uncompressedBytes": 5242880,
-    "sha256Uncompressed": "1b934e6b34d8c091dee96bdc53f1cf940110406ccf5b238653fa6f99406255ac"
+    "sha256Uncompressed": "86ecc3768e6c6595be7459b8497b3b674216a9cbae8cbbcf4c03daea7de12612"
   },
   "thresholds": {
     "entity": 0.15,
@@ -221,7 +222,16 @@
   },
   "training": {
     "seed": 731947,
-    "datasetManifestSha256": "553436f1faea46cdcbae9da6103d18be2c0e7829422b845f50b35b3b13f1994a",
+    "datasetManifestSha256": "514e2b01db113ba372a30f2ecf81065e261bb0fd0d2fc175dce00acaebc9dcf6",
+    "challengeSlices": [
+      "baseline",
+      "ocr-corruption",
+      "neighboring-row-negatives",
+      "repeated-titles",
+      "unfamiliar-column-order",
+      "header-footer-distractions"
+    ],
+    "hardNeighborNegativeMining": true,
     "teacherUsed": false,
     "pretrainedWeightsUsed": false,
     "personalDataUsed": false
@@ -230,62 +240,103 @@
     "schemaVersion": 1,
     "generatedAt": "deterministic-pipeline",
     "dev": {
-      "pages": 2000,
+      "pages": 2500,
       "blockRoleAccuracy": 1.0,
-      "entityMicroF1": 0.999962033486465,
-      "relationMicroF1": 0.8688672619644828,
-      "groupLinkMicroF1": 0.918827660723933,
-      "documentTypeAccuracy": 0.865,
-      "executionEquivalence": {
-        "bornDigital": 0.999000999000999,
+      "entityMicroF1": 1.0,
+      "relationMicroF1": 0.9691962959963284,
+      "groupLinkMicroF1": 0.9871004299856672,
+      "documentTypeAccuracy": 0.8616,
+      "criticalRolePageEquivalence": {
+        "bornDigital": 1.0,
         "scanned": 1.0,
-        "overall": 0.9995
+        "overall": 1.0
       },
+      "challengeCriticalRolePageEquivalence": {
+        "baseline": 1.0,
+        "ocr-corruption": 1.0,
+        "neighboring-row-negatives": 1.0,
+        "repeated-titles": 1.0,
+        "unfamiliar-column-order": 1.0,
+        "header-footer-distractions": 1.0
+      },
+      "hardNegativeFalseLinkRate": 0.06771240370659819,
+      "distractorFalseEntityRate": 0.0,
       "evidenceCoverage": 1.0
     },
     "testFloat32": {
-      "pages": 2000,
+      "pages": 2500,
       "blockRoleAccuracy": 1.0,
       "entityMicroF1": 1.0,
-      "relationMicroF1": 0.8930703200500256,
-      "groupLinkMicroF1": 0.94429789853161,
-      "documentTypeAccuracy": 0.8525,
-      "executionEquivalence": {
+      "relationMicroF1": 0.977866473149492,
+      "groupLinkMicroF1": 0.9908014602265792,
+      "documentTypeAccuracy": 0.7964,
+      "criticalRolePageEquivalence": {
         "bornDigital": 1.0,
         "scanned": 1.0,
         "overall": 1.0
       },
+      "challengeCriticalRolePageEquivalence": {
+        "baseline": 1.0,
+        "ocr-corruption": 1.0,
+        "neighboring-row-negatives": 1.0,
+        "repeated-titles": 1.0,
+        "unfamiliar-column-order": 1.0,
+        "header-footer-distractions": 1.0
+      },
+      "hardNegativeFalseLinkRate": 0.04996676522496504,
+      "distractorFalseEntityRate": 0.0,
       "evidenceCoverage": 1.0
     },
     "testInt8": {
-      "pages": 2000,
+      "pages": 2500,
       "blockRoleAccuracy": 1.0,
       "entityMicroF1": 1.0,
-      "relationMicroF1": 0.892320009149654,
-      "groupLinkMicroF1": 0.9426476739833998,
-      "documentTypeAccuracy": 0.849,
-      "executionEquivalence": {
+      "relationMicroF1": 0.9775440505334422,
+      "groupLinkMicroF1": 0.9909003033232225,
+      "documentTypeAccuracy": 0.7996,
+      "criticalRolePageEquivalence": {
         "bornDigital": 1.0,
         "scanned": 1.0,
         "overall": 1.0
       },
+      "challengeCriticalRolePageEquivalence": {
+        "baseline": 1.0,
+        "ocr-corruption": 1.0,
+        "neighboring-row-negatives": 1.0,
+        "repeated-titles": 1.0,
+        "unfamiliar-column-order": 1.0,
+        "header-footer-distractions": 1.0
+      },
+      "hardNegativeFalseLinkRate": 0.049416672396800296,
+      "distractorFalseEntityRate": 0.0,
       "evidenceCoverage": 1.0
     },
     "textOnlyInferenceAblation": {
-      "pages": 2000,
-      "blockRoleAccuracy": 0.9894342494219569,
-      "entityMicroF1": 0.9996530989824237,
-      "relationMicroF1": 0.3982829413960433,
-      "groupLinkMicroF1": 0.6505598114319388,
-      "documentTypeAccuracy": 0.9265,
-      "executionEquivalence": {
+      "pages": 2500,
+      "blockRoleAccuracy": 1.0,
+      "entityMicroF1": 0.9958674958080828,
+      "relationMicroF1": 0.47398826401419236,
+      "groupLinkMicroF1": 0.8124278264674778,
+      "documentTypeAccuracy": 0.878,
+      "criticalRolePageEquivalence": {
         "bornDigital": 1.0,
-        "scanned": 0.991,
-        "overall": 0.9955
+        "scanned": 1.0,
+        "overall": 1.0
       },
+      "challengeCriticalRolePageEquivalence": {
+        "baseline": 1.0,
+        "ocr-corruption": 1.0,
+        "neighboring-row-negatives": 1.0,
+        "repeated-titles": 1.0,
+        "unfamiliar-column-order": 1.0,
+        "header-footer-distractions": 1.0
+      },
+      "hardNegativeFalseLinkRate": 0.6097320589516148,
+      "distractorFalseEntityRate": 0.0,
       "evidenceCoverage": 1.0
     },
-    "maximumQuantizationDelta": 0.0035000000000000586,
+    "maximumQuantizationDelta": 0.0031999999999999806,
+    "phase6ChallengeMinimumCriticalRolePageEquivalence": 1.0,
     "splitDisjoint": {
       "templateFamilies": true,
       "fonts": true,
@@ -296,6 +347,21 @@
       "Metrics are from generated held-out layouts, not an independent human document set.",
       "OCR recognition quality remains bounded by the bundled Tesseract model.",
       "Handwriting and unusually visual pages are outside this checkpoint."
-    ]
+    ],
+    "promotionGates": {
+      "allChallengeSlicesPresent": true,
+      "hardNegativeFalseLinkRateAtMostFivePercent": true,
+      "distractorFalseEntityRateAtMostTwoPercent": true,
+      "everyCriticalValueEvidenceBacked": true,
+      "quantizationDeltaAtMostHalfPoint": true
+    }
+  },
+  "safety": {
+    "exactSourceProjectionRequired": true,
+    "crossPageLinksAllowed": false,
+    "deterministicSemanticCompilerRequired": true,
+    "explicitConfirmationRequired": true,
+    "repairFallbackCandidateSelectionOnly": true,
+    "repairFallbackHasMutationAuthority": false
   }
 }

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { flexModelJobStatusSchema } from './flex-model-api'
 import {
   calendarBatchItemSchema,
   calendarSnapshotRequestSchema,
@@ -156,9 +157,30 @@ export const assistantSendRequestSchema = z
   .object({
     conversationId: identifierSchema.nullable(),
     text: z.string().trim().min(1).max(50_000),
-    range: calendarSnapshotRequestSchema
+    range: calendarSnapshotRequestSchema,
+    streamId: identifierSchema.nullable().optional()
   })
   .strict()
+
+export const assistantStreamEventSchema = z.discriminatedUnion('type', [
+  z
+    .object({
+      type: z.literal('chunk'),
+      streamId: identifierSchema,
+      text: z.string().min(1).max(8_000)
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal('status'),
+      streamId: identifierSchema,
+      status: flexModelJobStatusSchema
+    })
+    .strict()
+])
+
+export const assistantCancelRequestSchema = z.object({ streamId: identifierSchema }).strict()
+export const assistantCancelResponseSchema = z.object({ cancelled: z.boolean() }).strict()
 
 export const assistantConfirmRequestSchema = z
   .object({ proposalId: identifierSchema, range: calendarSnapshotRequestSchema })
@@ -182,5 +204,7 @@ export type AssistantFeedbackResponse = z.infer<typeof assistantFeedbackResponse
 export type AssistantResponse = z.infer<typeof assistantResponseSchema>
 export type AssistantExchange = z.infer<typeof assistantExchangeSchema>
 export type AssistantSendRequest = z.infer<typeof assistantSendRequestSchema>
+export type AssistantStreamEvent = z.infer<typeof assistantStreamEventSchema>
+export type AssistantCancelRequest = z.infer<typeof assistantCancelRequestSchema>
 export type AssistantConfirmRequest = z.infer<typeof assistantConfirmRequestSchema>
 export type AssistantRejectRequest = z.infer<typeof assistantRejectRequestSchema>

@@ -9,30 +9,30 @@
   "files": {
     "train": {
       "path": "ml/planscan/.generated/dataset/train.jsonl",
-      "pages": 12000,
-      "sha256": "84a4108e1d320c7b854dd4787a48c5c02f8ebae782fdc3f40541a2721df8e8c1",
-      "nativePages": 6000,
-      "scannedPages": 6000
+      "pages": 16000,
+      "sha256": "a9e9c9a71009126e583ba4df2886ffc536462c3b79795333df90bfc925a00baa",
+      "nativePages": 8016,
+      "scannedPages": 7984
     },
     "dev": {
       "path": "ml/planscan/.generated/dataset/dev.jsonl",
-      "pages": 2000,
-      "sha256": "7c7619b63e09e1edf2d0c5bf64020c2d83a919cd451e0edf13629b39b92a6df8",
-      "nativePages": 1001,
-      "scannedPages": 999
+      "pages": 2500,
+      "sha256": "cf03ce56f48c507e971500cde64e72ecf8f2a8118e18a080e9923e5db4af5ea4",
+      "nativePages": 1258,
+      "scannedPages": 1242
     },
     "test": {
       "path": "ml/planscan/.generated/dataset/test.jsonl",
-      "pages": 2000,
-      "sha256": "6f7324faf1c1fdf22d1e4bb2c74c48d69a5165ba72f81784a4dba43da2995db4",
-      "nativePages": 1000,
-      "scannedPages": 1000
+      "pages": 2500,
+      "sha256": "1a21d127bf95e4c7cabbc4cefd556e49356aeed942b6b7da02bcbb92eca5ba5c",
+      "nativePages": 1252,
+      "scannedPages": 1248
     }
   },
   "heldout": {
     "path": "fixtures/planscan/heldout.v0.1.jsonl",
-    "pages": 96,
-    "sha256": "2afbfcf28cb453c550018f9215e727de3070bc23d1ba760ff170d8612e4c8410"
+    "pages": 120,
+    "sha256": "4a0408219dce669cb74f2de24f5144790fb73966e5c8cc301541025175a05082"
   },
   "disjointAssets": {
     "train": {
@@ -46,8 +46,18 @@
         "flyer-stack",
         "phone-capture"
       ],
-      "fonts": ["Alder Sans", "Bramble Serif", "Cove Mono", "Dune Grotesk"],
-      "scanStyles": ["clean", "soft-jpeg", "warm-shadow", "light-skew"],
+      "fonts": [
+        "Alder Sans",
+        "Bramble Serif",
+        "Cove Mono",
+        "Dune Grotesk"
+      ],
+      "scanStyles": [
+        "clean",
+        "soft-jpeg",
+        "warm-shadow",
+        "light-skew"
+      ],
       "organizations": [
         "Cedar Studio",
         "Willow School",
@@ -58,10 +68,24 @@
       ]
     },
     "dev": {
-      "templateFamilies": ["ribbon-timeline", "offset-course-grid", "bordered-invite"],
-      "fonts": ["Elm Humanist", "Field Slab"],
-      "scanStyles": ["cool-scan", "faint-copy"],
-      "organizations": ["Foxglove College", "Beacon Workshop", "Pine Rail"]
+      "templateFamilies": [
+        "ribbon-timeline",
+        "offset-course-grid",
+        "bordered-invite"
+      ],
+      "fonts": [
+        "Elm Humanist",
+        "Field Slab"
+      ],
+      "scanStyles": [
+        "cool-scan",
+        "faint-copy"
+      ],
+      "organizations": [
+        "Foxglove College",
+        "Beacon Workshop",
+        "Pine Rail"
+      ]
     },
     "test": {
       "templateFamilies": [
@@ -70,9 +94,21 @@
         "itinerary-bands",
         "notebook-screenshot"
       ],
-      "fonts": ["Kite Sans", "Lumen Serif", "Orbit Mono"],
-      "scanStyles": ["creased-paper", "phone-glare", "low-contrast"],
-      "organizations": ["Saffron Institute", "Riverglass Club", "Canyon Transit"]
+      "fonts": [
+        "Kite Sans",
+        "Lumen Serif",
+        "Orbit Mono"
+      ],
+      "scanStyles": [
+        "creased-paper",
+        "phone-glare",
+        "low-contrast"
+      ],
+      "organizations": [
+        "Saffron Institute",
+        "Riverglass Club",
+        "Canyon Transit"
+      ]
     }
   },
   "documentTypes": [
@@ -85,5 +121,39 @@
     "table",
     "screenshot"
   ],
-  "manifestSha256": "553436f1faea46cdcbae9da6103d18be2c0e7829422b845f50b35b3b13f1994a"
+  "challengeSlices": [
+    "baseline",
+    "ocr-corruption",
+    "neighboring-row-negatives",
+    "repeated-titles",
+    "unfamiliar-column-order",
+    "header-footer-distractions"
+  ],
+  "challengeCounts": {
+    "train": {
+      "baseline": 2672,
+      "ocr-corruption": 2672,
+      "neighboring-row-negatives": 2664,
+      "repeated-titles": 2664,
+      "unfamiliar-column-order": 2664,
+      "header-footer-distractions": 2664
+    },
+    "dev": {
+      "baseline": 417,
+      "ocr-corruption": 417,
+      "neighboring-row-negatives": 417,
+      "repeated-titles": 417,
+      "unfamiliar-column-order": 417,
+      "header-footer-distractions": 415
+    },
+    "test": {
+      "baseline": 420,
+      "ocr-corruption": 416,
+      "neighboring-row-negatives": 416,
+      "repeated-titles": 416,
+      "unfamiliar-column-order": 416,
+      "header-footer-distractions": 416
+    }
+  },
+  "manifestSha256": "514e2b01db113ba372a30f2ecf81065e261bb0fd0d2fc175dce00acaebc9dcf6"
 }
