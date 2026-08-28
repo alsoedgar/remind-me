@@ -1892,10 +1892,25 @@ function normalizedChoice(value: string): string {
     .trim()
 }
 
+function isAffirmativeClarificationAnswer(value: string): boolean {
+  return /^(?:y(?:e(?:s+)?)?|yep+|yup+|yeah+|sure(?: thing)?|ok(?:ay)?|please(?: do)?|do (?:it|that)|go ahead|sounds good|that works|absolutely|definitely)$/u.test(
+    normalizedChoice(value)
+  )
+}
+
+function isNegativeClarificationAnswer(value: string): boolean {
+  return /^(?:n(?:o+)?(?: thanks)?|nope+|nah+|cancel|never mind|nevermind|do not|don't|stop|leave it)$/u.test(
+    normalizedChoice(value)
+  )
+}
+
 function selectedClarificationOption(value: string, options: readonly string[]): string | null {
   const normalized = normalizedChoice(value)
   const exact = options.find((option) => normalizedChoice(option) === normalized)
   if (exact) return exact
+  if (options.length === 1 && isAffirmativeClarificationAnswer(normalized)) {
+    return options[0] ?? null
+  }
   const ordinal =
     /^(?:the\s+)?(first|second|third|fourth|fifth|1st|2nd|3rd|4th|5th)(?:\s+one)?$/u.exec(
       normalized
@@ -1915,6 +1930,7 @@ function isClarificationContinuation(
 ): boolean {
   const normalized = normalizedChoice(value)
   if (!normalized || normalized.length > 500) return false
+  if (isNegativeClarificationAnswer(normalized)) return true
   if (selectedClarificationOption(value, clarification.options)) return true
   switch (clarification.code) {
     case 'missing-date':
@@ -2704,6 +2720,8 @@ export class PersistentAssistantService {
     }
 
     const pendingClarification = conversation.dialogueState.pendingClarification
+    const clarificationDeclined =
+      pendingClarification !== null && isNegativeClarificationAnswer(normalizedInput)
     const clarificationContinuation =
       pendingClarification !== null &&
       isClarificationContinuation(normalizedInput, pendingClarification)
@@ -2713,6 +2731,21 @@ export class PersistentAssistantService {
         ...this.repository.getAssistantDialogueState(conversation.id),
         pendingClarification: null,
         updatedAt: clearedAt
+      })
+    }
+    if (pendingClarification && clarificationDeclined) {
+      const clearedAt = new Date().toISOString()
+      this.repository.saveAssistantDialogueState(conversation.id, {
+        ...this.repository.getAssistantDialogueState(conversation.id),
+        pendingClarification: null,
+        updatedAt: clearedAt
+      })
+      return this.respond(conversation.id, id, request.range, {
+        kind: 'answer',
+        text: 'Okay—nothing was saved. Tell me what you want changed whenever you’re ready.',
+        relatedEventIds: [],
+        relatedReminderIds: [],
+        receipt: null
       })
     }
     const contextualInput = clarificationContinuation
@@ -2916,8 +2949,17 @@ export class PersistentAssistantService {
     let disposition = getActionDisposition(parseResult.draft)
     let usedFlexibleFallback = false
     let calendarFallbackResult: FlexModelCalendarFallbackResult | null = null
+    const hasDeterministicReminderRangeConversion =
+      disposition === 'clarify' &&
+      parseResult.draft.ambiguities.some(
+        (ambiguity) =>
+          ambiguity.code === 'unsupported-expression' &&
+          ambiguity.options.some((option) => normalizedChoice(option) === 'create calendar events')
+      )
     const needsCalendarFallback =
-      needsFlexiblePlanRepair(routedText, parseResult) || requiresMultipleActionCoverage
+      (!hasDeterministicReminderRangeConversion &&
+        needsFlexiblePlanRepair(routedText, parseResult)) ||
+      requiresMultipleActionCoverage
 
     if (needsCalendarFallback && this.calendarFallbackPlanner) {
       trace.fallbackWorkload = 'plan'

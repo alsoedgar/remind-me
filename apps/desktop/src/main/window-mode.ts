@@ -41,6 +41,15 @@ export class WindowModeController {
     return this.getState()
   }
 
+  private setTitleBarHeight(height: number): void {
+    if (process.platform !== 'win32') return
+    try {
+      this.window.setTitleBarOverlay({ height })
+    } catch {
+      // Framed Windows builds do not expose the overlay; their native title bar remains usable.
+    }
+  }
+
   private enterCompact(mode: Extract<AppWindowMode, 'widget' | 'glance'>): void {
     if (this.mode === 'full') {
       this.fullWasMaximized = this.window.isMaximized()
@@ -54,6 +63,7 @@ export class WindowModeController {
       mode === 'glance'
         ? glanceBoundsForWorkArea(display.workArea)
         : widgetBoundsForWorkArea(display.workArea)
+    this.setTitleBarHeight(mode === 'glance' ? 28 : 32)
     this.window.setMinimumSize(
       Math.min(mode === 'glance' ? 272 : 340, bounds.width),
       Math.min(mode === 'glance' ? 228 : 480, bounds.height)
@@ -76,6 +86,7 @@ export class WindowModeController {
   }
 
   private enterFullApp(): void {
+    this.setTitleBarHeight(36)
     this.window.setAlwaysOnTop(false)
     this.window.setSkipTaskbar(false)
     this.window.setMenuBarVisibility(process.platform !== 'win32')

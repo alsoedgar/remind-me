@@ -2120,6 +2120,9 @@ export function App(): ReactNode {
       .catch(() => setBridgeError(true))
   }, [initialize, initializeWindow])
   useEffect(() => {
+    document.documentElement.dataset.windowMode = windowState?.mode ?? 'full'
+  }, [windowState?.mode])
+  useEffect(() => {
     const preferences = snapshot?.preferences
     if (preferences && isThemeId(preferences.themeId) && preferences.themeId !== theme)
       setTheme(preferences.themeId)

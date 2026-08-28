@@ -1637,6 +1637,74 @@ describe('PersistentAssistantService', () => {
     }
   })
 
+  it('turns an affirmed reminder time range into a reviewable calendar event', async () => {
+    const repository = new SqliteCalendarRepository(':memory:')
+    try {
+      const planCalendar = vi.fn(async () => ({ kind: 'not-calendar' as const }))
+      const assistant = new PersistentAssistantService(repository, null, null, null, null, {
+        calendarPlanner: { planCalendar },
+        generalResponder: null
+      })
+      const ambiguous = await assistant.send({
+        conversationId: null,
+        text: 'add a reminder for my calc III exam on oct 1st at 6:30-7:30pm',
+        range
+      })
+      expect(ambiguous.response.kind).toBe('clarification')
+      expect(ambiguous.conversation.dialogueState.pendingClarification).toMatchObject({
+        code: 'unsupported-expression',
+        options: ['Create calendar events']
+      })
+
+      const converted = await assistant.send({
+        conversationId: ambiguous.conversation.id,
+        text: 'yes',
+        range
+      })
+      expect(converted.response.kind).toBe('preview')
+      expect(converted.response.text).not.toMatch(/cannot create calendar events/iu)
+      expect(converted.conversation.dialogueState.pendingClarification).toBeNull()
+      expect(converted.conversation.activeProposal?.payload).toMatchObject({
+        kind: 'event-save',
+        form: {
+          title: 'calc III exam',
+          startDate: '2026-10-01',
+          startTime: '18:30',
+          endTime: '19:30'
+        }
+      })
+      expect(converted.snapshot.events).toHaveLength(0)
+      expect(planCalendar).not.toHaveBeenCalled()
+    } finally {
+      repository.close()
+    }
+  })
+
+  it('lets a user decline a pending clarification without handing it to broad chat', async () => {
+    const repository = new SqliteCalendarRepository(':memory:')
+    try {
+      const assistant = new PersistentAssistantService(repository)
+      const ambiguous = await assistant.send({
+        conversationId: null,
+        text: 'remind me about office hours on October 1 from 2-3pm',
+        range
+      })
+      expect(ambiguous.response.kind).toBe('clarification')
+
+      const declined = await assistant.send({
+        conversationId: ambiguous.conversation.id,
+        text: 'no thanks',
+        range
+      })
+      expect(declined.response.kind).toBe('answer')
+      expect(declined.response.text).toContain('nothing was saved')
+      expect(declined.conversation.dialogueState.pendingClarification).toBeNull()
+      expect(declined.conversation.activeProposal).toBeNull()
+    } finally {
+      repository.close()
+    }
+  })
+
   it('uses a clarification choice to resolve an ambiguous destructive target', async () => {
     const repository = new SqliteCalendarRepository(':memory:')
     try {

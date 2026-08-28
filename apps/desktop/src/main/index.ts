@@ -227,6 +227,24 @@ function scheduleSmokeResult(window: BrowserWindow): void {
               range
             })
           }
+          const reminderRangeClarification = await window.remindMe.sendAssistantMessage({
+            conversationId: null,
+            text: 'Add a reminder for my Calc III exam on October 1, 2026 at 6:30-7:30 PM',
+            range
+          })
+          const reminderRangeConversion = await window.remindMe.sendAssistantMessage({
+            conversationId: reminderRangeClarification.conversation.id,
+            text: 'yes',
+            range
+          })
+          const reminderRangeProposal = reminderRangeConversion.conversation.activeProposal
+          if (reminderRangeProposal) {
+            await window.remindMe.rejectAssistantProposal({
+              proposalId: reminderRangeProposal.id,
+              mode: 'cancel',
+              range
+            })
+          }
           const waveBuffer = await fetch('/voice-smoke.wav').then((response) => response.arrayBuffer())
           const waveView = new DataView(waveBuffer)
           let waveOffset = 12
@@ -481,6 +499,14 @@ function scheduleSmokeResult(window: BrowserWindow): void {
               remindCoreProposal?.operation === 'reminder.create' &&
               remindCoreProposal.payload.kind === 'reminder-save' &&
               remindCoreProposal.payload.form.title === 'feed Juniper',
+            reminderRangeContinuation:
+              reminderRangeClarification.response.kind === 'clarification' &&
+              reminderRangeConversion.response.kind === 'preview' &&
+              reminderRangeProposal?.payload.kind === 'event-save' &&
+              reminderRangeProposal.payload.form.title === 'Calc III exam' &&
+              reminderRangeProposal.payload.form.startDate === '2026-10-01' &&
+              reminderRangeProposal.payload.form.startTime === '18:30' &&
+              reminderRangeProposal.payload.form.endTime === '19:30',
             voiceCancellation:
               cancellation.cancelled === true && cancellationRejected === true,
             voiceTranscription: voice.text

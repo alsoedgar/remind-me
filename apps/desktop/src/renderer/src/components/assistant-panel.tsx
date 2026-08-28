@@ -48,9 +48,15 @@ function bulkDeletePreview(
   return preview
 }
 
+function compactClarificationLabel(option: string): string {
+  if (option.toLocaleLowerCase() === 'create calendar events') return 'Create event'
+  return option
+}
+
 export function AssistantPanel({
   onOpen,
   mode = 'workspace',
+  compactVariant = 'mini',
   wide = false,
   onClose,
   onToggleWide,
@@ -58,6 +64,7 @@ export function AssistantPanel({
 }: {
   onOpen: (request: EditorRequest) => void
   mode?: 'workspace' | 'sidebar' | 'compact'
+  compactVariant?: 'mini' | 'tiny'
   wide?: boolean
   onClose?: () => void
   onToggleWide?: () => void
@@ -246,8 +253,10 @@ export function AssistantPanel({
     : 0
   const bulkClearPreview = bulkClearPayload ? bulkDeletePreview(bulkClearPayload, snapshot) : []
   const compact = mode === 'compact'
+  const tiny = compact && compactVariant === 'tiny'
+  const pendingClarification = conversation?.dialogueState.pendingClarification ?? null
   const visibleTurns =
-    conversation?.turns.slice(compact ? -8 : mode === 'sidebar' ? -16 : -24) ?? []
+    conversation?.turns.slice(tiny ? -1 : compact ? -8 : mode === 'sidebar' ? -16 : -24) ?? []
   const headingId = `assistant-heading-${mode}`
   const inputId = `assistant-input-${mode}`
   const activityLabel =
@@ -264,6 +273,7 @@ export function AssistantPanel({
         aria-labelledby={headingId}
         aria-busy={busy}
         data-testid={compact ? 'compact-assistant' : undefined}
+        data-compact-variant={compact ? compactVariant : undefined}
       >
         <header className="assistant-intro">
           <span className="assistant-spark" aria-hidden="true">
@@ -280,7 +290,9 @@ export function AssistantPanel({
             </h2>
             <p>
               {compact
-                ? 'Get a local answer or make a reviewed calendar change without opening the full app.'
+                ? tiny
+                  ? 'Ask, add, move, or remove plans.'
+                  : 'Ask a question or make a reviewed calendar change without opening the full app.'
                 : mode === 'sidebar'
                   ? 'Ask naturally about any day. Answers use your private on-device calendar, and changes always wait for review.'
                   : 'Ask naturally. Every answer comes from your on-device calendar, and every change waits for your review.'}
@@ -464,6 +476,25 @@ export function AssistantPanel({
             </article>
           ) : null}
 
+          {!busy && !proposal && pendingClarification?.options.length ? (
+            <div className="clarification-actions" role="group" aria-label="Quick replies">
+              {pendingClarification.options.map((option) => (
+                <button type="button" key={option} onClick={() => void send(option)}>
+                  {tiny ? compactClarificationLabel(option) : option}
+                </button>
+              ))}
+              {pendingClarification.options.length === 1 ? (
+                <button
+                  className="clarification-decline"
+                  type="button"
+                  onClick={() => void send('no thanks')}
+                >
+                  Not now
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
           {proposal ? (
             <article className="proposal-card" aria-label="Calendar change awaiting review">
               <div className="proposal-heading">
@@ -519,7 +550,7 @@ export function AssistantPanel({
                     disabled={busy}
                     onClick={() => void editProposal()}
                   >
-                    Edit details
+                    {tiny ? 'Edit' : 'Edit details'}
                   </button>
                 ) : null}
                 <button
@@ -531,10 +562,16 @@ export function AssistantPanel({
                   {busy
                     ? 'Applying…'
                     : bulkClearPayload
-                      ? `Delete ${bulkClearCount} ${bulkClearCount === 1 ? 'item' : 'items'}`
+                      ? tiny
+                        ? `Delete ${bulkClearCount}`
+                        : `Delete ${bulkClearCount} ${bulkClearCount === 1 ? 'item' : 'items'}`
                       : proposal.risk === 'destructive'
-                        ? 'Confirm change'
-                        : 'Save locally'}
+                        ? tiny
+                          ? 'Confirm'
+                          : 'Confirm change'
+                        : tiny
+                          ? 'Save'
+                          : 'Save locally'}
                 </button>
               </div>
             </article>
@@ -670,9 +707,11 @@ export function AssistantPanel({
             placeholder={
               busy
                 ? 'You can type your next message while I work…'
-                : compact
-                  ? 'Ask about your calendar…'
-                  : 'Try “Am I free Friday afternoon?”'
+                : tiny
+                  ? 'Ask or change a plan…'
+                  : compact
+                    ? 'Ask about your calendar…'
+                    : 'Try “Am I free Friday afternoon?”'
             }
             autoComplete="off"
             enterKeyHint="send"

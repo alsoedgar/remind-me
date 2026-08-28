@@ -249,7 +249,12 @@ export function DesktopWidget({
   }
 
   const compactAssistant = (
-    <AssistantPanel mode="compact" onOpen={onOpenEditor} onOpenDocument={onOpenDocument} />
+    <AssistantPanel
+      mode="compact"
+      compactVariant={mode === 'glance' ? 'tiny' : 'mini'}
+      onOpen={onOpenEditor}
+      onOpenDocument={onOpenDocument}
+    />
   )
 
   if (mode === 'glance') {
@@ -307,11 +312,11 @@ export function DesktopWidget({
           <section className="glance-assistant-shell" aria-label="Local assistant" key={tab}>
             <header className="glance-assistant-bar">
               <span>
-                <strong>Local assistant</strong>
-                <small>Private · on device</small>
+                <strong>Ask your calendar</strong>
+                <small>Private · can read and change plans</small>
               </span>
               <button type="button" onClick={onOpenAssistant}>
-                Full chat ↗
+                Open ↗
               </button>
             </header>
             <div className="glance-assistant">{compactAssistant}</div>

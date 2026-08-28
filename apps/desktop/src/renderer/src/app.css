@@ -6,7 +6,16 @@
   --motion-quick: 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
   --motion-smooth: 240ms cubic-bezier(0.22, 1, 0.36, 1);
   --motion-gentle: 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  --window-titlebar-height: 36px;
   interpolate-size: allow-keywords;
+}
+
+:root[data-window-mode='widget'] {
+  --window-titlebar-height: 32px;
+}
+
+:root[data-window-mode='glance'] {
+  --window-titlebar-height: 28px;
 }
 
 html,
@@ -23,7 +32,7 @@ body,
   top: 0;
   right: 138px;
   left: 0;
-  height: 36px;
+  height: var(--window-titlebar-height);
   -webkit-app-region: drag;
 }
 
@@ -33,7 +42,7 @@ body,
   top: 0;
   right: 0;
   left: 0;
-  height: 36px;
+  height: var(--window-titlebar-height);
   pointer-events: none;
   content: '';
   background: var(--color-bg-secondary);
@@ -49,7 +58,7 @@ body,
 
 :root[data-window-controls-overlay='true'] .app-shell,
 :root[data-window-controls-overlay='true'] .widget-root {
-  padding-top: 36px;
+  padding-top: var(--window-titlebar-height);
 }
 
 :root[data-window-controls-overlay='true'] .main-content {
@@ -58,7 +67,7 @@ body,
 
 :root[data-window-controls-overlay='true'] .assistant-sidebar,
 :root[data-window-controls-overlay='true'] .dialog-backdrop {
-  top: 36px;
+  top: var(--window-titlebar-height);
 }
 
 body {
@@ -870,6 +879,31 @@ h3,
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.clarification-actions {
+  display: flex;
+  align-self: stretch;
+  flex-wrap: wrap;
+  gap: 0.42rem;
+  padding: 0.05rem 0.1rem 0.12rem;
+}
+
+.clarification-actions button {
+  min-height: 2rem;
+  padding: 0.38rem 0.68rem;
+  color: var(--color-button-text);
+  font-size: 0.7rem;
+  font-weight: 900;
+  background: var(--color-accent);
+  border: 2px solid var(--color-border);
+  border-radius: 999px;
+  box-shadow: 1px 1px 0 var(--color-shadow);
+}
+
+.clarification-actions .clarification-decline {
+  color: var(--color-text-secondary);
+  background: var(--color-bg-card);
 }
 
 .assistant-loading {
@@ -6278,6 +6312,22 @@ button.agenda-item:hover,
   font-size: 0.56rem;
 }
 
+.assistant-compact-panel .clarification-actions {
+  flex-wrap: nowrap;
+  gap: 0.28rem;
+  padding: 0.02rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.assistant-compact-panel .clarification-actions button {
+  flex: 0 0 auto;
+  min-height: 1.8rem;
+  padding: 0.28rem 0.5rem;
+  font-size: 0.56rem;
+  border-width: 1.5px;
+}
+
 .assistant-compact-panel .voice-status,
 .assistant-compact-panel .assistant-error {
   min-height: 0;
@@ -6359,6 +6409,18 @@ button.agenda-item:hover,
 
 .glance-widget[data-view='assistant'] {
   grid-template-rows: auto auto minmax(0, 1fr);
+  gap: 0.34rem;
+  background:
+    radial-gradient(
+      circle at 100% 0,
+      color-mix(in srgb, var(--color-accent) 30%, transparent) 0 4rem,
+      transparent 4.1rem
+    ),
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--color-bg-primary) 94%, var(--color-accent)),
+      var(--color-bg-primary)
+    );
 }
 
 .glance-header,
@@ -6595,7 +6657,13 @@ button.agenda-item:hover,
   grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
-  gap: 0.3rem;
+  gap: 0.28rem;
+  padding: 0.3rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--color-bg-card) 72%, transparent);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 1px 1px 0 color-mix(in srgb, var(--color-shadow) 55%, transparent);
 }
 
 .glance-assistant-bar {
@@ -6604,7 +6672,7 @@ button.agenda-item:hover,
   align-items: center;
   justify-content: space-between;
   min-width: 0;
-  padding: 0.12rem 0.05rem;
+  padding: 0.02rem 0.04rem 0.12rem;
 }
 
 .glance-assistant-bar > span {
@@ -6613,7 +6681,7 @@ button.agenda-item:hover,
 }
 
 .glance-assistant-bar strong {
-  font-size: 0.62rem;
+  font-size: 0.64rem;
 }
 
 .glance-assistant-bar small {
@@ -6631,7 +6699,8 @@ button.agenda-item:hover,
   padding: 0.18rem 0.36rem;
   font-size: 0.52rem;
   font-weight: 900;
-  background: var(--color-bg-card);
+  color: var(--color-button-text);
+  background: var(--color-accent);
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
@@ -6642,19 +6711,86 @@ button.agenda-item:hover,
 }
 
 .glance-assistant .conversation-timeline {
-  padding: 0.34rem;
+  gap: 0.28rem;
+  padding: 0.32rem;
+  background:
+    linear-gradient(color-mix(in srgb, var(--color-border) 6%, transparent) 1px, transparent 1px) 0
+      0 / 100% 1.4rem,
+    color-mix(in srgb, var(--color-bg-secondary) 78%, transparent);
+  border-width: 1px;
 }
 
 .glance-assistant .conversation-turn,
 .glance-assistant .proposal-card {
   width: auto;
-  max-width: 100%;
+  max-width: 94%;
   padding: 0.36rem 0.42rem;
   font-size: 0.58rem;
+  border-width: 1px;
+  box-shadow: 1px 1px 0 color-mix(in srgb, var(--color-shadow) 42%, transparent);
+}
+
+.glance-assistant .user-turn {
+  max-width: 86%;
+}
+
+.glance-assistant .conversation-turn p {
+  margin-top: 0.1rem;
+  line-height: 1.32;
+}
+
+.glance-assistant .turn-author {
+  font-size: 0.42rem;
+  letter-spacing: 0.06em;
+}
+
+.glance-assistant .proposal-card {
+  width: 100%;
+  max-width: 100%;
+}
+
+.glance-assistant .proposal-heading h3 {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.glance-assistant .proposal-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.2rem;
+  margin-top: 0.3rem;
+}
+
+.glance-assistant .proposal-actions button {
+  min-width: 0;
+  min-height: 1.55rem;
+  padding: 0.2rem 0.24rem;
+  overflow: hidden;
+  font-size: 0.48rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.glance-assistant .clarification-actions {
+  gap: 0.22rem;
+  padding: 0;
+}
+
+.glance-assistant .clarification-actions button {
+  min-height: 1.5rem;
+  padding: 0.2rem 0.38rem;
+  font-size: 0.49rem;
+  border-width: 1px;
 }
 
 .glance-assistant .assistant-composer {
   grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.2rem;
+  padding: 0.24rem;
+  background: color-mix(in srgb, var(--color-bg-card) 90%, transparent);
 }
 
 .glance-assistant .assistant-composer > .composer-icon-button:first-child {
@@ -6663,6 +6799,8 @@ button.agenda-item:hover,
 
 .glance-assistant .assistant-composer textarea {
   min-height: 1.55rem;
+  max-height: 3.25rem;
+  padding: 0.28rem 0.12rem;
   font-size: 0.62rem;
 }
 
