@@ -1404,6 +1404,181 @@ h3,
   border-radius: var(--radius-sm);
 }
 
+.canvas-settings .muted-copy {
+  margin-top: var(--space-2);
+}
+
+.canvas-connect-form {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.canvas-connect-form label,
+.canvas-import-controls label {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+}
+
+.canvas-connect-form input,
+.canvas-import-controls select {
+  width: 100%;
+}
+
+.canvas-connect-form .settings-note,
+.canvas-message {
+  margin: 0;
+}
+
+.canvas-credential-warning {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.canvas-credential-warning .settings-warning {
+  margin: 0;
+}
+
+.canvas-credential-warning .text-button {
+  margin-top: 0;
+}
+
+.canvas-connected-controls,
+.canvas-review-toolbar,
+.canvas-import-controls,
+.canvas-assignment-list li label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.canvas-connected-controls {
+  padding: var(--space-3);
+  margin-top: var(--space-4);
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-bg-primary));
+  border: 1px dashed color-mix(in srgb, var(--color-border) 54%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.canvas-connected-controls > div:first-child,
+.canvas-review-toolbar > div:first-child {
+  display: grid;
+  min-width: 0;
+  gap: 0.15rem;
+}
+
+.canvas-connected-controls small,
+.canvas-review-toolbar small,
+.canvas-assignment-main small,
+.canvas-assignment-meta small {
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.canvas-connected-controls > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.canvas-connected-controls .text-button,
+.canvas-review-toolbar .text-button {
+  align-self: center;
+  margin-top: 0;
+  font-size: var(--font-size-xs);
+}
+
+.canvas-assignment-review {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.canvas-review-toolbar {
+  padding: 0 var(--space-1);
+}
+
+.canvas-import-controls {
+  align-items: end;
+  padding: var(--space-3);
+  background: var(--color-bg-primary);
+  border: 1px solid color-mix(in srgb, var(--color-border) 38%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.canvas-import-controls label {
+  flex: 1;
+}
+
+.canvas-assignment-list {
+  display: grid;
+  max-height: 25rem;
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid color-mix(in srgb, var(--color-border) 42%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.canvas-assignment-list li {
+  border-bottom: 1px dashed color-mix(in srgb, var(--color-border) 35%, transparent);
+}
+
+.canvas-assignment-list li:last-child {
+  border-bottom: 0;
+}
+
+.canvas-assignment-list li[data-added='true'] {
+  opacity: 0.62;
+}
+
+.canvas-assignment-list li label {
+  align-items: flex-start;
+  padding: var(--space-3);
+  cursor: pointer;
+}
+
+.canvas-assignment-list input {
+  flex: 0 0 auto;
+  margin-top: 0.22rem;
+}
+
+.canvas-assignment-main,
+.canvas-assignment-meta {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+}
+
+.canvas-assignment-main {
+  flex: 1;
+}
+
+.canvas-assignment-main strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.canvas-assignment-meta {
+  flex: 0 1 12rem;
+  text-align: right;
+}
+
+.canvas-assignment-meta strong {
+  font-size: var(--font-size-xs);
+}
+
 .warm-model-button {
   width: 100%;
   margin-top: var(--space-2);
@@ -1612,6 +1787,25 @@ h3,
 
   .send-button {
     grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 560px) {
+  .canvas-connected-controls,
+  .canvas-review-toolbar,
+  .canvas-import-controls,
+  .canvas-assignment-list li label {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .canvas-connected-controls > div:last-child {
+    justify-content: flex-start;
+  }
+
+  .canvas-assignment-meta {
+    flex-basis: auto;
+    text-align: left;
   }
 }
 

@@ -36,6 +36,8 @@ import type {
 import type { ReminderNotificationScheduler } from './notification-scheduler'
 import type { OfflineVoiceRuntime } from './voice-runtime'
 import type { OptionalFlexModelRuntime } from './flex-model-runtime'
+import type { CanvasService } from './canvas-service'
+import { buildCanvasImportPlan } from './canvas-import'
 
 const maximumImportBytes = 25 * 1024 * 1024
 const documentSelectionLifetimeMs = 30 * 60 * 1_000
@@ -69,6 +71,7 @@ interface IpcHandlerDependencies {
   scheduler: ReminderNotificationScheduler
   voiceRuntime: OfflineVoiceRuntime
   flexModelRuntime: OptionalFlexModelRuntime
+  canvasService: CanvasService
   deleteRecoveryCopies: () => Promise<number>
   validateSender: (event: IpcMainInvokeEvent) => void
   appInfo: () => AppInfo
@@ -152,6 +155,7 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
     scheduler,
     voiceRuntime,
     flexModelRuntime,
+    canvasService,
     validateSender,
     appInfo,
     windowControl
@@ -462,6 +466,111 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
     })
   })
 
+  ipcMain.handle(ipcChannels.canvasGetStatus, async (event, payload: unknown) => {
+    validate(event)
+    ipcContracts[ipcChannels.canvasGetStatus].request.parse(payload)
+    return ipcContracts[ipcChannels.canvasGetStatus].response.parse(await canvasService.getStatus())
+  })
+
+  ipcMain.handle(ipcChannels.canvasConnect, async (event, payload: unknown) => {
+    validate(event)
+    const request = ipcContracts[ipcChannels.canvasConnect].request.parse(payload)
+    return ipcContracts[ipcChannels.canvasConnect].response.parse(
+      await canvasService.connect(request)
+    )
+  })
+
+  ipcMain.handle(ipcChannels.canvasDisconnect, async (event, payload: unknown) => {
+    validate(event)
+    ipcContracts[ipcChannels.canvasDisconnect].request.parse(payload)
+    return ipcContracts[ipcChannels.canvasDisconnect].response.parse(
+      await canvasService.disconnect()
+    )
+  })
+
+  ipcMain.handle(ipcChannels.canvasListAssignments, async (event, payload: unknown) => {
+    validate(event)
+    ipcContracts[ipcChannels.canvasListAssignments].request.parse(payload)
+    const fetched = await canvasService.listUpcomingAssignments()
+    const links = new Map(
+      repository
+        .listCanvasImportLinks(fetched.assignments.map((assignment) => assignment.sourceKey))
+        .map((link) => [link.sourceKey, link])
+    )
+    const assignments = fetched.assignments.map((assignment) => {
+      const link = links.get(assignment.sourceKey)
+      const exists =
+        link !== undefined &&
+        (link.entityKind === 'event'
+          ? repository.getEvent(link.entityId) !== null
+          : repository.getReminder(link.entityId) !== null)
+      return {
+        ...assignment,
+        importKind: exists ? (link?.entityKind === 'event' ? 'all-day-event' : 'reminder') : null
+      }
+    })
+    return ipcContracts[ipcChannels.canvasListAssignments].response.parse({
+      ...fetched,
+      assignments
+    })
+  })
+
+  ipcMain.handle(ipcChannels.canvasImportAssignments, async (event, payload: unknown) => {
+    validate(event)
+    const request = ipcContracts[ipcChannels.canvasImportAssignments].request.parse(payload)
+    const fetched = await canvasService.listUpcomingAssignments()
+    const requestedAssignments = new Map(
+      fetched.assignments.map((assignment) => [assignment.sourceKey, assignment])
+    )
+    const selected = request.sourceKeys.flatMap((sourceKey) => {
+      const assignment = requestedAssignments.get(sourceKey)
+      return assignment ? [assignment] : []
+    })
+    if (selected.length === 0) {
+      throw new Error(
+        'Those Canvas assignments are no longer upcoming. Refresh the list and choose again.'
+      )
+    }
+    const existingLinks = repository.listCanvasImportLinks(
+      selected.map((assignment) => assignment.sourceKey)
+    )
+    const plan = buildCanvasImportPlan({
+      assignments: selected,
+      targetKind: request.kind,
+      timezone: repository.getPreferences().timezone,
+      existingLinks,
+      localEntityExists: (link) =>
+        link.entityKind === 'event'
+          ? repository.getEvent(link.entityId) !== null
+          : repository.getReminder(link.entityId) !== null
+    })
+    if (plan.items.length === 0) {
+      throw new Error(
+        'Those Canvas assignments are already represented locally. Refresh to see them.'
+      )
+    }
+    const label = request.kind === 'reminder' ? 'reminder' : 'calendar item'
+    const result = service.applyBatch(
+      plan.items,
+      `Added ${plan.items.length} Canvas ${label}${plan.items.length === 1 ? '' : 's'}.`,
+      request.range,
+      {
+        actor: 'import',
+        operation: request.kind === 'reminder' ? 'reminder.create' : 'event.create',
+        allowCreateWithId: true
+      }
+    )
+    repository.saveCanvasImportLinks(plan.links)
+    afterMutation()
+    return ipcContracts[ipcChannels.canvasImportAssignments].response.parse({
+      result,
+      createdCount: plan.createdCount,
+      updatedCount: plan.updatedCount,
+      skippedCount:
+        request.sourceKeys.length - selected.length + (selected.length - plan.items.length)
+    })
+  })
+
   ipcMain.handle(ipcChannels.documentSelect, async (event, payload: unknown) => {
     validate(event)
     ipcContracts[ipcChannels.documentSelect].request.parse(payload)
@@ -643,6 +752,7 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
     const request = ipcContracts[ipcChannels.dataDeleteAll].request.parse(payload)
     pendingDocumentSelections.clear()
     const response = service.deleteAllData(request.range)
+    await canvasService.disconnect()
     const recoveryCopiesDeleted = await dependencies.deleteRecoveryCopies()
     afterMutation()
     return ipcContracts[ipcChannels.dataDeleteAll].response.parse({

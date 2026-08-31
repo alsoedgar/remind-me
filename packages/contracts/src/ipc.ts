@@ -32,6 +32,14 @@ import {
   eventFormSchema,
   reminderFormSchema
 } from './calendar-api'
+import {
+  canvasAssignmentsResponseSchema,
+  canvasConnectRequestSchema,
+  canvasConnectionStatusSchema,
+  canvasDisconnectRequestSchema,
+  canvasImportAssignmentsRequestSchema,
+  canvasImportAssignmentsResponseSchema
+} from './canvas-api'
 import { preferencesEntitySchema } from './entities'
 import {
   flexModelCancelRequestSchema,
@@ -96,6 +104,11 @@ export const ipcChannels = {
   dataExport: 'data:export',
   dataImport: 'data:import',
   dataDeleteAll: 'data:delete-all',
+  canvasGetStatus: 'canvas:get-status',
+  canvasConnect: 'canvas:connect',
+  canvasDisconnect: 'canvas:disconnect',
+  canvasListAssignments: 'canvas:list-assignments',
+  canvasImportAssignments: 'canvas:import-assignments',
   documentSelect: 'document:select',
   documentCommit: 'document:commit',
   documentDiscard: 'document:discard',
@@ -364,6 +377,26 @@ export const ipcContracts = {
     request: dataDeleteAllRequestSchema,
     response: dataDeleteAllResultSchema
   },
+  [ipcChannels.canvasGetStatus]: {
+    request: z.object({}).strict(),
+    response: canvasConnectionStatusSchema
+  },
+  [ipcChannels.canvasConnect]: {
+    request: canvasConnectRequestSchema,
+    response: canvasConnectionStatusSchema
+  },
+  [ipcChannels.canvasDisconnect]: {
+    request: canvasDisconnectRequestSchema,
+    response: canvasConnectionStatusSchema
+  },
+  [ipcChannels.canvasListAssignments]: {
+    request: z.object({}).strict(),
+    response: canvasAssignmentsResponseSchema
+  },
+  [ipcChannels.canvasImportAssignments]: {
+    request: canvasImportAssignmentsRequestSchema,
+    response: canvasImportAssignmentsResponseSchema
+  },
   [ipcChannels.documentSelect]: {
     request: documentSelectRequestSchema,
     response: documentSelectResponseSchema
@@ -526,6 +559,15 @@ export interface RemindMeBridge {
   importData: (
     range: z.infer<typeof calendarSnapshotRequestSchema>
   ) => Promise<z.infer<typeof dataImportResultSchema>>
+  getCanvasStatus: () => Promise<z.infer<typeof canvasConnectionStatusSchema>>
+  connectCanvas: (
+    input: z.infer<typeof canvasConnectRequestSchema>
+  ) => Promise<z.infer<typeof canvasConnectionStatusSchema>>
+  disconnectCanvas: () => Promise<z.infer<typeof canvasConnectionStatusSchema>>
+  listCanvasAssignments: () => Promise<z.infer<typeof canvasAssignmentsResponseSchema>>
+  importCanvasAssignments: (
+    input: z.infer<typeof canvasImportAssignmentsRequestSchema>
+  ) => Promise<z.infer<typeof canvasImportAssignmentsResponseSchema>>
   deleteAllData: (
     confirmation: 'DELETE',
     range: z.infer<typeof calendarSnapshotRequestSchema>

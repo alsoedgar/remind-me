@@ -52,6 +52,7 @@ All preview data below is synthetic. The captures are produced by the production
 - Read born-digital PDFs locally, fall back to offline OCR for scanned PDFs and images, reconstruct schedule rows, and let the optional Qwen pack group exact source blocks only when PlanScan/rules leave a coverage gap.
 - Preserve lectures, labs, recurrence days, date ranges, times, and locations without silently creating arranged or asynchronous meetings that have no fixed time.
 - Import/export ICS, back up and restore JSON, schedule native notifications, and persist everything in local SQLite.
+- Optionally connect a Canvas account with a device-protected personal token, review upcoming assignment due dates, and add only selected items as local reminders or all-day calendar entries.
 - Run as a full app, a pinned 420 × 680 mini calendar, or a tiny glance window at sign-in.
 - Customize palettes, density, typography contrast, and paper, frosted-glass, or liquid-glass surfaces.
 
@@ -184,7 +185,7 @@ Good interview discussion areas include why calendar execution remains determini
 
 ## Privacy and limitations
 
-Remind Me has no account requirement, telemetry, or required server. Calendar data and assistant history remain on the device. The optional language pack is downloaded only after explicit consent, verified by SHA-256, and used locally afterward.
+Remind Me has no account requirement, telemetry, or required server. Calendar data and assistant history remain on the device. The optional language pack is downloaded only after explicit consent, verified by SHA-256, and used locally afterward. Canvas is an opt-in, read-only exception: when connected, the app sends a device-protected personal token only to the Canvas site the user chooses, fetches assignments on request, and saves only user-selected due dates locally. The token is excluded from backups.
 
 Current limitations include English-only speech and language handling, an unsigned first Windows release, a pending independently human-authored Phase 8 benchmark, and imperfect OCR on noisy scans. The app surfaces uncertainty and preserves review/fallback paths instead of treating model output as authoritative.
 

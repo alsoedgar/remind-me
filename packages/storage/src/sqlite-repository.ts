@@ -34,6 +34,7 @@ import {
 import {
   databaseSchemaVersion,
   fifthMigrationSql,
+  sixthMigrationSql,
   initialMigrationSql,
   fourthMigrationSql,
   secondMigrationSql,
@@ -56,6 +57,12 @@ interface NotificationDelivery {
   reminderId: string
   dueAtUtc: string
   deliveredAt: string
+}
+
+export interface CanvasImportLink {
+  sourceKey: string
+  entityKind: 'event' | 'reminder'
+  entityId: string
 }
 
 interface MutationMetadata {
@@ -318,6 +325,7 @@ export class SqliteCalendarRepository {
         DELETE FROM attachments;
         DELETE FROM conversations;
         DELETE FROM document_import_identities;
+        DELETE FROM canvas_import_links;
         DELETE FROM calendars;
         DELETE FROM action_history;
         DELETE FROM preferences;
@@ -399,6 +407,58 @@ export class SqliteCalendarRepository {
       )
       .get(id) as DatabaseRow | undefined
     return row ? mapReminder(row) : null
+  }
+
+  listCanvasImportLinks(sourceKeys: readonly string[]): CanvasImportLink[] {
+    const uniqueKeys = [...new Set(sourceKeys)]
+    if (uniqueKeys.length === 0) return []
+    const placeholders = uniqueKeys.map(() => '?').join(', ')
+    const rows = this.database
+      .prepare(
+        `SELECT source_key, entity_kind, entity_id
+         FROM canvas_import_links
+         WHERE source_key IN (${placeholders})`
+      )
+      .all(...uniqueKeys) as DatabaseRow[]
+    return rows.map((row) => {
+      const entityKind = stringValue(row, 'entity_kind')
+      if (entityKind !== 'event' && entityKind !== 'reminder') {
+        throw new Error('Canvas import link has an invalid local item type')
+      }
+      return {
+        sourceKey: stringValue(row, 'source_key'),
+        entityKind,
+        entityId: stringValue(row, 'entity_id')
+      }
+    })
+  }
+
+  saveCanvasImportLinks(inputLinks: readonly CanvasImportLink[]): void {
+    const links = [...new Map(inputLinks.map((link) => [link.sourceKey, link])).values()]
+    if (links.length === 0) return
+    const now = new Date().toISOString()
+    this.database.exec('BEGIN IMMEDIATE')
+    try {
+      const statement = this.database.prepare(
+        `INSERT INTO canvas_import_links
+          (source_key, entity_kind, entity_id, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(source_key) DO UPDATE SET
+           entity_kind = excluded.entity_kind,
+           entity_id = excluded.entity_id,
+           updated_at = excluded.updated_at`
+      )
+      for (const link of links) {
+        if (link.entityKind !== 'event' && link.entityKind !== 'reminder') {
+          throw new Error('Canvas imports can only link events or reminders')
+        }
+        statement.run(link.sourceKey, link.entityKind, link.entityId, now, now)
+      }
+      this.database.exec('COMMIT')
+    } catch (error) {
+      this.database.exec('ROLLBACK')
+      throw error
+    }
   }
 
   ensureAssistantConversation(
@@ -942,6 +1002,10 @@ export class SqliteCalendarRepository {
         if (currentVersion === 4) {
           this.database.exec(fifthMigrationSql)
           currentVersion = 5
+        }
+        if (currentVersion === 5) {
+          this.database.exec(sixthMigrationSql)
+          currentVersion = 6
         }
         this.database.exec(`PRAGMA user_version = ${currentVersion}`)
         this.database.exec('COMMIT')

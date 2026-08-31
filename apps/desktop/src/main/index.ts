@@ -1,4 +1,12 @@
-import { app, BrowserWindow, net, protocol, session, type WebFrameMain } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  net,
+  protocol,
+  safeStorage,
+  session,
+  type WebFrameMain
+} from 'electron'
 import { writeFile } from 'node:fs/promises'
 import { join, normalize, resolve, sep } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -23,6 +31,7 @@ import {
   windowAppearanceOptions
 } from './appearance-runtime'
 import { scheduleDocumentReleaseGate } from './document-release-gate'
+import { CanvasService } from './canvas-service'
 
 const applicationScheme = 'remind-me'
 const applicationHost = 'app'
@@ -971,6 +980,22 @@ if (!hasSingleInstanceLock) {
         }
       )
       voiceRuntime = new OfflineVoiceRuntime(voiceRuntimePaths(), isTestRun ? 300 : undefined)
+      const canvasService = new CanvasService({
+        connectionPath: join(app.getPath('userData'), 'canvas-connection-v1.json'),
+        credentialVault: {
+          isAvailable: async () => {
+            if (!(await safeStorage.isAsyncEncryptionAvailable())) return false
+            return (
+              process.platform !== 'linux' ||
+              safeStorage.getSelectedStorageBackend() !== 'basic_text'
+            )
+          },
+          encrypt: async (value) =>
+            (await safeStorage.encryptStringAsync(value)).toString('base64'),
+          decrypt: async (value) =>
+            (await safeStorage.decryptStringAsync(Buffer.from(value, 'base64'))).result
+        }
+      })
       notificationScheduler = new ReminderNotificationScheduler(
         repository,
         () => {
@@ -988,6 +1013,7 @@ if (!hasSingleInstanceLock) {
         scheduler: notificationScheduler,
         voiceRuntime,
         flexModelRuntime,
+        canvasService,
         deleteRecoveryCopies: () => deleteCalendarRecoveryCopies(databasePath),
         validateSender: (event) => validateIpcSender(event.senderFrame),
         appInfo: () => ({

@@ -460,6 +460,39 @@ describe('SqliteCalendarRepository', () => {
     }
   })
 
+  it('migrates Canvas import links from version 5 and clears them with local data', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'remind-me-canvas-link-migration-'))
+    temporaryDirectories.push(directory)
+    const databasePath = join(directory, 'calendar.sqlite3')
+    const legacyDatabase = new DatabaseSync(databasePath)
+    legacyDatabase.exec(initialMigrationSql)
+    legacyDatabase.exec('DROP TABLE canvas_import_links; PRAGMA user_version = 5')
+    legacyDatabase.close()
+
+    const repository = new SqliteCalendarRepository(databasePath)
+    try {
+      expect(repository.getSchemaVersion()).toBe(databaseSchemaVersion)
+      repository.saveCanvasImportLinks([
+        {
+          sourceKey: 'canvas:assignment-one',
+          entityKind: 'reminder',
+          entityId: 'reminder:canvas-one'
+        }
+      ])
+      expect(repository.listCanvasImportLinks(['canvas:assignment-one'])).toEqual([
+        {
+          sourceKey: 'canvas:assignment-one',
+          entityKind: 'reminder',
+          entityId: 'reminder:canvas-one'
+        }
+      ])
+      repository.deleteAllData()
+      expect(repository.listCanvasImportLinks(['canvas:assignment-one'])).toEqual([])
+    } finally {
+      repository.close()
+    }
+  })
+
   it('records one notification delivery per reminder due time', () => {
     const repository = new SqliteCalendarRepository(':memory:')
     const service = new PersistentCalendarService(repository)

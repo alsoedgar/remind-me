@@ -7,7 +7,7 @@ import type {
   ReminderEntity
 } from '@remind-me/contracts'
 
-export const databaseSchemaVersion = 5
+export const databaseSchemaVersion = 6
 
 export const databaseTables = [
   'calendars',
@@ -22,7 +22,8 @@ export const databaseTables = [
   'document_import_identities',
   'preferences',
   'action_history',
-  'notification_deliveries'
+  'notification_deliveries',
+  'canvas_import_links'
 ] as const
 
 export interface StorageTransaction {
@@ -202,6 +203,17 @@ CREATE TABLE notification_deliveries (
   delivered_at TEXT NOT NULL,
   PRIMARY KEY (reminder_id, due_at_utc)
 );
+
+CREATE TABLE canvas_import_links (
+  source_key TEXT PRIMARY KEY,
+  entity_kind TEXT NOT NULL CHECK (entity_kind IN ('event', 'reminder')),
+  entity_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX canvas_import_entity
+  ON canvas_import_links(entity_kind, entity_id);
 `
 
 export const secondMigrationSql = `
@@ -309,4 +321,21 @@ INSERT INTO notification_deliveries (reminder_id, due_at_utc, delivered_at)
   SELECT reminder_id, due_at_utc, delivered_at FROM reminder_notification_deliveries_v5;
 
 DROP TABLE reminder_notification_deliveries_v5;
+`
+
+/**
+ * Canvas links only identify which local item was created from an assignment.
+ * They deliberately do not contain Canvas credentials or assignment content.
+ */
+export const sixthMigrationSql = `
+CREATE TABLE IF NOT EXISTS canvas_import_links (
+  source_key TEXT PRIMARY KEY,
+  entity_kind TEXT NOT NULL CHECK (entity_kind IN ('event', 'reminder')),
+  entity_id TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS canvas_import_entity
+  ON canvas_import_links(entity_kind, entity_id);
 `

@@ -22,6 +22,7 @@ import { EditorDialog, RepeatDayScheduleDialog, type EditorRequest } from './com
 import { AssistantPanel } from './components/assistant-panel'
 import { DesktopWidget } from './components/desktop-widget'
 import { DocumentImportDialog } from './components/document-import-dialog'
+import { CanvasAssignments } from './components/canvas-assignments'
 import { ThemeCustomizer } from './components/theme-customizer'
 import { dayAgendaItems } from './day-agenda'
 import { appearanceFromPreferences, applyAppearanceToDocument } from './theme-runtime'
@@ -1479,6 +1480,7 @@ function SettingsView({
             </small>
           ) : null}
         </section>
+        <CanvasAssignments snapshot={snapshot} />
         <section className="paper-card settings-section privacy-settings">
           <p className="eyebrow">Privacy</p>
           <h2>Local means local</h2>
@@ -1497,7 +1499,11 @@ function SettingsView({
             </li>
             <li>
               <span>Network dependency</span>
-              <strong>Optional install only</strong>
+              <strong>Optional installs / Canvas</strong>
+            </li>
+            <li>
+              <span>Canvas connection</span>
+              <strong>Only when you choose</strong>
             </li>
           </ul>
         </section>
@@ -1610,8 +1616,8 @@ function SettingsView({
             <div className="delete-data-confirmation" role="group" aria-label="Delete all data">
               <strong>This cannot be undone.</strong>
               <p>
-                Events, reminders, conversations, preferences, and undo history will be securely
-                erased. Export a backup first if you may need them later.
+                Events, reminders, conversations, preferences, undo history, and any saved Canvas
+                connection will be securely erased. Export a backup first if you may need it later.
               </p>
               <label>
                 Type DELETE to continue

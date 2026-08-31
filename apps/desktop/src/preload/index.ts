@@ -110,6 +110,31 @@ const bridge: RemindMeBridge = {
     const response: unknown = await ipcRenderer.invoke(ipcChannels.dataImport, request)
     return ipcContracts[ipcChannels.dataImport].response.parse(response)
   },
+  getCanvasStatus: async () => {
+    const request = ipcContracts[ipcChannels.canvasGetStatus].request.parse({})
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.canvasGetStatus, request)
+    return ipcContracts[ipcChannels.canvasGetStatus].response.parse(response)
+  },
+  connectCanvas: async (input) => {
+    const request = ipcContracts[ipcChannels.canvasConnect].request.parse(input)
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.canvasConnect, request)
+    return ipcContracts[ipcChannels.canvasConnect].response.parse(response)
+  },
+  disconnectCanvas: async () => {
+    const request = ipcContracts[ipcChannels.canvasDisconnect].request.parse({})
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.canvasDisconnect, request)
+    return ipcContracts[ipcChannels.canvasDisconnect].response.parse(response)
+  },
+  listCanvasAssignments: async () => {
+    const request = ipcContracts[ipcChannels.canvasListAssignments].request.parse({})
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.canvasListAssignments, request)
+    return ipcContracts[ipcChannels.canvasListAssignments].response.parse(response)
+  },
+  importCanvasAssignments: async (input) => {
+    const request = ipcContracts[ipcChannels.canvasImportAssignments].request.parse(input)
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.canvasImportAssignments, request)
+    return ipcContracts[ipcChannels.canvasImportAssignments].response.parse(response)
+  },
   deleteAllData: async (confirmation, range) => {
     const request = ipcContracts[ipcChannels.dataDeleteAll].request.parse({
       confirmation,

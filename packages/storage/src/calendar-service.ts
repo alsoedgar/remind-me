@@ -419,6 +419,8 @@ export class PersistentCalendarService {
       operation?: CalendarOperation
       risk?: RiskLevel
       assistantProposalId?: string
+      /** Reserved for trusted local importers that generate their own opaque IDs. */
+      allowCreateWithId?: boolean
     } = {}
   ): CalendarMutationResult {
     if (inputItems.length === 0) throw new Error('A batch needs at least one calendar change')
@@ -442,11 +444,15 @@ export class PersistentCalendarService {
         case 'event-save': {
           const form = eventFormSchema.parse(item.form)
           const existing = form.id ? this.repository.getEvent(form.id) : null
-          if (form.id && !existing) throw new Error('An event in this batch no longer exists')
+          if (form.id && !existing && !options.allowCreateWithId) {
+            throw new Error('An event in this batch no longer exists')
+          }
           if (form.id) markTouched(`event:${form.id}`)
           events.push(
             eventEntitySchema.parse({
-              id: existing?.id ?? `event:${randomUUID()}`,
+              id:
+                existing?.id ??
+                (options.allowCreateWithId && form.id ? form.id : `event:${randomUUID()}`),
               calendarId: form.calendarId ?? existing?.calendarId ?? defaultCalendarId,
               title: form.title,
               description: form.description,
@@ -477,11 +483,15 @@ export class PersistentCalendarService {
         case 'reminder-save': {
           const form = reminderFormSchema.parse(item.form)
           const existing = form.id ? this.repository.getReminder(form.id) : null
-          if (form.id && !existing) throw new Error('A reminder in this batch no longer exists')
+          if (form.id && !existing && !options.allowCreateWithId) {
+            throw new Error('A reminder in this batch no longer exists')
+          }
           if (form.id) markTouched(`reminder:${form.id}`)
           reminders.push(
             reminderEntitySchema.parse({
-              id: existing?.id ?? `reminder:${randomUUID()}`,
+              id:
+                existing?.id ??
+                (options.allowCreateWithId && form.id ? form.id : `reminder:${randomUUID()}`),
               calendarId: form.calendarId ?? existing?.calendarId ?? defaultCalendarId,
               title: form.title,
               notes: form.notes,
