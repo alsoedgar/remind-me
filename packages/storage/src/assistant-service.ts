@@ -1366,17 +1366,22 @@ function bulkClearCommand(
 }
 
 function reminderToForm(reminder: ReminderEntity): ReminderForm {
-  const due = localParts(reminder.dueAtUtc, reminder.timezone)
+  const due = reminder.dueAtUtc ? localParts(reminder.dueAtUtc, reminder.timezone) : null
   return reminderFormSchema.parse({
     id: reminder.id,
     calendarId: reminder.calendarId,
     title: reminder.title,
     notes: reminder.notes,
-    dueDate: due.date,
-    dueTime: due.time,
+    dueDate: due?.date ?? null,
+    dueTime: due?.time ?? null,
     timezone: reminder.timezone,
     recurrence: reminder.recurrence
   })
+}
+
+function reminderFormDueAtUtc(form: ReminderForm): string | null {
+  if (form.dueDate === null || form.dueTime === null) return null
+  return localInstant(form.dueDate, form.dueTime, form.timezone)
 }
 
 function requestId(): string {
@@ -1396,11 +1401,12 @@ function overlaps(startA: string, endA: string, startB: string, endB: string): b
 }
 
 function formatDateTime(
-  instant: string,
+  instant: string | null,
   locale: string,
   timezone: string,
   includeDate = true
 ): string {
+  if (instant === null) return 'No due date'
   return new Intl.DateTimeFormat(locale, {
     timeZone: timezone,
     ...(includeDate ? { weekday: 'short', month: 'short', day: 'numeric' } : {}),
@@ -1409,7 +1415,8 @@ function formatDateTime(
   }).format(new Date(instant))
 }
 
-function formatDate(instant: string, locale: string, timezone: string): string {
+function formatDate(instant: string | null, locale: string, timezone: string): string {
+  if (instant === null) return 'No due date'
   return new Intl.DateTimeFormat(locale, {
     timeZone: timezone,
     weekday: 'long',
@@ -1418,12 +1425,19 @@ function formatDate(instant: string, locale: string, timezone: string): string {
   }).format(new Date(instant))
 }
 
-function formatTime(instant: string, locale: string, timezone: string): string {
+function formatTime(instant: string | null, locale: string, timezone: string): string {
+  if (instant === null) return 'No due time'
   return new Intl.DateTimeFormat(locale, {
     timeZone: timezone,
     hour: 'numeric',
     minute: '2-digit'
   }).format(new Date(instant))
+}
+
+function compareOptionalInstants(left: string | null, right: string | null): number {
+  if (left === null) return right === null ? 0 : 1
+  if (right === null) return -1
+  return Date.parse(left) - Date.parse(right)
 }
 
 function clippedDetail(value: string, maximum = 120): string {
@@ -1626,7 +1640,7 @@ function focusedDialogueItems(
               id: item.id,
               kind: 'reminder' as const,
               title: reminder.title,
-              at: item.occurrenceStart ?? reminder.dueAtUtc,
+              at: item.occurrenceStart ?? reminder.dueAtUtc ?? reminder.updatedAt,
               timezone: reminder.timezone,
               location: '',
               stableIndex: index
@@ -1659,7 +1673,7 @@ function focusedDialogueItems(
             id,
             kind: 'reminder' as const,
             title: reminder.title,
-            at: reminder.dueAtUtc,
+            at: reminder.dueAtUtc ?? reminder.updatedAt,
             timezone: reminder.timezone,
             location: '',
             stableIndex: focusedEvents.length + index
@@ -2170,7 +2184,9 @@ function reminderAttributeValue(
     case 'location':
       return 'reminders do not have rooms or locations'
     case 'date':
-      return formatDate(reminder.dueAtUtc, locale, reminder.timezone)
+      return reminder.dueAtUtc
+        ? formatDate(reminder.dueAtUtc, locale, reminder.timezone)
+        : 'no due date saved'
     case 'notes':
       return reminder.notes.trim() ? clippedDetail(reminder.notes) : 'no notes saved'
     case 'duration':
@@ -2181,7 +2197,9 @@ function reminderAttributeValue(
       return recurrenceDetail(reminder.recurrence, locale)
     case 'time':
     case 'start':
-      return formatTime(reminder.dueAtUtc, locale, reminder.timezone)
+      return reminder.dueAtUtc
+        ? formatTime(reminder.dueAtUtc, locale, reminder.timezone)
+        : 'no due time saved'
   }
 }
 
@@ -2254,17 +2272,19 @@ function groundedReminderAnswerItem(reminder: ReminderEntity, locale: string): G
     notes: reminderAttributeValue(reminder, 'notes', locale),
     recurrence: reminderAttributeValue(reminder, 'recurrence', locale)
   }
+  const dueDateLabel = reminder.dueAtUtc
+    ? formatDate(reminder.dueAtUtc, locale, reminder.timezone)
+    : 'No due date'
+  const dueTimeLabel = reminder.dueAtUtc
+    ? formatTime(reminder.dueAtUtc, locale, reminder.timezone)
+    : 'No due time'
   return {
     key: dialogueFrameItemKey(frameItem),
     kind: 'reminder',
     title: reminder.title,
-    dateLabel: formatDate(reminder.dueAtUtc, locale, reminder.timezone),
-    timeLabel: formatTime(reminder.dueAtUtc, locale, reminder.timezone),
-    detail: `${formatDateTime(
-      reminder.dueAtUtc,
-      locale,
-      reminder.timezone
-    )}, reminder: “${reminder.title}”${
+    dateLabel: dueDateLabel,
+    timeLabel: dueTimeLabel,
+    detail: `${reminder.dueAtUtc ? formatDateTime(reminder.dueAtUtc, locale, reminder.timezone) : 'No due date'}, reminder: “${reminder.title}”${
       reminder.notes.trim() ? ` — ${clippedDetail(reminder.notes)}` : ''
     }`,
     attributes
@@ -4013,6 +4033,7 @@ export class PersistentAssistantService {
       }
       for (const reminder of reminders) {
         if (
+          reminder.dueAtUtc !== null &&
           Date.parse(reminder.dueAtUtc) >= Date.parse(activeRange.rangeStartUtc) &&
           Date.parse(reminder.dueAtUtc) < Date.parse(activeRange.rangeEndUtc)
         ) {
@@ -4043,7 +4064,8 @@ export class PersistentAssistantService {
       .slice()
       .sort(
         (left, right) =>
-          Math.abs(Date.parse(left.dueAtUtc) - now) - Math.abs(Date.parse(right.dueAtUtc) - now)
+          Math.abs(Date.parse(left.dueAtUtc ?? left.updatedAt) - now) -
+          Math.abs(Date.parse(right.dueAtUtc ?? right.updatedAt) - now)
       )
       .slice(0, 24)) {
       add(this.reminderFactForChat(reminder, 'nearby'))
@@ -4493,7 +4515,7 @@ export class PersistentAssistantService {
     }
     if (entry.payload.kind === 'reminder-save') {
       const form = entry.payload.form
-      const dueAtUtc = localInstant(form.dueDate, form.dueTime, form.timezone)
+      const dueAtUtc = reminderFormDueAtUtc(form)
       const date = formatDate(dueAtUtc, locale, form.timezone)
       const time = formatTime(dueAtUtc, locale, form.timezone)
       const notes = form.notes.trim() ? clippedDetail(form.notes) : 'no notes saved'
@@ -4507,7 +4529,7 @@ export class PersistentAssistantService {
         location: 'reminders do not have a location',
         notes,
         recurrence,
-        details: `${date} at ${time}; ${recurrence}`
+        details: dueAtUtc ? `${date} at ${time}; ${recurrence}` : `No due date; ${recurrence}`
       }
     }
     if (entry.payload.kind === 'event-delete') {
@@ -4573,7 +4595,9 @@ export class PersistentAssistantService {
       location: 'reminders do not have a location',
       notes: reminder.notes.trim() ? clippedDetail(reminder.notes) : 'no notes saved',
       recurrence,
-      details: `${date} at ${time}; ${recurrence}`
+      details: reminder.dueAtUtc
+        ? `${date} at ${time}; ${recurrence}`
+        : `No due date; ${recurrence}`
     }
   }
 
@@ -5173,7 +5197,7 @@ export class PersistentAssistantService {
         calendarId: payload.form.calendarId ?? calendarId,
         title: payload.form.title,
         notes: payload.form.notes,
-        dueAtUtc: localInstant(payload.form.dueDate, payload.form.dueTime, payload.form.timezone),
+        dueAtUtc: reminderFormDueAtUtc(payload.form),
         timezone: payload.form.timezone,
         recurrence: null,
         status: 'active',
@@ -5367,7 +5391,7 @@ export class PersistentAssistantService {
           ...emptyFields,
           title: form.title,
           description: form.notes,
-          dueAtUtc: localInstant(form.dueDate, form.dueTime, form.timezone),
+          dueAtUtc: reminderFormDueAtUtc(form),
           timezone: form.timezone,
           allDay: false
         },
@@ -6265,10 +6289,8 @@ export class PersistentAssistantService {
         return { kind: 'event-delete', id }
       }
       case 'reminder.create': {
-        if (!command.fields.dueAtUtc || !command.fields.title) {
-          throw new Error('The proposed reminder is missing a title or due time.')
-        }
-        const due = localParts(command.fields.dueAtUtc, timezone)
+        if (!command.fields.title) throw new Error('The proposed reminder is missing a title.')
+        const due = command.fields.dueAtUtc ? localParts(command.fields.dueAtUtc, timezone) : null
         return {
           kind: 'reminder-save',
           form: reminderFormSchema.parse({
@@ -6276,8 +6298,8 @@ export class PersistentAssistantService {
             calendarId: this.repository.listCalendars()[0]?.id ?? null,
             title: command.fields.title,
             notes: command.fields.description ?? '',
-            dueDate: due.date,
-            dueTime: due.time,
+            dueDate: due?.date ?? null,
+            dueTime: due?.time ?? null,
             timezone,
             recurrence: command.recurrence
           })
@@ -6337,7 +6359,11 @@ export class PersistentAssistantService {
         return `Delete “${this.repository.getEvent(payload.id)?.title ?? 'this event'}”.`
       case 'reminder-save': {
         const action = payload.form.id ? 'Update' : 'Create'
-        return `${action} reminder “${payload.form.title}” for ${payload.form.dueDate} at ${payload.form.dueTime}${recurrenceLabel(payload.form.recurrence)}.`
+        const timing =
+          payload.form.dueDate && payload.form.dueTime
+            ? `for ${payload.form.dueDate} at ${payload.form.dueTime}`
+            : 'without a due date'
+        return `${action} reminder “${payload.form.title}” ${timing}${recurrenceLabel(payload.form.recurrence)}.`
       }
       case 'reminder-complete':
         return `Complete “${this.repository.getReminder(payload.id)?.title ?? 'this reminder'}”.`
@@ -6745,10 +6771,11 @@ export class PersistentAssistantService {
           .filter(
             (reminder) =>
               reminder.status === 'active' &&
+              reminder.dueAtUtc !== null &&
               Date.parse(reminder.dueAtUtc) >= Date.parse(queryStart) &&
               Date.parse(reminder.dueAtUtc) < Date.parse(queryEnd)
           )
-          .sort((left, right) => Date.parse(left.dueAtUtc) - Date.parse(right.dueAtUtc))
+          .sort((left, right) => Date.parse(left.dueAtUtc!) - Date.parse(right.dueAtUtc!))
         const requestedSelection = calendarListSelection(question)
         if (requestedSelection?.itemKind === 'class') {
           const likelyClasses = occurrences.filter((occurrence) =>
@@ -6772,8 +6799,8 @@ export class PersistentAssistantService {
             id: reminder.id,
             occurrenceStart: reminder.dueAtUtc
           }))
-        ].sort(
-          (left, right) => Date.parse(left.occurrenceStart) - Date.parse(right.occurrenceStart)
+        ].sort((left, right) =>
+          compareOptionalInstants(left.occurrenceStart, right.occurrenceStart)
         )
         if (requestedSelection) {
           const ordered = [
@@ -6784,7 +6811,7 @@ export class PersistentAssistantService {
             })),
             ...reminders.map((reminder) => ({
               kind: 'reminder' as const,
-              at: reminder.dueAtUtc,
+              at: reminder.dueAtUtc ?? reminder.updatedAt,
               reminder
             }))
           ].sort((left, right) => Date.parse(left.at) - Date.parse(right.at))
@@ -6812,8 +6839,8 @@ export class PersistentAssistantService {
             id: reminder.id,
             occurrenceStart: reminder.dueAtUtc
           }))
-        ].sort(
-          (left, right) => Date.parse(left.occurrenceStart) - Date.parse(right.occurrenceStart)
+        ].sort((left, right) =>
+          compareOptionalInstants(left.occurrenceStart, right.occurrenceStart)
         )
         if (selectedResultItems.length === 1) {
           const selectedKey = dialogueFrameItemKey(selectedResultItems[0]!)
@@ -6847,7 +6874,7 @@ export class PersistentAssistantService {
             )
           })),
           ...reminders.map((reminder) => ({
-            at: reminder.dueAtUtc,
+            at: reminder.dueAtUtc!,
             item: groundedReminderAnswerItem(reminder, preferences.locale)
           }))
         ]
@@ -6933,8 +6960,8 @@ export class PersistentAssistantService {
             id: reminder.id,
             occurrenceStart: reminder.dueAtUtc
           }))
-        ].sort(
-          (left, right) => Date.parse(left.occurrenceStart) - Date.parse(right.occurrenceStart)
+        ].sort((left, right) =>
+          compareOptionalInstants(left.occurrenceStart, right.occurrenceStart)
         )
         selectedResultItems = orderedResultItems
         const groundedItems = [
@@ -6947,7 +6974,7 @@ export class PersistentAssistantService {
             )
           })),
           ...reminders.map((reminder) => ({
-            at: reminder.dueAtUtc,
+            at: reminder.dueAtUtc ?? reminder.updatedAt,
             item: groundedReminderAnswerItem(reminder, preferences.locale)
           }))
         ]

@@ -3184,6 +3184,8 @@ describe('PersistentAssistantService', () => {
 
   it('orders focused results and their requested range ahead of nearby background facts', async () => {
     const repository = new SqliteCalendarRepository(':memory:')
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-28T18:00:00.000Z'))
     try {
       const calendar = new PersistentCalendarService(repository)
       calendar.saveEvent(overlappingEvent('Calculus III', '10:00', '10:50'), range)
@@ -3231,6 +3233,7 @@ describe('PersistentAssistantService', () => {
         factPacket.facts.find((fact) => fact.fields.title === 'Nearby appointment')
       ).toMatchObject({ priority: 'nearby' })
     } finally {
+      vi.useRealTimers()
       repository.close()
     }
   })

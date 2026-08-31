@@ -3268,6 +3268,38 @@ button.agenda-item:hover,
   resize: vertical;
 }
 
+.reminder-due-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--color-bg-card) 64%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--color-border) 66%, transparent);
+  border-radius: var(--radius-sm);
+}
+
+.reminder-due-toggle input {
+  flex: none;
+  width: 1.1rem;
+  min-height: 1.1rem;
+  margin-top: 0.15rem;
+}
+
+.reminder-due-toggle span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.reminder-due-toggle small {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.form-grid[data-disabled='true'] {
+  opacity: 0.58;
+}
+
 .form-grid {
   display: grid;
   gap: var(--space-4);

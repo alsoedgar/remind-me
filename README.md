@@ -171,7 +171,7 @@ fixtures/                  Golden language, audio, and document fixtures
 docs/                      Architecture decisions, privacy inventory, and release notes
 ```
 
-## Resume and interview highlights
+## Highlights
 
 Concise ways to describe the project without overstating the research results:
 

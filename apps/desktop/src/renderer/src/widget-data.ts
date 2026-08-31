@@ -69,6 +69,10 @@ export function activeWidgetReminders<T extends WidgetReminder>(
 ): T[] {
   return reminders
     .filter((reminder) => reminder.status === 'active')
-    .sort((left, right) => Date.parse(left.dueAtUtc) - Date.parse(right.dueAtUtc))
+    .sort((left, right) => {
+      if (left.dueAtUtc === null) return right.dueAtUtc === null ? 0 : 1
+      if (right.dueAtUtc === null) return -1
+      return Date.parse(left.dueAtUtc) - Date.parse(right.dueAtUtc)
+    })
     .slice(0, limit)
 }

@@ -89,6 +89,24 @@ describe('SqliteCalendarRepository', () => {
     }
   })
 
+  it('stores undated reminders locally without scheduling a notification', () => {
+    const repository = new SqliteCalendarRepository(':memory:')
+    const service = new PersistentCalendarService(repository)
+    try {
+      const saved = service.saveReminder(
+        { ...reminderForm, title: 'Buy oat milk', dueDate: null, dueTime: null },
+        range
+      )
+
+      expect(saved.snapshot.reminders).toMatchObject([
+        { title: 'Buy oat milk', dueAtUtc: null, recurrence: null, status: 'active' }
+      ])
+      expect(repository.listPendingReminderNotifications()).toEqual([])
+    } finally {
+      repository.close()
+    }
+  })
+
   it('securely clears personal data and reseeds only local defaults', () => {
     const repository = new SqliteCalendarRepository(':memory:')
     const service = new PersistentCalendarService(repository)
@@ -384,6 +402,64 @@ describe('SqliteCalendarRepository', () => {
     }
   })
 
+  it('migrates version 4 reminders without losing due dates or notification history', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'remind-me-undated-reminder-migration-'))
+    temporaryDirectories.push(directory)
+    const databasePath = join(directory, 'calendar.sqlite3')
+    const legacySql = initialMigrationSql.replace('due_at_utc TEXT,', 'due_at_utc TEXT NOT NULL,')
+    const legacyDatabase = new DatabaseSync(databasePath)
+    legacyDatabase.exec(legacySql)
+    legacyDatabase.exec('PRAGMA user_version = 4')
+    legacyDatabase
+      .prepare(
+        `INSERT INTO calendars (id, name, color, timezone, is_default, created_at, updated_at)
+         VALUES ('calendar:legacy', 'Legacy', '#abc123', 'America/Chicago', 1, ?, ?)`
+      )
+      .run('2026-03-01T12:00:00.000Z', '2026-03-01T12:00:00.000Z')
+    legacyDatabase
+      .prepare(
+        `INSERT INTO reminders (
+          id, calendar_id, title, notes, due_at_utc, timezone, recurrence_json,
+          status, completed_at, provenance, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, NULL, 'active', NULL, 'manual', ?, ?)`
+      )
+      .run(
+        'reminder:legacy',
+        'calendar:legacy',
+        'Legacy reminder',
+        '',
+        '2026-03-09T14:15:00.000Z',
+        'America/Chicago',
+        '2026-03-01T12:00:00.000Z',
+        '2026-03-01T12:00:00.000Z'
+      )
+    legacyDatabase
+      .prepare(
+        `INSERT INTO notification_deliveries (reminder_id, due_at_utc, delivered_at)
+         VALUES (?, ?, ?)`
+      )
+      .run('reminder:legacy', '2026-03-09T14:15:00.000Z', '2026-03-09T14:16:00.000Z')
+    legacyDatabase.close()
+
+    const repository = new SqliteCalendarRepository(databasePath)
+    try {
+      expect(repository.getSchemaVersion()).toBe(databaseSchemaVersion)
+      expect(repository.getReminder('reminder:legacy')).toMatchObject({
+        dueAtUtc: '2026-03-09T14:15:00.000Z'
+      })
+      expect(repository.listPendingReminderNotifications()).toEqual([])
+      const saved = new PersistentCalendarService(repository).saveReminder(
+        { ...reminderForm, title: 'No date after migration', dueDate: null, dueTime: null },
+        range
+      )
+      expect(
+        saved.snapshot.reminders.find((reminder) => reminder.title === 'No date after migration')
+      ).toMatchObject({ dueAtUtc: null })
+    } finally {
+      repository.close()
+    }
+  })
+
   it('records one notification delivery per reminder due time', () => {
     const repository = new SqliteCalendarRepository(':memory:')
     const service = new PersistentCalendarService(repository)
@@ -392,6 +468,7 @@ describe('SqliteCalendarRepository', () => {
       const reminder = saved.snapshot.reminders[0]
       expect(repository.listPendingReminderNotifications()).toHaveLength(1)
       if (!reminder) throw new Error('Expected a reminder')
+      if (!reminder.dueAtUtc) throw new Error('Expected the reminder to have a due time')
       repository.recordReminderNotification(
         reminder.id,
         reminder.dueAtUtc,

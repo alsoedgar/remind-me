@@ -129,8 +129,8 @@ function generalEventSemanticKey(form: EventForm): string {
 function reminderSemanticKey(form: ReminderForm): string {
   return semanticKey('reminder', [
     canonicalDocumentText(form.title),
-    form.dueDate,
-    form.dueTime,
+    form.dueDate ?? 'undated',
+    form.dueTime ?? 'untimed',
     form.timezone
   ])
 }
@@ -233,14 +233,14 @@ function eventFormFromEntity(event: EventEntity): EventForm {
 }
 
 function reminderFormFromEntity(reminder: ReminderEntity): ReminderForm {
-  const due = localParts(reminder.dueAtUtc, reminder.timezone)
+  const due = reminder.dueAtUtc ? localParts(reminder.dueAtUtc, reminder.timezone) : null
   return {
     id: null,
     calendarId: reminder.calendarId,
     title: reminder.title,
     notes: reminder.notes,
-    dueDate: due.date,
-    dueTime: due.time,
+    dueDate: due?.date ?? null,
+    dueTime: due?.time ?? null,
     timezone: reminder.timezone,
     recurrence: reminder.recurrence
   }

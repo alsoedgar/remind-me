@@ -58,7 +58,7 @@ export const reminderEntitySchema = z
     calendarId: identifierSchema,
     title: z.string().min(1).max(1_000),
     notes: z.string().max(10_000),
-    dueAtUtc: isoInstantSchema,
+    dueAtUtc: isoInstantSchema.nullable(),
     timezone: ianaTimeZoneSchema,
     recurrence: recurrenceRuleSchema.nullable(),
     status: z.enum(['active', 'completed', 'cancelled']),
@@ -69,6 +69,15 @@ export const reminderEntitySchema = z
     updatedAt: isoInstantSchema
   })
   .strict()
+  .superRefine((reminder, context) => {
+    if (reminder.dueAtUtc === null && reminder.recurrence !== null) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A repeating reminder needs a due date',
+        path: ['recurrence']
+      })
+    }
+  })
 
 export const recurrenceExceptionEntitySchema = z
   .object({

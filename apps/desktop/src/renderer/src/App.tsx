@@ -159,7 +159,10 @@ function Navigation({
   const setRoute = useUiStore((state) => state.setRoute)
   const overdueCount =
     snapshot?.reminders.filter(
-      (reminder) => reminder.status === 'active' && Date.parse(reminder.dueAtUtc) < Date.now()
+      (reminder) =>
+        reminder.status === 'active' &&
+        reminder.dueAtUtc !== null &&
+        Date.parse(reminder.dueAtUtc) < Date.now()
     ).length ?? 0
 
   return (
@@ -258,9 +261,10 @@ function TodayView({
     .filter(
       (reminder) =>
         reminder.status === 'active' &&
+        reminder.dueAtUtc !== null &&
         localParts(reminder.dueAtUtc, reminder.timezone).date <= today
     )
-    .sort((left, right) => Date.parse(left.dueAtUtc) - Date.parse(right.dueAtUtc))
+    .sort((left, right) => Date.parse(left.dueAtUtc!) - Date.parse(right.dueAtUtc!))
   const planCount = events.length + reminders.length
   const inNextWeek = snapshot.occurrences.filter((occurrence) => {
     const difference =
@@ -337,7 +341,9 @@ function TodayView({
                       <strong>{reminder.title}</strong>
                       <small>
                         {formatDueDate(reminder.dueAtUtc, reminder.timezone, preferences.locale, {
-                          includeDate: localParts(reminder.dueAtUtc, reminder.timezone).date < today
+                          includeDate:
+                            reminder.dueAtUtc !== null &&
+                            localParts(reminder.dueAtUtc, reminder.timezone).date < today
                         })}
                       </small>
                     </span>
@@ -532,6 +538,7 @@ function CalendarView({
               const reminders = snapshot.reminders.filter(
                 (reminder) =>
                   reminder.status === 'active' &&
+                  reminder.dueAtUtc !== null &&
                   localParts(reminder.dueAtUtc, reminder.timezone).date === cell.date &&
                   (!query ||
                     `${reminder.title} ${reminder.notes}`
@@ -782,7 +789,7 @@ function CalendarView({
   )
 }
 
-type ReminderFilter = 'upcoming' | 'overdue' | 'completed' | 'recurring'
+type ReminderFilter = 'upcoming' | 'overdue' | 'completed' | 'recurring' | 'unscheduled'
 
 function RemindersView({
   snapshot,
@@ -806,9 +813,18 @@ function RemindersView({
       return false
     if (filter === 'completed') return reminder.status === 'completed'
     if (filter === 'recurring') return reminder.status === 'active' && Boolean(reminder.recurrence)
+    if (filter === 'unscheduled') return reminder.status === 'active' && reminder.dueAtUtc === null
     if (filter === 'overdue')
-      return reminder.status === 'active' && Date.parse(reminder.dueAtUtc) < now
-    return reminder.status === 'active' && Date.parse(reminder.dueAtUtc) >= now
+      return (
+        reminder.status === 'active' &&
+        reminder.dueAtUtc !== null &&
+        Date.parse(reminder.dueAtUtc) < now
+      )
+    return (
+      reminder.status === 'active' &&
+      reminder.dueAtUtc !== null &&
+      Date.parse(reminder.dueAtUtc) >= now
+    )
   })
 
   return (
@@ -828,17 +844,20 @@ function RemindersView({
       </div>
       <div className="reminder-tools">
         <div className="filter-row" aria-label="Reminder filters">
-          {(['upcoming', 'overdue', 'completed', 'recurring'] as const).map((option) => (
-            <button
-              type="button"
-              data-active={filter === option}
-              key={option}
-              onClick={() => setFilter(option)}
-            >
-              {option[0]?.toUpperCase()}
-              {option.slice(1)}
-            </button>
-          ))}
+          {(['upcoming', 'overdue', 'unscheduled', 'completed', 'recurring'] as const).map(
+            (option) => (
+              <button
+                type="button"
+                data-active={filter === option}
+                key={option}
+                onClick={() => setFilter(option)}
+              >
+                {option === 'unscheduled'
+                  ? 'No date'
+                  : `${option[0]?.toUpperCase()}${option.slice(1)}`}
+              </button>
+            )
+          )}
         </div>
         <label className="search-field">
           <span className="visually-hidden">Search reminders</span>
@@ -862,7 +881,10 @@ function RemindersView({
         <div className="reminder-list">
           {reminders.map((reminder) => {
             const recurrence = recurrenceLabel(reminder.recurrence)
-            const overdue = reminder.status === 'active' && Date.parse(reminder.dueAtUtc) < now
+            const overdue =
+              reminder.status === 'active' &&
+              reminder.dueAtUtc !== null &&
+              Date.parse(reminder.dueAtUtc) < now
             return (
               <article className="reminder-row" data-overdue={overdue} key={reminder.id}>
                 <button

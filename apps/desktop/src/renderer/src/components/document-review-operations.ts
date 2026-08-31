@@ -128,6 +128,7 @@ export function splitDocumentDraft(
         warnings: [...draft.warnings, `Split during review into the ${weekday} series.`]
       } as DocumentImportDraft
     }
+    if (draft.form.dueDate === null) return draft
     const dueDate = firstWeekdayOnOrAfter(draft.form.dueDate, weekday)
     const form: ReminderForm = { ...draft.form, dueDate, recurrence: recurrenceForDay }
     const identity = recalculate(form, null, source, events, reminders)
@@ -169,12 +170,11 @@ function scheduleMergeKey(schedule: DocumentScheduleMetadata | null): string {
 }
 
 function nearbyStartDates(left: DocumentImportDraft, right: DocumentImportDraft): boolean {
-  const leftDate = Temporal.PlainDate.from(
-    left.kind === 'event' ? left.form.startDate : left.form.dueDate
-  )
-  const rightDate = Temporal.PlainDate.from(
-    right.kind === 'event' ? right.form.startDate : right.form.dueDate
-  )
+  const leftDateValue = left.kind === 'event' ? left.form.startDate : left.form.dueDate
+  const rightDateValue = right.kind === 'event' ? right.form.startDate : right.form.dueDate
+  if (leftDateValue === null || rightDateValue === null) return false
+  const leftDate = Temporal.PlainDate.from(leftDateValue)
+  const rightDate = Temporal.PlainDate.from(rightDateValue)
   return Math.abs(leftDate.until(rightDate, { largestUnit: 'day' }).days) <= 7
 }
 
@@ -255,7 +255,9 @@ export function mergeDocumentDrafts(
   )
   const earliestDate = drafts
     .map((draft) => (draft.kind === 'event' ? draft.form.startDate : draft.form.dueDate))
+    .filter((date): date is string => date !== null)
     .sort()[0]!
+  if (!earliestDate) return anchor
   const recurrence = { ...anchor.form.recurrence, byWeekday }
   const schedule = anchor.schedule ? { ...anchor.schedule, weekdays: byWeekday } : null
   const sourceRows = drafts
@@ -339,7 +341,11 @@ export function reclassifyDocumentDraft(
   events: readonly EventEntity[],
   reminders: readonly ReminderEntity[]
 ): DocumentImportDraft {
-  if (!canReclassifyDocumentDraft(draft)) return draft
+  if (
+    !canReclassifyDocumentDraft(draft) ||
+    (draft.kind === 'reminder' && (draft.form.dueDate === null || draft.form.dueTime === null))
+  )
+    return draft
   const source = {
     sourceSha256: draft.importIdentity.sourceSha256,
     sourceRowId: draft.importIdentity.sourceRowId
@@ -367,9 +373,9 @@ export function reclassifyDocumentDraft(
         kind: 'reminder',
         description: form.notes,
         allDay: false,
-        startDate: form.dueDate,
+        startDate: form.dueDate!,
         endDate: null,
-        startTime: form.dueTime,
+        startTime: form.dueTime!,
         endTime: null,
         timeBasis: 'source-instant',
         location: '',

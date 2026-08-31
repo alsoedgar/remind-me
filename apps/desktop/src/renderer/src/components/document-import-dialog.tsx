@@ -415,7 +415,7 @@ function ReminderDraftEditor({
             id={fieldId('due-date')}
             required
             type="date"
-            value={form.dueDate}
+            value={form.dueDate ?? ''}
             onChange={(event) => onChange({ ...form, dueDate: event.target.value })}
           />
         </div>
@@ -425,7 +425,7 @@ function ReminderDraftEditor({
             id={fieldId('due-time')}
             required
             type="time"
-            value={form.dueTime}
+            value={form.dueTime ?? ''}
             onChange={(event) => onChange({ ...form, dueTime: event.target.value })}
           />
         </label>

@@ -244,7 +244,7 @@ function proposalTitles(
 function proposalDates(payload: AssistantProposalPayload | null): string[] {
   return proposalItems(payload).flatMap((item) => {
     if (item.kind === 'event-save') return [item.form.startDate]
-    if (item.kind === 'reminder-save') return [item.form.dueDate]
+    if (item.kind === 'reminder-save' && item.form.dueDate) return [item.form.dueDate]
     return []
   })
 }
@@ -252,7 +252,7 @@ function proposalDates(payload: AssistantProposalPayload | null): string[] {
 function proposalTimes(payload: AssistantProposalPayload | null): string[] {
   return proposalItems(payload).flatMap((item) => {
     if (item.kind === 'event-save') return item.form.startTime ? [item.form.startTime] : []
-    if (item.kind === 'reminder-save') return [item.form.dueTime]
+    if (item.kind === 'reminder-save' && item.form.dueTime) return [item.form.dueTime]
     return []
   })
 }

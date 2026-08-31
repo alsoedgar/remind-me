@@ -128,7 +128,7 @@ function matchesNextDate(
 
 function nextRecurringReminder(reminder: ReminderEntity): ReminderEntity | null {
   const rule = reminder.recurrence
-  if (!rule) return null
+  if (!rule || reminder.dueAtUtc === null) return null
   if (rule.end.kind === 'count' && rule.end.count <= 1) return null
 
   const current = Temporal.Instant.from(reminder.dueAtUtc).toZonedDateTimeISO(reminder.timezone)
@@ -173,6 +173,11 @@ function nextRecurringReminder(reminder: ReminderEntity): ReminderEntity | null 
     candidate = candidate.add({ days: 1 })
   }
   throw new Error('Recurring reminder exceeded the supported ten-year horizon')
+}
+
+function reminderDueAtUtc(form: ReminderForm): string | null {
+  if (form.dueDate === null || form.dueTime === null) return null
+  return toInstant(form.dueDate, form.dueTime, form.timezone)
 }
 
 export class PersistentCalendarService {
@@ -297,7 +302,7 @@ export class PersistentCalendarService {
       calendarId: form.calendarId ?? existing?.calendarId ?? this.repository.listCalendars()[0]?.id,
       title: form.title,
       notes: form.notes,
-      dueAtUtc: toInstant(form.dueDate, form.dueTime, form.timezone),
+      dueAtUtc: reminderDueAtUtc(form),
       timezone: form.timezone,
       recurrence: form.recurrence,
       status: 'active',
@@ -480,7 +485,7 @@ export class PersistentCalendarService {
               calendarId: form.calendarId ?? existing?.calendarId ?? defaultCalendarId,
               title: form.title,
               notes: form.notes,
-              dueAtUtc: toInstant(form.dueDate, form.dueTime, form.timezone),
+              dueAtUtc: reminderDueAtUtc(form),
               timezone: form.timezone,
               recurrence: form.recurrence,
               status: 'active',
@@ -751,7 +756,7 @@ export class PersistentCalendarService {
             calendarId: defaultCalendar.id,
             title: form.title,
             notes: form.notes,
-            dueAtUtc: toInstant(form.dueDate, form.dueTime, form.timezone),
+            dueAtUtc: reminderDueAtUtc(form),
             timezone: form.timezone,
             recurrence: form.recurrence,
             status: 'active',

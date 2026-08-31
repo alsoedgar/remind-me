@@ -1092,7 +1092,7 @@ function targetMatch(
         id: reminder.id,
         kind: 'reminder' as const,
         title: reminder.title,
-        at: reminder.dueAtUtc,
+        at: reminder.dueAtUtc ?? reminder.updatedAt,
         stableIndex: focusedEvents.length + index
       }))
     ].sort((left, right) => {
@@ -1169,15 +1169,15 @@ function targetMatch(
       : reminders
           .filter((reminder) => reminder.status === 'active')
           .map((reminder) => {
-            const local = Temporal.Instant.from(reminder.dueAtUtc).toZonedDateTimeISO(
-              reminder.timezone
-            )
+            const local = reminder.dueAtUtc
+              ? Temporal.Instant.from(reminder.dueAtUtc).toZonedDateTimeISO(reminder.timezone)
+              : null
             return {
               id: reminder.id,
               kind: 'reminder' as const,
               title: reminder.title,
-              date: local.toPlainDate().toString(),
-              time: local.toPlainTime().toString({ smallestUnit: 'minute' }),
+              date: local?.toPlainDate().toString() ?? '',
+              time: local?.toPlainTime().toString({ smallestUnit: 'minute' }) ?? '',
               location: ''
             }
           }))
@@ -1743,8 +1743,17 @@ export function parseCalendarText(
           (candidate) => candidate.id === target.reminderIds[0]
         )
         if (!reminder) return clarify(context, sourceText, 'unclear-reference', 'Which reminder?')
-        const effectiveDate = requestedDate ?? storedDateMatch(reminder.dueAtUtc, reminder.timezone)
-        const effectiveTime = requestedTime ?? storedTimeMatch(reminder.dueAtUtc, reminder.timezone)
+        const existingDueAt = reminder.dueAtUtc
+        if (existingDueAt === null && (!requestedDate || !requestedTime)) {
+          return clarify(
+            context,
+            sourceText,
+            'missing-time',
+            'That reminder has no due date yet. Include both a day and time to schedule it.'
+          )
+        }
+        const effectiveDate = requestedDate ?? storedDateMatch(existingDueAt!, reminder.timezone)
+        const effectiveTime = requestedTime ?? storedTimeMatch(existingDueAt!, reminder.timezone)
         draft.fields.when = sourcedWindow(
           mutationWindow(effectiveDate, null, { ...effectiveTime, endTime: null }, false),
           windowSpan.start,
@@ -2038,6 +2047,39 @@ export function parseCalendarText(
     reminderRequestPattern.test(sourceText) || context.semanticHint?.operation === 'reminder.create'
   if (isReminder) {
     if (!date) {
+      const recurrence = recurrenceFromText(sourceText, context.localDate)
+      if (!time && recurrence === null) {
+        const hintedTitle =
+          context.semanticHint?.operation === 'reminder.create'
+            ? hintedText(sourceText, context.semanticHint.titleSpan, evidenceId)
+            : null
+        const hintedDescription =
+          context.semanticHint?.operation === 'reminder.create'
+            ? hintedText(sourceText, context.semanticHint.descriptionSpan, evidenceId)
+            : null
+        const title = hintedTitle?.value ?? reminderTitle(sourceText, null, null)
+        if (!title)
+          return clarify(
+            context,
+            sourceText,
+            'unclear-reference',
+            'What should I remind you about?'
+          )
+        const draft = baseDraft(
+          context,
+          sourceText,
+          'reminder.create',
+          'low',
+          hintedTitle ? Math.min(0.95, context.semanticHint?.confidence ?? 0.95) : 0.95
+        )
+        draft.fields.title = hintedTitle ?? sourcedText(title, sourceText, evidenceId)
+        draft.fields.description = hintedDescription
+        return {
+          draft: calendarIRDraftSchema.parse(draft),
+          sourceText,
+          matchedPattern: 'undated-reminder-create'
+        }
+      }
       return clarify(context, sourceText, 'missing-date', 'What day should I remind you?', [
         'today',
         'tomorrow'

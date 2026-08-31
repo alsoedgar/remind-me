@@ -7,7 +7,7 @@ import type {
   ReminderEntity
 } from '@remind-me/contracts'
 
-export const databaseSchemaVersion = 4
+export const databaseSchemaVersion = 5
 
 export const databaseTables = [
   'calendars',
@@ -78,7 +78,7 @@ CREATE TABLE reminders (
   calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   notes TEXT NOT NULL DEFAULT '',
-  due_at_utc TEXT NOT NULL,
+  due_at_utc TEXT,
   timezone TEXT NOT NULL,
   recurrence_json TEXT,
   status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'cancelled')),
@@ -249,4 +249,64 @@ CREATE TABLE IF NOT EXISTS document_import_identities (
 
 CREATE INDEX IF NOT EXISTS document_import_semantic_key
   ON document_import_identities(semantic_key, entity_kind);
+`
+
+/**
+ * SQLite cannot drop a NOT NULL constraint in place. Rebuild only the
+ * reminders table and preserve notification deliveries while it is replaced.
+ */
+export const fifthMigrationSql = `
+DROP INDEX IF EXISTS reminders_due;
+
+CREATE TABLE reminder_notification_deliveries_v5 (
+  reminder_id TEXT NOT NULL,
+  due_at_utc TEXT NOT NULL,
+  delivered_at TEXT NOT NULL,
+  PRIMARY KEY (reminder_id, due_at_utc)
+);
+
+INSERT INTO reminder_notification_deliveries_v5 (reminder_id, due_at_utc, delivered_at)
+  SELECT reminder_id, due_at_utc, delivered_at FROM notification_deliveries;
+
+DROP TABLE notification_deliveries;
+
+CREATE TABLE reminders_v5 (
+  id TEXT PRIMARY KEY,
+  calendar_id TEXT NOT NULL REFERENCES calendars(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  notes TEXT NOT NULL DEFAULT '',
+  due_at_utc TEXT,
+  timezone TEXT NOT NULL,
+  recurrence_json TEXT,
+  status TEXT NOT NULL CHECK (status IN ('active', 'completed', 'cancelled')),
+  completed_at TEXT,
+  provenance TEXT NOT NULL CHECK (provenance IN ('manual', 'assistant', 'import')),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+INSERT INTO reminders_v5 (
+  id, calendar_id, title, notes, due_at_utc, timezone, recurrence_json,
+  status, completed_at, provenance, created_at, updated_at
+)
+  SELECT
+    id, calendar_id, title, notes, due_at_utc, timezone, recurrence_json,
+    status, completed_at, provenance, created_at, updated_at
+  FROM reminders;
+
+DROP TABLE reminders;
+ALTER TABLE reminders_v5 RENAME TO reminders;
+CREATE INDEX reminders_due ON reminders(status, due_at_utc);
+
+CREATE TABLE notification_deliveries (
+  reminder_id TEXT NOT NULL REFERENCES reminders(id) ON DELETE CASCADE,
+  due_at_utc TEXT NOT NULL,
+  delivered_at TEXT NOT NULL,
+  PRIMARY KEY (reminder_id, due_at_utc)
+);
+
+INSERT INTO notification_deliveries (reminder_id, due_at_utc, delivered_at)
+  SELECT reminder_id, due_at_utc, delivered_at FROM reminder_notification_deliveries_v5;
+
+DROP TABLE reminder_notification_deliveries_v5;
 `

@@ -121,6 +121,15 @@ describe('deterministic calendar parser', () => {
     })
   })
 
+  it('creates an undated reminder when no schedule is requested', () => {
+    const draft = parse('Remind me to buy oat milk')
+
+    expect(draft.operation).toBe('reminder.create')
+    expect(draft.fields.title?.value).toBe('buy oat milk')
+    expect(draft.fields.when).toBeNull()
+    expect(draft.recurrence).toBeNull()
+  })
+
   it('understands a reminder action placed after the date and time', () => {
     const draft = parse('Remind me tomorrow at 6 PM to call Mom')
     expect(draft.fields.title?.value).toBe('call Mom')

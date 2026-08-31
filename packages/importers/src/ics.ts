@@ -227,7 +227,7 @@ export function exportIcs(
     lines.push('BEGIN:VTODO')
     lines.push(`UID:${escapeText(reminder.id)}@remind-me.local`)
     lines.push(`DTSTAMP:${utcIcs(reminder.updatedAt)}`)
-    lines.push(`DUE:${utcIcs(reminder.dueAtUtc)}`)
+    if (reminder.dueAtUtc) lines.push(`DUE:${utcIcs(reminder.dueAtUtc)}`)
     lines.push(`SUMMARY:${escapeText(reminder.title)}`)
     if (reminder.notes) lines.push(`DESCRIPTION:${escapeText(reminder.notes)}`)
     lines.push(`X-REMIND-ME-TIMEZONE:${escapeText(reminder.timezone)}`)

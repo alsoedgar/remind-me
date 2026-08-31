@@ -58,12 +58,30 @@ export const reminderFormSchema = z
     calendarId: identifierSchema.nullable(),
     title: z.string().trim().min(1).max(1_000),
     notes: z.string().max(10_000),
-    dueDate: localDateSchema,
-    dueTime: localTimeSchema,
+    dueDate: localDateSchema.nullable(),
+    dueTime: localTimeSchema.nullable(),
     timezone: ianaTimeZoneSchema,
     recurrence: recurrenceRuleSchema.nullable()
   })
   .strict()
+  .superRefine((form, context) => {
+    const hasDate = form.dueDate !== null
+    const hasTime = form.dueTime !== null
+    if (hasDate !== hasTime) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A reminder needs both a due date and time, or neither',
+        path: hasDate ? ['dueTime'] : ['dueDate']
+      })
+    }
+    if (!hasDate && form.recurrence !== null) {
+      context.addIssue({
+        code: 'custom',
+        message: 'A repeating reminder needs a due date',
+        path: ['recurrence']
+      })
+    }
+  })
 
 export const eventOccurrenceSchema = z
   .object({

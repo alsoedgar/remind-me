@@ -76,6 +76,9 @@ export function buildDocumentWeekPreview(
   let scheduleSeriesCount = 0
 
   for (const draft of drafts) {
+    if (draft.kind === 'reminder' && (draft.form.dueDate === null || draft.form.dueTime === null)) {
+      continue
+    }
     const schedule = draft.schedule
     if (schedule) {
       scheduleSeriesCount += 1
@@ -84,7 +87,7 @@ export function buildDocumentWeekPreview(
     const weekdays =
       draft.form.recurrence?.frequency === 'weekly' && draft.form.recurrence.byWeekday.length > 0
         ? draft.form.recurrence.byWeekday
-        : [weekdayForDate(draft.kind === 'event' ? draft.form.startDate : draft.form.dueDate)]
+        : [weekdayForDate(draft.kind === 'event' ? draft.form.startDate : draft.form.dueDate!)]
     for (const weekday of weekdays) {
       const item: DocumentWeekItem = {
         draftId: draft.id,
@@ -94,7 +97,7 @@ export function buildDocumentWeekPreview(
         courseCode: schedule?.courseCode ?? null,
         sectionCode: schedule?.sectionCode ?? null,
         component: schedule?.component ?? null,
-        startTime: draft.kind === 'event' ? (draft.form.startTime ?? '00:00') : draft.form.dueTime,
+        startTime: draft.kind === 'event' ? (draft.form.startTime ?? '00:00') : draft.form.dueTime!,
         endTime: draft.kind === 'event' ? draft.form.endTime : null,
         location: draft.kind === 'event' ? draft.form.location : '',
         colorIndex: colorIndex(schedule?.courseCode ?? draft.form.title)

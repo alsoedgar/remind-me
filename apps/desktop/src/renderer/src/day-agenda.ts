@@ -18,7 +18,7 @@ export interface DayAgendaReminder {
   id: string
   title: string
   notes?: string
-  dueAtUtc: string
+  dueAtUtc: string | null
   timezone: string
   status: 'active' | 'completed' | 'cancelled'
 }
@@ -60,12 +60,13 @@ export function dayAgendaItems(
       .filter(
         (reminder) =>
           reminder.status === 'active' &&
+          reminder.dueAtUtc !== null &&
           localParts(reminder.dueAtUtc, reminder.timezone).date === date
       )
       .map((reminder): DayAgendaItem => ({
         kind: 'reminder',
         id: reminder.id,
-        sortAt: Date.parse(reminder.dueAtUtc),
+        sortAt: Date.parse(reminder.dueAtUtc!),
         reminder
       }))
   ].sort(

@@ -33,6 +33,7 @@ import {
 } from '@remind-me/contracts'
 import {
   databaseSchemaVersion,
+  fifthMigrationSql,
   initialMigrationSql,
   fourthMigrationSql,
   secondMigrationSql,
@@ -132,7 +133,7 @@ function mapReminder(row: DatabaseRow): ReminderEntity {
     calendarId: stringValue(row, 'calendar_id'),
     title: stringValue(row, 'title'),
     notes: stringValue(row, 'notes'),
-    dueAtUtc: stringValue(row, 'due_at_utc'),
+    dueAtUtc: nullableString(row, 'due_at_utc'),
     timezone: stringValue(row, 'timezone'),
     recurrence: jsonRecurrence(nullableString(row, 'recurrence_json')),
     status: stringValue(row, 'status'),
@@ -380,7 +381,7 @@ export class SqliteCalendarRepository {
            LEFT JOIN document_import_identities
              ON document_import_identities.entity_kind = 'reminder'
             AND document_import_identities.entity_id = reminders.id
-           ORDER BY reminders.due_at_utc, reminders.title`
+           ORDER BY reminders.due_at_utc IS NULL, reminders.due_at_utc, reminders.title`
         )
         .all() as DatabaseRow[]
     ).map(mapReminder)
@@ -882,6 +883,7 @@ export class SqliteCalendarRepository {
              ON document_import_identities.entity_kind = 'reminder'
             AND document_import_identities.entity_id = reminders.id
            WHERE reminders.status = 'active'
+             AND reminders.due_at_utc IS NOT NULL
              AND NOT EXISTS (
                SELECT 1 FROM notification_deliveries deliveries
                WHERE deliveries.reminder_id = reminders.id
@@ -936,6 +938,10 @@ export class SqliteCalendarRepository {
         if (currentVersion === 3) {
           this.database.exec(fourthMigrationSql)
           currentVersion = 4
+        }
+        if (currentVersion === 4) {
+          this.database.exec(fifthMigrationSql)
+          currentVersion = 5
         }
         this.database.exec(`PRAGMA user_version = ${currentVersion}`)
         this.database.exec('COMMIT')

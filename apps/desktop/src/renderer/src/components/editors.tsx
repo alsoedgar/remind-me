@@ -781,6 +781,7 @@ function ReminderEditor({
             recurrence: null
           }
   )
+  const hasDueDate = form.dueDate !== null && form.dueTime !== null
 
   async function submit(submitEvent: FormEvent): Promise<void> {
     submitEvent.preventDefault()
@@ -805,22 +806,41 @@ function ReminderEditor({
             placeholder="Call Mom"
           />
         </label>
-        <div className="form-grid two-columns">
+        <label className="reminder-due-toggle">
+          <input
+            checked={hasDueDate}
+            type="checkbox"
+            onChange={(inputEvent) => {
+              if (inputEvent.target.checked) {
+                setForm({ ...form, dueDate: fallbackDate, dueTime: '09:00' })
+                return
+              }
+              setForm({ ...form, dueDate: null, dueTime: null, recurrence: null })
+            }}
+          />
+          <span>
+            <strong>Set a due date</strong>
+            <small>Undated reminders stay in your reminders list without a notification.</small>
+          </span>
+        </label>
+        <div className="form-grid two-columns" data-disabled={!hasDueDate}>
           <label>
             Due date
             <input
-              required
+              disabled={!hasDueDate}
+              required={hasDueDate}
               type="date"
-              value={form.dueDate}
+              value={form.dueDate ?? ''}
               onChange={(inputEvent) => setForm({ ...form, dueDate: inputEvent.target.value })}
             />
           </label>
           <label>
             Due time
             <input
-              required
+              disabled={!hasDueDate}
+              required={hasDueDate}
               type="time"
-              value={form.dueTime}
+              value={form.dueTime ?? ''}
               onChange={(inputEvent) => setForm({ ...form, dueTime: inputEvent.target.value })}
             />
           </label>
@@ -843,11 +863,15 @@ function ReminderEditor({
             placeholder="Optional context for future you"
           />
         </label>
-        <RecurrenceFields
-          recurrence={form.recurrence}
-          date={form.dueDate}
-          onChange={(recurrence) => setForm({ ...form, recurrence })}
-        />
+        {hasDueDate && form.dueDate ? (
+          <RecurrenceFields
+            recurrence={form.recurrence}
+            date={form.dueDate}
+            onChange={(recurrence) => setForm({ ...form, recurrence })}
+          />
+        ) : (
+          <p className="editor-inline-note">Add a due date to make this reminder repeat.</p>
+        )}
         <footer className="dialog-actions">
           {reminder ? (
             <button

@@ -62,14 +62,14 @@ export function eventToForm(event: EventEntity): EventForm {
 }
 
 export function reminderToForm(reminder: ReminderEntity): ReminderForm {
-  const due = localParts(reminder.dueAtUtc, reminder.timezone)
+  const due = reminder.dueAtUtc ? localParts(reminder.dueAtUtc, reminder.timezone) : null
   return {
     id: reminder.id,
     calendarId: reminder.calendarId,
     title: reminder.title,
     notes: reminder.notes,
-    dueDate: due.date,
-    dueTime: due.time,
+    dueDate: due?.date ?? null,
+    dueTime: due?.time ?? null,
     timezone: reminder.timezone,
     recurrence: reminder.recurrence
   }
@@ -103,11 +103,12 @@ export function formatEventTime(
 }
 
 export function formatDueDate(
-  instant: string,
+  instant: string | null,
   timezone: string,
   locale: string,
   options: { includeDate?: boolean } = {}
 ): string {
+  if (instant === null) return 'No due date'
   return new Intl.DateTimeFormat(locale, {
     timeZone: timezone,
     ...(options.includeDate ? { weekday: 'short', month: 'short', day: 'numeric' } : {}),

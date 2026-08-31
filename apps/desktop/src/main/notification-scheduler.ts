@@ -21,7 +21,7 @@ export class ReminderNotificationScheduler {
     }
 
     const next = this.repository.listPendingReminderNotifications()[0]
-    if (!next) return
+    if (!next?.dueAtUtc) return
     const delay = Date.parse(next.dueAtUtc) - Date.now()
     if (delay <= 0) {
       queueMicrotask(() => this.deliverDue())
@@ -42,6 +42,7 @@ export class ReminderNotificationScheduler {
     const now = new Date()
     const nowIso = now.toISOString()
     for (const reminder of this.repository.listPendingReminderNotifications()) {
+      if (!reminder.dueAtUtc) continue
       if (Date.parse(reminder.dueAtUtc) > now.getTime()) break
       const notification = new Notification({
         title: reminder.title,

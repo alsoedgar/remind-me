@@ -177,7 +177,7 @@ export function dryRunCalendarCommand(
         calendarId: context.defaultCalendarId,
         title: requireValue(command.fields.title, 'title'),
         notes: command.fields.description ?? '',
-        dueAtUtc: requireValue(command.fields.dueAtUtc, 'dueAtUtc'),
+        dueAtUtc: command.fields.dueAtUtc,
         timezone: requireValue(command.fields.timezone, 'timezone'),
         recurrence: command.recurrence,
         status: 'active',

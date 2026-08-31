@@ -200,14 +200,22 @@ export const calendarIRDraftSchema = z
         path: ['fields']
       })
     }
+    if (draft.operation === 'reminder.create' && draft.fields.title === null) {
+      context.addIssue({
+        code: 'custom',
+        message: 'reminder.create requires a title',
+        path: ['fields']
+      })
+    }
     if (
       draft.operation === 'reminder.create' &&
-      (draft.fields.title === null || draft.fields.when === null)
+      draft.recurrence !== null &&
+      draft.fields.when === null
     ) {
       context.addIssue({
         code: 'custom',
-        message: 'reminder.create requires title and when',
-        path: ['fields']
+        message: 'a repeating reminder requires a due date',
+        path: ['fields', 'when']
       })
     }
     if (draft.operation === 'event.move' && draft.fields.when === null) {

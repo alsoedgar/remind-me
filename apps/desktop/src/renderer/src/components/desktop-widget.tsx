@@ -547,7 +547,8 @@ export function DesktopWidget({
             )
           ) : reminders.length ? (
             reminders.map((reminder) => {
-              const overdue = Date.parse(reminder.dueAtUtc) < Date.now()
+              const overdue =
+                reminder.dueAtUtc !== null && Date.parse(reminder.dueAtUtc) < Date.now()
               return (
                 <div
                   className="widget-list-item widget-reminder-item"
@@ -570,6 +571,7 @@ export function DesktopWidget({
                         {overdue ? 'Overdue · ' : ''}
                         {formatDueDate(reminder.dueAtUtc, reminder.timezone, locale, {
                           includeDate:
+                            reminder.dueAtUtc !== null &&
                             localParts(reminder.dueAtUtc, reminder.timezone).date !== today
                         })}
                       </small>

@@ -64,11 +64,11 @@ export interface DocumentReviewTotals {
 }
 
 function draftDate(draft: DocumentImportDraft): string {
-  return draft.kind === 'event' ? draft.form.startDate : draft.form.dueDate
+  return draft.kind === 'event' ? draft.form.startDate : (draft.form.dueDate ?? 'No due date')
 }
 
 function draftEndDate(draft: DocumentImportDraft): string {
-  if (draft.kind === 'reminder') return draft.form.dueDate
+  if (draft.kind === 'reminder') return draft.form.dueDate ?? 'No due date'
   if (draft.form.recurrence?.end.kind === 'until') return draft.form.recurrence.end.date
   return draft.form.endDate
 }
