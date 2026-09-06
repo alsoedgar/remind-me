@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { calendarIRDraftSchema } from '@remind-me/contracts'
 import { dryRunCalendarCommand } from './dry-run'
-import { resolveCalendarIR } from './resolver'
+import { resolveCalendarIR, resolveTemporalWindow, resolveLocalDateTime } from './resolver'
 import type { CalendarState, ResolverContext } from './types'
 
 const context: ResolverContext = {
@@ -16,6 +16,30 @@ const context: ResolverContext = {
 const emptyState: CalendarState = { events: [], reminders: [] }
 
 describe('calendar contract engine', () => {
+  it('asks about skipped and repeated clock times instead of silently shifting an event', () => {
+    expect(() => resolveLocalDateTime('2026-03-08', '02:30', 'America/Chicago')).toThrow(
+      'clock change'
+    )
+    expect(() => resolveLocalDateTime('2026-11-01', '01:30', 'America/Chicago')).toThrow(
+      'clock change'
+    )
+    expect(resolveLocalDateTime('2026-03-08', '03:30', 'America/Chicago')).toBe(
+      '2026-03-08T08:30:00.000Z'
+    )
+  })
+  it('rejects an all-day range ending before it begins', () => {
+    expect(() =>
+      resolveTemporalWindow(
+        {
+          start: { date: { kind: 'absolute', date: '2026-09-10' }, time: null },
+          end: { date: { kind: 'absolute', date: '2026-09-08' }, time: null },
+          allDay: true,
+          timezone: 'America/Chicago'
+        },
+        context
+      )
+    ).toThrow('end date')
+  })
   it('resolves and dry-runs a relative event creation', () => {
     const draft = calendarIRDraftSchema.parse({
       version: '0.1',

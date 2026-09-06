@@ -42,6 +42,12 @@ import {
 } from './canvas-api'
 import { preferencesEntitySchema } from './entities'
 import {
+  onlineAiConnectRequestSchema,
+  onlineAiConfigureRequestSchema,
+  onlineAiStatusSchema,
+  onlineAiDocumentRequestSchema
+} from './online-ai-api'
+import {
   flexModelCancelRequestSchema,
   flexModelConfigureRequestSchema,
   flexModelInstallRequestSchema,
@@ -105,6 +111,11 @@ export const ipcChannels = {
   dataImport: 'data:import',
   dataDeleteAll: 'data:delete-all',
   canvasGetStatus: 'canvas:get-status',
+  onlineAiGetStatus: 'online-ai:get-status',
+  onlineAiConnect: 'online-ai:connect',
+  onlineAiConfigure: 'online-ai:configure',
+  onlineAiDisconnect: 'online-ai:disconnect',
+  onlineAiDocument: 'online-ai:document',
   canvasConnect: 'canvas:connect',
   canvasDisconnect: 'canvas:disconnect',
   canvasListAssignments: 'canvas:list-assignments',
@@ -299,6 +310,26 @@ export const calendarDryRunResponseSchema = z
   .strict()
 
 export const ipcContracts = {
+  [ipcChannels.onlineAiGetStatus]: {
+    request: z.object({}).strict(),
+    response: onlineAiStatusSchema
+  },
+  [ipcChannels.onlineAiConnect]: {
+    request: onlineAiConnectRequestSchema,
+    response: onlineAiStatusSchema
+  },
+  [ipcChannels.onlineAiConfigure]: {
+    request: onlineAiConfigureRequestSchema,
+    response: onlineAiStatusSchema
+  },
+  [ipcChannels.onlineAiDisconnect]: {
+    request: z.object({}).strict(),
+    response: onlineAiStatusSchema
+  },
+  [ipcChannels.onlineAiDocument]: {
+    request: onlineAiDocumentRequestSchema,
+    response: documentFallbackResponseSchema.nullable()
+  },
   [ipcChannels.appGetInfo]: {
     request: appInfoRequestSchema,
     response: appInfoResponseSchema
@@ -511,6 +542,17 @@ export type AppInfo = z.infer<typeof appInfoResponseSchema>
 export type PreferencesUpdate = z.infer<typeof preferencesUpdateRequestSchema>
 
 export interface RemindMeBridge {
+  getOnlineAiStatus: () => Promise<z.infer<typeof onlineAiStatusSchema>>
+  connectOnlineAi: (
+    input: z.infer<typeof onlineAiConnectRequestSchema>
+  ) => Promise<z.infer<typeof onlineAiStatusSchema>>
+  configureOnlineAi: (
+    input: z.infer<typeof onlineAiConfigureRequestSchema>
+  ) => Promise<z.infer<typeof onlineAiStatusSchema>>
+  disconnectOnlineAi: () => Promise<z.infer<typeof onlineAiStatusSchema>>
+  groupDocumentWithOnlineAi: (
+    input: z.infer<typeof onlineAiDocumentRequestSchema>
+  ) => Promise<z.infer<typeof documentFallbackResponseSchema> | null>
   getAppInfo: () => Promise<AppInfo>
   getWindowState: () => Promise<z.infer<typeof appWindowStateSchema>>
   setWindowMode: (mode: AppWindowMode) => Promise<z.infer<typeof appWindowStateSchema>>

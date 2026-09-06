@@ -70,6 +70,42 @@ function parse(
 }
 
 describe('deterministic calendar parser', () => {
+  it('uses a trailing year for both ends of a past or cross-year date range', () => {
+    const past = parse('Add conference from September 2 through September 4, 2025')
+    expect(past.fields.when?.value.start.date).toEqual({ kind: 'absolute', date: '2025-09-02' })
+    expect(past.fields.when?.value.end?.date).toEqual({ kind: 'absolute', date: '2025-09-04' })
+    const crossing = parse('Add holiday from December 28 through January 3, 2027')
+    expect(crossing.fields.when?.value.start.date).toEqual({ kind: 'absolute', date: '2026-12-28' })
+    expect(crossing.fields.when?.value.end?.date).toEqual({ kind: 'absolute', date: '2027-01-03' })
+  })
+  it.each(['no due date', 'without a due date', 'without due dates', 'undated', 'someday'])(
+    'understands an explicit %s reminder',
+    (suffix) => {
+      const draft = parse(`Remind me to buy oat milk, ${suffix}`)
+      expect(draft.operation).toBe('reminder.create')
+      expect(draft.fields.title?.value).toBe('buy oat milk')
+      expect(draft.fields.when).toBeNull()
+      expect(draft.recurrence).toBeNull()
+    }
+  )
+
+  it.each([
+    'in 2 hours',
+    'next week',
+    'when I get home',
+    'on February 30',
+    'on 2/30',
+    'on 2026-02-30'
+  ])('asks about unresolved timing instead of silently dropping %s', (timing) => {
+    expect(parse(`Remind me to call Mom ${timing}`).operation).toBe('assistant.clarify')
+  })
+
+  it('lets a user choose no due date while answering a reminder question', () => {
+    const draft = parse('no due date', { previousUserText: 'Remind me to call Mom tomorrow' })
+    expect(draft.operation).toBe('reminder.create')
+    expect(draft.fields.title?.value).toBe('call Mom')
+    expect(draft.fields.when).toBeNull()
+  })
   it.each([
     ['Remind me to call Mom tomorrow at 6 PM', 'reminder.create'],
     ['Remind me tomorrow at 6 PM to call Mom', 'reminder.create'],
@@ -93,6 +129,11 @@ describe('deterministic calendar parser', () => {
     ['Which class comes second today?', 'calendar.list'],
     ['In what room is my first class today?', 'calendar.list'],
     ['Show my upcoming events', 'calendar.list'],
+    ['What assignments are due today?', 'calendar.list'],
+    ['Do I have any upcoming assignments?', 'calendar.list'],
+    ['What exams do I have next week?', 'calendar.list'],
+    ["What's my next assignment?", 'calendar.list'],
+    ["What's due today?", 'calendar.list'],
     ["What's on my calendar next week?", 'calendar.list'],
     ['Show my schedule Friday', 'calendar.list'],
     ['Summarize tomorrow with details', 'calendar.list'],

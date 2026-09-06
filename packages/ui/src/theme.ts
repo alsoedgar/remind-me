@@ -305,7 +305,7 @@ export function themeCssVariables(
 ): Readonly<Record<string, string>> {
   const palette = normalizeThemePalette(paletteValue)
   const dark = paletteColorScheme(palette) === 'dark'
-  const opacity = Math.round(clamp(glassValue.opacity, 65, 96))
+  const opacity = Math.round(clamp(glassValue.opacity, 0, 100))
   const blur = Math.round(clamp(glassValue.blur, 0, 48))
   const saturation = Math.round(clamp(glassValue.saturation, 90, 160))
   const accentHover = mixHex(palette.accentColor, dark ? '#ffffff' : '#000000', 0.16)
@@ -331,9 +331,9 @@ export function themeCssVariables(
     '--color-warning': dark ? '#e1b06e' : '#9b6634',
     '--color-danger': dark ? '#e38b91' : '#9b4d59',
     '--color-focus': dark ? '#8fc5dc' : '#426e86',
-    '--glass-main-opacity': `${Math.max(45, opacity - 12)}%`,
+    '--glass-main-opacity': `${Math.round(opacity * 0.846)}%`,
     '--glass-surface-opacity': `${opacity}%`,
-    '--glass-card-opacity': `${Math.min(99, opacity + 7)}%`,
+    '--glass-card-opacity': `${Math.min(100, Math.round(opacity * 1.09))}%`,
     '--glass-blur': `${blur}px`,
     '--glass-saturation': `${saturation}%`,
     '--glass-start': mixHex(palette.backgroundColor, palette.accentColor, dark ? 0.26 : 0.2),

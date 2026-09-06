@@ -66,16 +66,20 @@ export function resolveTemporalAnchor(anchor: TemporalAnchor, context: ResolverC
   }
 }
 
-function localInstant(date: string, time: string, timezone: string): string {
+export function resolveLocalDateTime(date: string, time: string, timezone: string): string {
   try {
     const plainDate = Temporal.PlainDate.from(date)
     const plainTime = Temporal.PlainTime.from(time)
     return plainDate
-      .toZonedDateTime({ timeZone: timezone, plainTime })
+      .toPlainDateTime(plainTime)
+      .toZonedDateTime(timezone, { disambiguation: 'reject' })
       .toInstant()
       .toString({ fractionalSecondDigits: 3 })
   } catch {
-    throw new CalendarResolutionError('invalid-window', `Invalid local date/time: ${date} ${time}`)
+    throw new CalendarResolutionError(
+      'invalid-window',
+      `The local time ${date} ${time} in ${timezone} is invalid or ambiguous during a clock change. Choose another time or timezone.`
+    )
   }
 }
 
@@ -98,11 +102,17 @@ export function resolveTemporalWindow(
   const timezone = window.timezone ?? context.timezone
 
   if (window.allDay) {
-    const startUtc = localInstant(startDate, '00:00', timezone)
+    const startUtc = resolveLocalDateTime(startDate, '00:00', timezone)
     const inclusiveEndDate = window.end
       ? resolveTemporalAnchor(window.end.date, context)
       : startDate
-    const endUtc = localInstant(addDays(inclusiveEndDate, 1), '00:00', timezone)
+    const endUtc = resolveLocalDateTime(addDays(inclusiveEndDate, 1), '00:00', timezone)
+    if (Date.parse(endUtc) <= Date.parse(startUtc)) {
+      throw new CalendarResolutionError(
+        'invalid-window',
+        'The end date must be on or after the start date'
+      )
+    }
     return { startUtc, endUtc, timezone, allDay: true }
   }
 
@@ -110,7 +120,7 @@ export function resolveTemporalWindow(
     throw new CalendarResolutionError('invalid-window', 'Timed window is missing a start time')
   }
 
-  const startUtc = localInstant(startDate, window.start.time, timezone)
+  const startUtc = resolveLocalDateTime(startDate, window.start.time, timezone)
   if (window.end === null) {
     return {
       startUtc,
@@ -121,7 +131,7 @@ export function resolveTemporalWindow(
   }
 
   const endDate = resolveTemporalAnchor(window.end.date, context)
-  const endUtc = localInstant(endDate, window.end.time ?? window.start.time, timezone)
+  const endUtc = resolveLocalDateTime(endDate, window.end.time ?? window.start.time, timezone)
   if (Date.parse(endUtc) <= Date.parse(startUtc)) {
     throw new CalendarResolutionError('invalid-window', 'Resolved end must be after start')
   }
@@ -156,7 +166,9 @@ export function resolveCalendarIR(
         draft.operation.startsWith('calendar.') && resolvedWindow ? resolvedWindow.startUtc : null,
       rangeEndUtc:
         draft.operation.startsWith('calendar.') && resolvedWindow ? resolvedWindow.endUtc : null,
-      timezone: resolvedWindow?.timezone ?? null,
+      timezone:
+        resolvedWindow?.timezone ??
+        (draft.operation === 'reminder.create' ? context.timezone : null),
       allDay: resolvedWindow?.allDay ?? null,
       reminderOffsetMinutes: draft.fields.reminderOffsetMinutes?.value ?? null,
       status: draft.fields.status

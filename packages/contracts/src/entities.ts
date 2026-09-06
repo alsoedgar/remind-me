@@ -194,7 +194,7 @@ export const preferencesEntitySchema = z
     mutedTextColor: themeColorSchema.default('#6f5b50'),
     borderColor: themeColorSchema.default('#3c2f2f'),
     surfaceStyle: z.enum(['paper', 'frosted', 'liquid']).default('paper'),
-    glassOpacity: z.number().int().min(65).max(96).default(78),
+    glassOpacity: z.number().int().min(0).max(100).default(78),
     glassBlur: z.number().int().min(0).max(48).default(26),
     glassSaturation: z.number().int().min(90).max(160).default(122),
     savedThemes: z.array(savedThemeSchema).max(8).default([]),

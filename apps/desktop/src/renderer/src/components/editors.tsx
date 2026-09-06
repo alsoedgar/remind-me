@@ -775,8 +775,8 @@ function ReminderEditor({
             calendarId: snapshot?.calendars[0]?.id ?? null,
             title: title ?? '',
             notes: '',
-            dueDate: fallbackDate,
-            dueTime: '09:00',
+            dueDate: date,
+            dueTime: date ? '09:00' : null,
             timezone: snapshot?.preferences.timezone ?? 'UTC',
             recurrence: null
           }

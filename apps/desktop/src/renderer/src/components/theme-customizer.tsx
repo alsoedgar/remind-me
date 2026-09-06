@@ -53,7 +53,7 @@ const surfaceOptions: ReadonlyArray<{
   {
     id: 'liquid',
     name: 'Liquid glass',
-    description: 'Layered color, light, and deeper glass reflections.'
+    description: 'Apple-inspired translucent layers, light, and soft depth.'
   }
 ]
 
@@ -316,8 +316,9 @@ export function ThemeCustomizer({
                 </span>
                 <input
                   type="range"
-                  min="65"
-                  max="96"
+                  min="0"
+                  max="100"
+                  step="1"
                   value={glassOpacity}
                   onChange={(event) => setGlassOpacity(Number(event.target.value))}
                 />

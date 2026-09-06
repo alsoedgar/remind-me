@@ -41,11 +41,24 @@ describe('theme palettes', () => {
       blur: -20,
       saturation: 500
     })
-    expect(variables['--glass-surface-opacity']).toBe('96%')
+    expect(variables['--glass-surface-opacity']).toBe('100%')
     expect(variables['--glass-blur']).toBe('0px')
     expect(variables['--glass-saturation']).toBe('160%')
     expect(
       contrastRatio(palette.accentColor, variables['--color-button-text'] ?? '#000000')
     ).toBeGreaterThanOrEqual(4.5)
+  })
+
+  it('maps the full opacity range to transparent and solid glass layers', () => {
+    const palette = paletteForTheme('morning-lo-fi')
+    const transparent = themeCssVariables(palette, { opacity: 0, blur: 26, saturation: 122 })
+    const solid = themeCssVariables(palette, { opacity: 100, blur: 26, saturation: 122 })
+
+    expect(transparent['--glass-main-opacity']).toBe('0%')
+    expect(transparent['--glass-surface-opacity']).toBe('0%')
+    expect(transparent['--glass-card-opacity']).toBe('0%')
+    expect(solid['--glass-main-opacity']).toBe('85%')
+    expect(solid['--glass-surface-opacity']).toBe('100%')
+    expect(solid['--glass-card-opacity']).toBe('100%')
   })
 })

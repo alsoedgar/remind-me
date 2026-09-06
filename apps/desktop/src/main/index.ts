@@ -32,6 +32,7 @@ import {
 } from './appearance-runtime'
 import { scheduleDocumentReleaseGate } from './document-release-gate'
 import { CanvasService } from './canvas-service'
+import { OnlineAiService, connectedAssistantFallbacks } from './online-ai-service'
 
 const applicationScheme = 'remind-me'
 const applicationHost = 'app'
@@ -878,6 +879,7 @@ if (!hasSingleInstanceLock) {
   let notificationScheduler: ReminderNotificationScheduler | null = null
   let voiceRuntime: OfflineVoiceRuntime | null = null
   let flexModelRuntime: OptionalFlexModelRuntime | null = null
+  let onlineAiService: OnlineAiService | null = null
   let windowModeController: WindowModeController | null = null
 
   function requireWindowModeController(): WindowModeController {
@@ -968,33 +970,38 @@ if (!hasSingleInstanceLock) {
         app.getPath('userData'),
         flexModelRuntimePaths()
       )
+      const credentialVault = {
+        isAvailable: async () => {
+          if (!(await safeStorage.isAsyncEncryptionAvailable())) return false
+          return (
+            process.platform !== 'linux' || safeStorage.getSelectedStorageBackend() !== 'basic_text'
+          )
+        },
+        encrypt: async (value: string) =>
+          (await safeStorage.encryptStringAsync(value)).toString('base64'),
+        decrypt: async (value: string) =>
+          (await safeStorage.decryptStringAsync(Buffer.from(value, 'base64'))).result
+      }
+      onlineAiService = new OnlineAiService({
+        connectionPath: join(app.getPath('userData'), 'online-ai-connection-v1.json'),
+        credentialVault,
+        disabled: isTestRun
+      })
       const assistantService = new PersistentAssistantService(
         repository,
         localRelease.planner,
         localRelease.plannerInfo,
         localRelease.speaker,
         localRelease.speakerInfo,
-        {
+        connectedAssistantFallbacks(onlineAiService, {
           calendarPlanner: flexModelRuntime,
           generalResponder: flexModelRuntime
-        }
+        })
       )
       voiceRuntime = new OfflineVoiceRuntime(voiceRuntimePaths(), isTestRun ? 300 : undefined)
       const canvasService = new CanvasService({
         connectionPath: join(app.getPath('userData'), 'canvas-connection-v1.json'),
-        credentialVault: {
-          isAvailable: async () => {
-            if (!(await safeStorage.isAsyncEncryptionAvailable())) return false
-            return (
-              process.platform !== 'linux' ||
-              safeStorage.getSelectedStorageBackend() !== 'basic_text'
-            )
-          },
-          encrypt: async (value) =>
-            (await safeStorage.encryptStringAsync(value)).toString('base64'),
-          decrypt: async (value) =>
-            (await safeStorage.decryptStringAsync(Buffer.from(value, 'base64'))).result
-        }
+        credentialVault
       })
       notificationScheduler = new ReminderNotificationScheduler(
         repository,
@@ -1014,6 +1021,7 @@ if (!hasSingleInstanceLock) {
         voiceRuntime,
         flexModelRuntime,
         canvasService,
+        onlineAiService,
         deleteRecoveryCopies: () => deleteCalendarRecoveryCopies(databasePath),
         validateSender: (event) => validateIpcSender(event.senderFrame),
         appInfo: () => ({
@@ -1067,6 +1075,7 @@ if (!hasSingleInstanceLock) {
     notificationScheduler?.stop()
     voiceRuntime?.dispose()
     void flexModelRuntime?.unload()
+    onlineAiService?.cancelAll()
     repository?.close()
     notificationScheduler = null
     voiceRuntime = null

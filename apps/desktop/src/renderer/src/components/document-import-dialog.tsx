@@ -19,7 +19,8 @@ import {
   applyDocumentFallbackResponse,
   applyDocumentRepairResponse,
   buildDocumentFallbackRequests,
-  planDocumentExtraction
+  planDocumentExtraction,
+  type DocumentPlanningContext
 } from '@remind-me/importers/document'
 import {
   reviewedDocumentItemSchema,
@@ -200,7 +201,7 @@ function EventDraftEditor({
             {draft.schedule.verification === 'layout-and-planscan'
               ? 'Layout + PlanScan agree'
               : draft.schedule.verification === 'fallback-grouping'
-                ? 'Qwen grouped · code verified'
+                ? 'AI grouped · code verified'
                 : 'Layout checked'}
           </span>
         </div>
@@ -472,6 +473,10 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
   const [error, setError] = useState<string | null>(null)
   const [reviewError, setReviewError] = useState<string | null>(null)
   const [reviewNotice, setReviewNotice] = useState<string | null>(null)
+  const [onlineConfigured, setOnlineConfigured] = useState(false)
+  const [onlineBusy, setOnlineBusy] = useState(false)
+  const [onlineRequested, setOnlineRequested] = useState(false)
+  const planningContextRef = useRef<DocumentPlanningContext | null>(null)
   const processorRef = useRef<LocalDocumentProcessor | null>(null)
   const selectionIdRef = useRef<string | null>(null)
   const committedRef = useRef(false)
@@ -481,11 +486,25 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
   const close = useCallback(() => {
     processorRef.current?.cancel()
     const selectionId = selectionIdRef.current
+    selectionIdRef.current = null
     if (selectionId && !committedRef.current) {
       void window.remindMe.discardDocumentSelection(selectionId).catch(() => undefined)
     }
     onClose()
   }, [onClose])
+
+  useEffect(() => {
+    let mounted = true
+    void window.remindMe
+      .getOnlineAiStatus()
+      .then((status) => {
+        if (mounted) setOnlineConfigured(status.configured)
+      })
+      .catch(() => undefined)
+    return () => {
+      mounted = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!snapshot) {
@@ -540,6 +559,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
           reminders: snapshot.reminders
         }
         const planned = planDocumentExtraction(extraction, planningContext)
+        planningContextRef.current = planningContext
         if (!mounted) return
         let reviewedPlan = planned
         if (planned.repairSession) {
@@ -645,6 +665,61 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
   }, [close, phase])
 
   const active = drafts.find((item) => item.draft.id === activeDraftId) ?? null
+  const onlineRequests = useMemo(
+    () => (analysis ? buildDocumentFallbackRequests(analysis) : []),
+    [analysis]
+  )
+  const onlinePageCount = new Set(onlineRequests.map((request) => request.page)).size
+
+  async function improveWithOnlineAi(): Promise<void> {
+    if (!analysis || !planningContextRef.current || onlineBusy || phase !== 'review') return
+    const selectionId = selectionIdRef.current
+    const context = planningContextRef.current
+    if (!selectionId) return
+    setOnlineBusy(true)
+    setOnlineRequested(true)
+    setReviewError(null)
+    let improved = analysis
+    try {
+      for (const request of onlineRequests) {
+        const page = analysis.extraction.pages.find((candidate) => candidate.page === request.page)
+        if (!page) continue
+        const response = await window.remindMe.groupDocumentWithOnlineAi({
+          request,
+          pageImageDataUrl: page.reviewImageDataUrl ?? page.thumbnailDataUrl,
+          consentToUpload: true
+        })
+        if (selectionIdRef.current !== selectionId) return
+        if (response) improved = applyDocumentFallbackResponse(improved, request, response, context)
+      }
+      setReviewNotice(
+        improved.drafts.length > analysis.drafts.length
+          ? `OpenAI found ${improved.drafts.length - analysis.drafts.length} more source-backed proposals. Review the selected items before adding them.`
+          : 'OpenAI found no additional complete events in these source fields. You can correct or complete the skipped items below.'
+      )
+    } catch (reason) {
+      if (selectionIdRef.current === selectionId) setReviewError(errorMessage(reason))
+    } finally {
+      if (selectionIdRef.current === selectionId) {
+        setAnalysis(improved)
+        // Preserve edits and selections made while the online review was running.
+        setDrafts((current) => {
+          const existing = new Set(current.map((item) => item.draft.id))
+          return [
+            ...current,
+            ...improved.drafts
+              .filter((draft) => !existing.has(draft.id))
+              .map((draft) => ({
+                draft,
+                selected: draft.reconciliation.recommendedSelected,
+                selectionMode: 'recommended' as const
+              }))
+          ]
+        })
+        setOnlineBusy(false)
+      }
+    }
+  }
   const activeSkipped = analysis?.skippedItems.find((item) => item.id === activeSkippedId) ?? null
   const allBlocks = useMemo(
     () => analysis?.extraction.pages.flatMap((page) => page.blocks) ?? [],
@@ -992,7 +1067,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
 
   async function commit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
-    if (!analysis || selectedCount === 0 || phase === 'saving') return
+    if (!analysis || selectedCount === 0 || phase === 'saving' || onlineBusy) return
     setReviewError(null)
     const items: ReviewedDocumentItem[] = []
     try {
@@ -1064,7 +1139,8 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
               </h2>
               {source ? (
                 <p className="document-source-line">
-                  {source.displayName} · {formatBytes(source.byteLength)} · never uploaded
+                  {source.displayName} · {formatBytes(source.byteLength)} ·{' '}
+                  {onlineRequested ? 'OpenAI review requested' : 'processed on this device'}
                 </p>
               ) : null}
             </div>
@@ -1135,6 +1211,26 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
             data-testid="document-review"
             onSubmit={(event) => void commit(event)}
           >
+            {onlineRequests.length > 0 ? (
+              <div className="document-online-review">
+                <div>
+                  <strong>Check missed events with OpenAI</strong>
+                  <p>
+                    {onlineConfigured
+                      ? `Send ${onlinePageCount} page${onlinePageCount === 1 ? '' : 's'} and their extracted text to your connected OpenAI model. API charges apply. Results join this review before you save.`
+                      : 'Connect an OpenAI API account in Settings to check missed events against page images.'}
+                  </p>
+                </div>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={!onlineConfigured || onlineBusy || phase === 'saving'}
+                  onClick={() => void improveWithOnlineAi()}
+                >
+                  {onlineBusy ? 'Checking pages…' : 'Send pages to OpenAI'}
+                </button>
+              </div>
+            ) : null}
             <div className="document-review-toolbar">
               <div>
                 <strong>
@@ -1893,7 +1989,7 @@ export function DocumentImportDialog({ onClose }: { onClose: () => void }): Reac
                   className="retro-button"
                   data-testid="document-confirm"
                   type="submit"
-                  disabled={phase === 'saving' || selectedCount === 0}
+                  disabled={phase === 'saving' || onlineBusy || selectedCount === 0}
                 >
                   {phase === 'saving'
                     ? 'Saving locally…'

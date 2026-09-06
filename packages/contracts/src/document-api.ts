@@ -579,7 +579,7 @@ export const documentFallbackResponseSchema = documentFallbackModelOutputSchema
   .extend({
     requestId: identifierSchema,
     page: z.number().int().positive().max(maximumDocumentPages),
-    modelId: z.literal('qwen3-1.7b-q4'),
+    modelId: z.enum(['qwen3-1.7b-q4', 'openai']),
     hasMutationAuthority: z.literal(false)
   })
   .strict()

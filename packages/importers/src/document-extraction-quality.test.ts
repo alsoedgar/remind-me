@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   assessDocumentText,
   decideNativePageOcr,
+  documentPdfRenderScale,
   isBetterCalendarGridContent,
   isBetterOcrContent,
   shouldRetryOcrPageSegmentation,
@@ -26,6 +27,23 @@ function content(rows: readonly { text: string; x?: number; y: number; confidenc
 }
 
 describe('document extraction quality', () => {
+  it('renders letter PDFs at useful OCR resolution within the pixel budget', () => {
+    const scale = documentPdfRenderScale(612, 792, 2200, 4_500_000)
+    expect(792 * scale).toBeCloseTo(2200)
+    expect(612 * 792 * scale * scale).toBeLessThanOrEqual(4_500_000)
+    expect(documentPdfRenderScale(4000, 4000, 2200, 4_500_000)).toBeLessThan(1)
+  })
+
+  it('retries sparse and empty sideways scans instead of accepting missing text', () => {
+    expect(shouldRetryOcrOrientation(content([]))).toBe(true)
+    expect(shouldRetryOcrOrientation(content([{ text: 'xy', y: 0.2, confidence: 0.2 }]))).toBe(true)
+    expect(shouldRetryOcrPageSegmentation(content([]))).toBe(true)
+    expect(
+      shouldRetryOcrPageSegmentation(
+        content([{ text: 'broken table row', y: 0.2, confidence: 0.4 }])
+      )
+    ).toBe(true)
+  })
   it('requests OCR when a hybrid page only exposes a native footer', () => {
     const footer = content([
       { text: 'Private local evaluation copy raster schedule body', x: 0.04, y: 0.97 }

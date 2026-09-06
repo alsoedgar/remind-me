@@ -100,7 +100,7 @@ Important invariants:
 
 - Models never own UTC conversion, timezones, DST, recurrence expansion, conflict checks, or storage.
 - Destructive, ambiguous, series-wide, and bulk changes require review.
-- Document bytes, OCR text, thumbnails, and recordings are temporary and never uploaded.
+- Document bytes, OCR text, thumbnails, and recordings are temporary. Processing stays local by default; optional OpenAI document review sends only the page images and extracted text the user explicitly chooses to review online. Voice recordings stay local.
 - The required models work out of the box; the optional language pack is the only explicit model download.
 - Context isolation, renderer sandboxing, strict Zod IPC contracts, custom protocol restrictions, and hardened Electron fuses protect the desktop boundary.
 
@@ -185,7 +185,9 @@ Good interview discussion areas include why calendar execution remains determini
 
 ## Privacy and limitations
 
-Remind Me has no account requirement, telemetry, or required server. Calendar data and assistant history remain on the device. The optional language pack is downloaded only after explicit consent, verified by SHA-256, and used locally afterward. Canvas is an opt-in, read-only exception: when connected, the app sends a device-protected personal token only to the Canvas site the user chooses, fetches assignments on request, and saves only user-selected due dates locally. The token is excluded from backups.
+Remind Me has no account requirement, telemetry, or required server. Calendar data and assistant history are stored on the device. The optional language pack is downloaded only after explicit consent, verified by SHA-256, and used locally afterward. Canvas is opt-in and read-only: when connected, the app sends a device-protected personal token only to the Canvas site the user chooses, fetches assignments on request, and saves only user-selected due dates locally. The token is excluded from backups.
+
+Settings also offers an optional **Connect OpenAI** API connection. Users supply their own API key, which is protected by the operating system and excluded from backups. A separate switch enables online interpretation of complex assistant requests and shares bounded conversation, profile and relevant calendar context. Simple commands remain local. In a document review, **Send pages to OpenAI** explicitly shares the indicated page images and source text to check missed event groupings. Results must pass source-ID validation and deterministic scheduling before joining the existing editable batch. Requests use Structured Outputs, `store: false`, bounded responses, timeouts and cancellation; these settings do not promise zero provider retention. API access and billing are separate from ChatGPT sign-in. See [online assistance](docs/architecture/online-assistance.md).
 
 Current limitations include English-only speech and language handling, an unsigned first Windows release, a pending independently human-authored Phase 8 benchmark, and imperfect OCR on noisy scans. The app surfaces uncertainty and preserves review/fallback paths instead of treating model output as authoritative.
 

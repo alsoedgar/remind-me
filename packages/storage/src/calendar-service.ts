@@ -6,7 +6,8 @@ import {
   expandEventsInRange,
   findOccurrenceConflicts,
   refreshEventDocumentImportIdentity,
-  refreshReminderDocumentImportIdentity
+  refreshReminderDocumentImportIdentity,
+  resolveLocalDateTime
 } from '@remind-me/calendar-engine'
 import {
   availabilityResultSchema,
@@ -57,10 +58,7 @@ const weekdayNumber: Record<Weekday, number> = {
 }
 
 function toInstant(date: string, time: string, timezone: string): string {
-  return Temporal.PlainDate.from(date)
-    .toZonedDateTime({ timeZone: timezone, plainTime: Temporal.PlainTime.from(time) })
-    .toInstant()
-    .toString({ fractionalSecondDigits: 3 })
+  return resolveLocalDateTime(date, time, timezone)
 }
 
 function eventInstants(form: EventForm): { startUtc: string; endUtc: string } {

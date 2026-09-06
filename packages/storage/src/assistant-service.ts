@@ -6,6 +6,7 @@ import {
   assistantPlanFromCalendarDrafts,
   createGroundedReply,
   getActionDisposition,
+  isUndatedReminderQuery,
   normalizeAssistantText,
   parseBulkClearIntent,
   parseProposalReviewCorrection,
@@ -115,6 +116,7 @@ export interface FlexibleCalendarPlanner {
 }
 
 export interface CalendarFallbackPlanner {
+  getFailureMessage?(): Promise<string | null>
   planCalendar(
     text: string,
     context: FlexModelPlanContext,
@@ -124,6 +126,7 @@ export interface CalendarFallbackPlanner {
 }
 
 export interface GeneralFallbackResponder {
+  getFailureMessage?(): Promise<string | null>
   respondGeneral(
     input: FlexModelChatRequest,
     onChunk?: (text: string) => void,
@@ -296,6 +299,18 @@ function generalFallbackLimitation(reason: AssistantFallbackReason): string {
       return 'I left out the local response because it claimed a calendar change that did not occur. Nothing was changed.'
     default:
       return 'I could not finish that response with the local language model. Please try again.'
+  }
+}
+
+async function providerFailureMessage(
+  provider: CalendarFallbackPlanner | GeneralFallbackResponder | null,
+  reason: AssistantFallbackReason
+): Promise<string | null> {
+  if (!['unavailable', 'timeout', 'invalid-output'].includes(reason)) return null
+  try {
+    return (await provider?.getFailureMessage?.())?.slice(0, 500) ?? null
+  } catch {
+    return null
   }
 }
 
@@ -1504,7 +1519,7 @@ function isRejectedFlexibleChatTurn(value: string): boolean {
 function looksLikeCalendarRequest(value: string): boolean {
   return (
     looksLikeCalendarMutation(value) ||
-    /\b(?:agenda|appointment|availability|available|calendar|class|conflict|course|event|meeting|plans?|reminder|schedule|today|tomorrow|tmr|tmrw|tmw|yesterday|weekend|monday|tuesday|wednesday|thursday|friday|saturday|sunday|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b|\b(?:am|will|would|could)\s+i\s+(?:be\s+)?(?:free|busy)\b|\bwhat (?:do|did) i have\b|\bwhat(?:'s|s| is) (?:on|coming up|next|tomorrow|tmr|tmrw|tmw|today)\b|^(?:when|where)\s+is\b|^(?:find|search(?:\s+for)?|look\s+up)\b|\b(?:at|around|before|after|from|between|until|by)\s+\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)?\b|\b\d{1,4}[/-]\d{1,2}(?:[/-]\d{1,4})?\b/iu.test(
+    /\b(?:agenda|appointment|assignments?|availability|available|calendar|class|conflict|course|deadlines?|due|events?|exams?|finals?|homework|meeting|midterms?|paper|plans?|projects?|quiz(?:zes)?|reminders?|schedule|tasks?|tests?|worksheet|today|tomorrow|tmr|tmrw|tmw|yesterday|weekend|monday|tuesday|wednesday|thursday|friday|saturday|sunday|jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b|\b(?:am|will|would|could)\s+i\s+(?:be\s+)?(?:free|busy)\b|\bwhat (?:do|did) i have\b|\bwhat(?:'s|s| is) (?:on|coming up|next|tomorrow|tmr|tmrw|tmw|today|due)\b|^(?:when|where)\s+is\b|^(?:find|search(?:\s+for)?|look\s+up)\b|\b(?:at|around|before|after|from|between|until|by)\s+\d{1,2}(?::\d{2})?\s*(?:a\.?m\.?|p\.?m\.?)?\b|\b\d{1,4}[/-]\d{1,2}(?:[/-]\d{1,4})?\b/iu.test(
       value
     )
   )
@@ -1555,7 +1570,7 @@ function calendarDetailFollowUp(value: string): CalendarDetailRequest | null {
     return 'time'
   }
   const referencesPriorResults =
-    /\b(?:they|them|their|these|those|these ones|those ones|the ones|these (?:classes|courses|lectures|labs|events|meetings|appointments|reminders|items)|those (?:classes|courses|lectures|labs|events|meetings|appointments|reminders|items))\b/iu.test(
+    /\b(?:they|them|their|these|those|these ones|those ones|the ones|these (?:classes|courses|lectures|labs|events|meetings|appointments|reminders|assignments?|exams?|items)|those (?:classes|courses|lectures|labs|events|meetings|appointments|reminders|assignments?|exams?|items))\b/iu.test(
       normalized
     )
   const asksForTheirTimes =
@@ -2029,7 +2044,7 @@ function looksLikeCalendarReadRequest(value: string): boolean {
   )
 }
 
-type CalendarListItemKind = 'class' | 'event' | 'reminder' | 'item'
+type CalendarListItemKind = 'assignment' | 'class' | 'due' | 'event' | 'exam' | 'reminder' | 'item'
 
 type CalendarListPosition =
   { kind: 'ordinal'; index: number } | { kind: 'next' } | { kind: 'previous' } | { kind: 'last' }
@@ -2037,6 +2052,31 @@ type CalendarListPosition =
 interface CalendarListSelection {
   itemKind: CalendarListItemKind
   position: CalendarListPosition
+}
+
+function calendarListCategory(value: string): CalendarListItemKind | null {
+  const normalized = value.normalize('NFKC').toLocaleLowerCase().replace(/[‘’]/gu, "'").trim()
+  if (/\b(?:exams?|midterms?|finals?|tests?)\b/u.test(normalized)) return 'exam'
+  if (
+    /\b(?:assignments?|homework|\bhw\b|quiz(?:zes)?|projects?|papers?|worksheets?|problem sets?|lab reports?|readings?|reflections?|presentations?)\b/u.test(
+      normalized
+    )
+  ) {
+    return 'assignment'
+  }
+  if (/\b(?:due dates?|deadlines?)\b|\b(?:what(?:'s|s| is)|anything)\s+due\b/u.test(normalized)) {
+    return 'due'
+  }
+  if (
+    /\b(?:classes?|courses?|lectures?|labs?|discussions?|seminars?|practicums?|recitations?|tutorials?)\b/u.test(
+      normalized
+    )
+  ) {
+    return 'class'
+  }
+  if (/\b(?:reminders?|tasks?)\b/u.test(normalized)) return 'reminder'
+  if (/\b(?:events?|meetings?|appointments?)\b/u.test(normalized)) return 'event'
+  return null
 }
 
 function calendarListSelection(value: string): CalendarListSelection | null {
@@ -2055,11 +2095,11 @@ function calendarListSelection(value: string): CalendarListSelection | null {
   }
 
   const direct =
-    /\b(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|earliest|next|previous|last|final|latest)\s+(class(?:es)?|courses?|lectures?|labs?|discussions?|seminars?|practicums?|recitations?|tutorials?|events?|meetings?|appointments?|plans?|items?|reminders?|tasks?|things?)\b/u.exec(
+    /\b(first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|earliest|next|previous|last|final|latest)\s+(class(?:es)?|courses?|lectures?|labs?|discussions?|seminars?|practicums?|recitations?|tutorials?|events?|meetings?|appointments?|plans?|items?|reminders?|tasks?|assignments?|homework|quiz(?:zes)?|projects?|papers?|worksheets?|exams?|midterms?|finals?|tests?|due dates?|deadlines?|things?)\b/u.exec(
       normalized
     )
   const inverse =
-    /\b(class(?:es)?|courses?|lectures?|labs?|discussions?|seminars?|practicums?|recitations?|tutorials?|events?|meetings?|appointments?|plans?|items?|reminders?|tasks?|things?)\s+(?:comes?|is)\s+(first|second|third|fourth|fifth|earliest|next|previous|last|final|latest)\b/u.exec(
+    /\b(class(?:es)?|courses?|lectures?|labs?|discussions?|seminars?|practicums?|recitations?|tutorials?|events?|meetings?|appointments?|plans?|items?|reminders?|tasks?|assignments?|homework|quiz(?:zes)?|projects?|papers?|worksheets?|exams?|midterms?|finals?|tests?|due dates?|deadlines?|things?)\s+(?:comes?|is)\s+(first|second|third|fourth|fifth|earliest|next|previous|last|final|latest)\b/u.exec(
       normalized
     )
   const ordinal = direct?.[1] ?? inverse?.[2]
@@ -2069,11 +2109,17 @@ function calendarListSelection(value: string): CalendarListSelection | null {
   const itemKind: CalendarListItemKind =
     /^(?:class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial)/u.test(noun)
       ? 'class'
-      : /^(?:reminder|task)/u.test(noun)
-        ? 'reminder'
-        : /^(?:event|meeting|appointment)/u.test(noun)
-          ? 'event'
-          : 'item'
+      : /^(?:assignment|homework|quiz|project|paper|worksheet)/u.test(noun)
+        ? 'assignment'
+        : /^(?:exam|midterm|final|test)/u.test(noun)
+          ? 'exam'
+          : /^(?:due date|deadline)/u.test(noun)
+            ? 'due'
+            : /^(?:reminder|task)/u.test(noun)
+              ? 'reminder'
+              : /^(?:event|meeting|appointment)/u.test(noun)
+                ? 'event'
+                : 'item'
   const position: CalendarListPosition =
     ordinal === 'next'
       ? { kind: 'next' }
@@ -2099,6 +2145,40 @@ function calendarListSelection(value: string): CalendarListSelection | null {
                 }[ordinal] ?? 0
             }
   return { itemKind, position }
+}
+
+function academicReminderText(reminder: ReminderEntity): string {
+  return `${reminder.title}\n${reminder.notes}`
+}
+
+function isLikelyAssignmentText(value: string): boolean {
+  return /\b(?:canvas\s+assignment|syllabus(?:\s+assignment)?|assignments?|homework|\bhw\b|quiz(?:zes)?|projects?|papers?|worksheets?|problem\s+sets?|exams?|midterms?|finals?(?:\s+exam)?|tests?|lab\s+reports?|readings?(?:\s+response)?|reflections?|presentations?|discussion\s+posts?|practicums?)\b/iu.test(
+    value
+  )
+}
+
+function isLikelyExamText(value: string): boolean {
+  return /\b(?:exams?|midterms?|finals?(?:\s+exam)?|tests?)\b/iu.test(value)
+}
+
+function isLikelyAssignmentReminder(reminder: ReminderEntity): boolean {
+  return isLikelyAssignmentText(academicReminderText(reminder))
+}
+
+function isLikelyExamReminder(reminder: ReminderEntity): boolean {
+  return isLikelyExamText(academicReminderText(reminder))
+}
+
+function occurrenceAcademicText(event: EventOccurrence, entity: EventEntity | null): string {
+  return `${event.title}\n${event.description}\n${entity?.description ?? ''}`
+}
+
+function isLikelyAssignmentOccurrence(event: EventOccurrence, entity: EventEntity | null): boolean {
+  return isLikelyAssignmentText(occurrenceAcademicText(event, entity))
+}
+
+function isLikelyExamOccurrence(event: EventOccurrence, entity: EventEntity | null): boolean {
+  return isLikelyExamText(occurrenceAcademicText(event, entity))
 }
 
 function isLikelyClassOccurrence(event: EventOccurrence, entity: EventEntity | null): boolean {
@@ -2846,7 +2926,9 @@ export class PersistentAssistantService {
         trace
       )
       if (conversational) return conversational
-      const detail = generalFallbackLimitation(trace.fallbackReason)
+      const detail =
+        (await providerFailureMessage(this.generalFallbackResponder, trace.fallbackReason)) ??
+        generalFallbackLimitation(trace.fallbackReason)
       return this.respond(conversation.id, id, request.range, {
         kind: 'unsupported',
         text: this.groundedReply(
@@ -2854,7 +2936,7 @@ export class PersistentAssistantService {
           id,
           'runtime-unavailable',
           [{ key: 'DETAIL', kind: 'text', value: detail }],
-          ['<DETAIL>', 'The optional local responder is unavailable: <DETAIL>']
+          ['<DETAIL>', 'The optional responder is unavailable: <DETAIL>']
         ),
         relatedEventIds: [],
         relatedReminderIds: [],
@@ -3118,7 +3200,9 @@ export class PersistentAssistantService {
           trace
         )
         if (conversational) return conversational
-        const detail = generalFallbackLimitation(trace.fallbackReason)
+        const detail =
+          (await providerFailureMessage(this.generalFallbackResponder, trace.fallbackReason)) ??
+          generalFallbackLimitation(trace.fallbackReason)
         return this.respond(conversation.id, id, request.range, {
           kind: 'unsupported',
           text: this.groundedReply(
@@ -3126,7 +3210,7 @@ export class PersistentAssistantService {
             id,
             'runtime-unavailable',
             [{ key: 'DETAIL', kind: 'text', value: detail }],
-            ['<DETAIL>', 'The optional local responder is unavailable: <DETAIL>']
+            ['<DETAIL>', 'The optional responder is unavailable: <DETAIL>']
           ),
           relatedEventIds: [],
           relatedReminderIds: [],
@@ -3134,7 +3218,8 @@ export class PersistentAssistantService {
         })
       }
       const detail = unsupported
-        ? calendarFallbackLimitation(trace.fallbackReason, mutation)
+        ? ((await providerFailureMessage(this.calendarFallbackPlanner, trace.fallbackReason)) ??
+          calendarFallbackLimitation(trace.fallbackReason, mutation))
         : 'I did not make a change because that request did not pass the local safety checks.'
       const text = this.groundedReply(
         conversation.id,
@@ -5532,7 +5617,9 @@ export class PersistentAssistantService {
       }
       if (fallbackResult.kind !== 'plan') {
         if (trace) trace.fallbackReason = fallbackResult.kind
-        fallbackFailureDetail = `The local fallback did not return a translation for all ${requestParts.length} requested items.`
+        fallbackFailureDetail =
+          (await providerFailureMessage(this.calendarFallbackPlanner, fallbackResult.kind)) ??
+          `The language planner did not return a translation for all ${requestParts.length} requested items.`
       } else {
         const flexiblePlan = fallbackResult.plan
         if (flexiblePlan.actions.length !== requestParts.length) {
@@ -6764,6 +6851,28 @@ export class PersistentAssistantService {
         break
       }
       case 'calendar.list': {
+        if (isUndatedReminderQuery(question)) {
+          const undated = this.repository
+            .listReminders()
+            .filter((item) => item.status === 'active' && item.dueAtUtc === null)
+          relatedReminderIds = undated.map((item) => item.id)
+          orderedResultItems = undated.map((item) => ({
+            kind: 'reminder' as const,
+            id: item.id,
+            occurrenceStart: null
+          }))
+          selectedResultItems = orderedResultItems
+          const page = renderGroundedAnswer({
+            items: undated.map((item) => groundedReminderAnswerItem(item, preferences.locale)),
+            locale: preferences.locale,
+            mode: requestedAttribute ? 'attributes' : asksForDetails ? 'details' : 'names',
+            fields: requestedAttribute ? [requestedAttribute] : [],
+            emptyText: 'There are no reminders without due dates.'
+          })
+          text = page.text
+          continuationCursor = page.nextCursor
+          break
+        }
         let occurrences = querySnapshot.occurrences
           .filter((item) => overlaps(item.startUtc, item.endUtc, queryStart, queryEnd))
           .sort((left, right) => Date.parse(left.startUtc) - Date.parse(right.startUtc))
@@ -6777,15 +6886,30 @@ export class PersistentAssistantService {
           )
           .sort((left, right) => Date.parse(left.dueAtUtc!) - Date.parse(right.dueAtUtc!))
         const requestedSelection = calendarListSelection(question)
-        if (requestedSelection?.itemKind === 'class') {
+        const requestedItemKind = requestedSelection?.itemKind ?? calendarListCategory(question)
+        if (requestedItemKind === 'class') {
           const likelyClasses = occurrences.filter((occurrence) =>
             isLikelyClassOccurrence(occurrence, this.repository.getEvent(occurrence.eventId))
           )
           occurrences = likelyClasses.length > 0 ? likelyClasses : occurrences
           reminders = []
-        } else if (requestedSelection?.itemKind === 'event') {
+        } else if (requestedItemKind === 'assignment') {
+          occurrences = occurrences.filter((occurrence) =>
+            isLikelyAssignmentOccurrence(occurrence, this.repository.getEvent(occurrence.eventId))
+          )
+          reminders = reminders.filter(isLikelyAssignmentReminder)
+        } else if (requestedItemKind === 'exam') {
+          occurrences = occurrences.filter((occurrence) =>
+            isLikelyExamOccurrence(occurrence, this.repository.getEvent(occurrence.eventId))
+          )
+          reminders = reminders.filter(isLikelyExamReminder)
+        } else if (requestedItemKind === 'due') {
+          occurrences = occurrences.filter((occurrence) =>
+            isLikelyAssignmentOccurrence(occurrence, this.repository.getEvent(occurrence.eventId))
+          )
+        } else if (requestedItemKind === 'event') {
           reminders = []
-        } else if (requestedSelection?.itemKind === 'reminder') {
+        } else if (requestedItemKind === 'reminder') {
           occurrences = []
         }
         orderedResultItems = [
@@ -6853,17 +6977,29 @@ export class PersistentAssistantService {
         relatedReminderIds = reminders.map((reminder) => reminder.id)
         const nextOnly = requestedSelection?.position.kind === 'next'
         const emptyText =
-          requestedSelection?.itemKind === 'class'
+          requestedItemKind === 'assignment'
             ? nextOnly
-              ? 'No classes coming up.'
-              : 'No classes scheduled.'
-            : requestedSelection?.itemKind === 'reminder'
+              ? 'No assignments coming up.'
+              : 'No assignments due in that period.'
+            : requestedItemKind === 'exam'
               ? nextOnly
-                ? 'No reminders coming up.'
-                : 'No reminders scheduled.'
-              : nextOnly
-                ? 'Nothing coming up.'
-                : 'Nothing scheduled.'
+                ? 'No exams coming up.'
+                : 'No exams scheduled in that period.'
+              : requestedItemKind === 'due'
+                ? nextOnly
+                  ? 'No upcoming due dates.'
+                  : 'Nothing is due in that period.'
+                : requestedItemKind === 'class'
+                  ? nextOnly
+                    ? 'No classes coming up.'
+                    : 'No classes scheduled.'
+                  : requestedItemKind === 'reminder'
+                    ? nextOnly
+                      ? 'No reminders coming up.'
+                      : 'No reminders scheduled.'
+                    : nextOnly
+                      ? 'Nothing coming up.'
+                      : 'Nothing scheduled.'
         const groundedItems = [
           ...occurrences.map((occurrence) => ({
             at: occurrence.startUtc,
@@ -6891,13 +7027,19 @@ export class PersistentAssistantService {
                   [],
                   nextOnly
                     ? ['Nothing coming up.', 'There’s nothing coming up.', 'Nothing is coming up.']
-                    : requestedSelection?.itemKind === 'class'
-                      ? ['No classes scheduled.', 'There are no classes scheduled.']
-                      : [
-                          'Nothing scheduled.',
-                          'There’s nothing scheduled.',
-                          'I found nothing scheduled.'
-                        ]
+                    : requestedItemKind === 'assignment'
+                      ? ['No assignments due in that period.', 'There are no assignments due then.']
+                      : requestedItemKind === 'exam'
+                        ? ['No exams scheduled in that period.', 'There are no exams then.']
+                        : requestedItemKind === 'due'
+                          ? ['Nothing is due in that period.', 'There are no due reminders then.']
+                          : requestedItemKind === 'class'
+                            ? ['No classes scheduled.', 'There are no classes scheduled.']
+                            : [
+                                'Nothing scheduled.',
+                                'There’s nothing scheduled.',
+                                'I found nothing scheduled.'
+                              ]
                 )
           break
         }

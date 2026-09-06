@@ -19,6 +19,7 @@ import {
   cleanDocumentWord as cleanWord,
   contentFromPositionedWords,
   decideNativePageOcr,
+  documentPdfRenderScale,
   isBetterCalendarGridContent,
   isBetterOcrContent,
   isStrongOcrOrientation,
@@ -27,7 +28,6 @@ import {
   positionedNativeWords,
   shouldRetryOcrPageSegmentation,
   shouldRetryOcrOrientation,
-  splitDocumentWords as splitWords,
   type DocumentTextContent,
   type PositionedDocumentWord,
   validateDocumentBytes
@@ -98,6 +98,7 @@ const thumbnailMaximumDimension = 440
 const reviewMaximumDimension = 2_200
 const ocrMaximumDimension = 2_200
 const ocrMaximumPixels = 4_500_000
+const ocrMinimumDimension = 1_600
 const workerScope = self as unknown as DedicatedWorkerGlobalScope
 
 let ocrWorker: OcrWorker | null = null
@@ -134,9 +135,13 @@ function progress(
 }
 
 function canvasScale(width: number, height: number, maximumDimension: number): number {
-  const dimensionScale = Math.min(1, maximumDimension / Math.max(width, height))
-  const pixelScale = Math.min(1, Math.sqrt(ocrMaximumPixels / (width * height)))
-  return Math.min(dimensionScale, pixelScale)
+  const longestSide = Math.max(width, height)
+  const desiredScale = Math.max(1, ocrMinimumDimension / longestSide)
+  const maximumScale = Math.min(
+    maximumDimension / longestSide,
+    Math.sqrt(ocrMaximumPixels / (width * height))
+  )
+  return Math.min(desiredScale, maximumScale)
 }
 
 async function canvasDataUrl(canvas: OffscreenCanvas, quality = 0.76): Promise<string> {
@@ -174,8 +179,6 @@ function thumbnailFromCanvas(source: OffscreenCanvas): OffscreenCanvas {
 
 function ocrContent(
   blocks: Awaited<ReturnType<OcrWorker['recognize']>>['data']['blocks'],
-  fallbackText: string,
-  fallbackConfidence: number,
   page: number,
   width: number,
   height: number
@@ -201,34 +204,9 @@ function ocrContent(
       }
     }
   }
-  if (positioned.length === 0) {
-    const lines = fallbackText
-      .split(/\r?\n/gu)
-      .map(normalizeFallbackLine)
-      .filter(Boolean)
-      .slice(0, 120)
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
-      const line = lines[lineIndex]!
-      const tokens = splitWords(line)
-      for (let wordIndex = 0; wordIndex < tokens.length; wordIndex += 1) {
-        positioned.push({
-          text: tokens[wordIndex]!,
-          confidence: fallbackConfidence / 100,
-          boundingBox: normalizeBoundingBox({
-            x: 0.06 + (wordIndex / Math.max(1, tokens.length)) * 0.86,
-            y: 0.04 + (lineIndex / Math.max(1, lines.length)) * 0.9,
-            width: Math.max(0.015, 0.82 / Math.max(1, tokens.length)),
-            height: Math.max(0.008, 0.75 / Math.max(1, lines.length))
-          })
-        })
-      }
-    }
-  }
+  // Missing geometry is missing evidence. An empty result triggers layout/orientation
+  // retries; inventing boxes would make unrelated fields look like one schedule row.
   return contentFromPositionedWords(positioned, page, 'ocr', 'ocr')
-}
-
-function normalizeFallbackLine(value: string): string {
-  return value.replace(/\s+/gu, ' ').trim()
 }
 
 async function ensureOcrWorker(): Promise<OcrWorker> {
@@ -292,14 +270,7 @@ async function recognizeCanvasOnce(
   const worker = await ensureOcrWorker()
   await worker.setParameters({ tessedit_pageseg_mode: segmentation })
   const result = await worker.recognize(canvas, { rotateAuto: false }, { text: true, blocks: true })
-  return ocrContent(
-    result.data.blocks,
-    result.data.text,
-    result.data.confidence,
-    page,
-    canvas.width,
-    canvas.height
-  )
+  return ocrContent(result.data.blocks, page, canvas.width, canvas.height)
 }
 
 async function recognizeCanvasLayout(
@@ -310,7 +281,9 @@ async function recognizeCanvasLayout(
   let content = await recognizeCanvasOnce(canvas, page, totalPages, PSM.SINGLE_BLOCK)
   if (shouldRetryOcrPageSegmentation(content)) {
     const layout = await recognizeCanvasOnce(canvas, page, totalPages, PSM.AUTO)
-    if (isBetterCalendarGridContent(layout, content)) content = layout
+    if (isBetterCalendarGridContent(layout, content) || isBetterOcrContent(layout, content)) {
+      content = layout
+    }
   }
   return content
 }
@@ -375,7 +348,12 @@ async function renderPdfPage(
   maximumDimension: number
 ): Promise<OffscreenCanvas> {
   const baseViewport = page.getViewport({ scale: 1 })
-  const scale = canvasScale(baseViewport.width, baseViewport.height, maximumDimension)
+  const scale = documentPdfRenderScale(
+    baseViewport.width,
+    baseViewport.height,
+    maximumDimension,
+    ocrMaximumPixels
+  )
   const viewport = page.getViewport({ scale })
   const canvas = new OffscreenCanvas(
     Math.max(1, Math.ceil(viewport.width)),
@@ -539,6 +517,8 @@ async function extractImage(selection: DocumentSelection): Promise<{
     )
     const context = canvas.getContext('2d')
     if (!context) throw new Error('Could not create an image canvas')
+    context.imageSmoothingEnabled = true
+    context.imageSmoothingQuality = 'high'
     context.fillStyle = '#ffffff'
     context.fillRect(0, 0, canvas.width, canvas.height)
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)

@@ -97,6 +97,7 @@ export function AssistantPanel({
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const focusRequestRef = useRef(0)
   const [clearArmed, setClearArmed] = useState(false)
+  const [onlineEnabled, setOnlineEnabled] = useState(false)
   const voiceState = useVoiceStore((state) => state.state)
   const voiceRuntime = useVoiceStore((state) => state.runtime)
   const voiceProgress = useVoiceStore((state) => state.progress)
@@ -128,6 +129,24 @@ export function AssistantPanel({
     void initialize()
     void initializeVoice()
   }, [initialize, initializeVoice])
+
+  useEffect(() => {
+    let active = true
+    const refresh = (): void => {
+      void window.remindMe
+        .getOnlineAiStatus()
+        .then((status) => {
+          if (active) setOnlineEnabled(status.configured && status.useForAssistant)
+        })
+        .catch(() => undefined)
+    }
+    refresh()
+    window.addEventListener('remind-me:online-ai-changed', refresh)
+    return () => {
+      active = false
+      window.removeEventListener('remind-me:online-ai-changed', refresh)
+    }
+  }, [snapshot?.generatedAt])
 
   useLayoutEffect(() => {
     requestComposerFocus()
@@ -280,7 +299,13 @@ export function AssistantPanel({
             ✦
           </span>
           <div>
-            <p className="eyebrow">{compact ? 'Private assistant' : 'Local assistant'}</p>
+            <p className="eyebrow">
+              {onlineEnabled
+                ? 'Connected assistant'
+                : compact
+                  ? 'Private assistant'
+                  : 'Local assistant'}
+            </p>
             <h2 id={headingId}>
               {compact
                 ? 'Ask from right here'
@@ -289,17 +314,21 @@ export function AssistantPanel({
                   : 'Talk through your time'}
             </h2>
             <p>
-              {compact
-                ? tiny
-                  ? 'Ask, add, move, or remove plans.'
-                  : 'Ask a question or make a reviewed calendar change without opening the full app.'
-                : mode === 'sidebar'
-                  ? 'Ask naturally about any day. Answers use your private on-device calendar, and changes always wait for review.'
-                  : 'Ask naturally. Every answer comes from your on-device calendar, and every change waits for your review.'}
+              {onlineEnabled
+                ? 'Complex requests may use OpenAI with relevant conversation and calendar context. Changes wait for your review.'
+                : compact
+                  ? tiny
+                    ? 'Ask, add, move, or remove plans.'
+                    : 'Ask a question or make a reviewed calendar change without opening the full app.'
+                  : mode === 'sidebar'
+                    ? 'Ask naturally about any day. Answers use your private on-device calendar, and changes always wait for review.'
+                    : 'Ask naturally. Every answer comes from your on-device calendar, and every change waits for your review.'}
             </p>
           </div>
           <div className="assistant-header-actions">
-            <span className="local-pill">{compact ? 'local' : 'offline · private'}</span>
+            <span className="local-pill">
+              {onlineEnabled ? 'OpenAI connected' : compact ? 'local' : 'offline · private'}
+            </span>
             {mode === 'sidebar' ? (
               <>
                 <button
@@ -346,7 +375,8 @@ export function AssistantPanel({
         {!compact ? (
           <div className="assistant-context-strip" aria-label="Assistant privacy and safety">
             <span>
-              <i aria-hidden="true" /> Ready on device
+              <i aria-hidden="true" />{' '}
+              {onlineEnabled ? 'Online assistance enabled' : 'Ready on device'}
             </span>
             <span>Calendar-aware answers</span>
             <span>Review before changes</span>

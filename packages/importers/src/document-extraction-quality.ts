@@ -113,9 +113,9 @@ export function decideNativePageOcr(
 export function shouldRetryOcrOrientation(content: DocumentTextContent): boolean {
   const quality = assessDocumentText(content)
   return (
-    quality.wordCount >= 6 &&
-    (quality.averageConfidence < 0.62 ||
-      (quality.score < 0.58 && quality.calendarSignalCount === 0))
+    quality.wordCount < 6 ||
+    quality.averageConfidence < 0.62 ||
+    (quality.score < 0.58 && quality.calendarSignalCount === 0)
   )
 }
 
@@ -158,7 +158,33 @@ function calendarGridSignals(content: DocumentTextContent): {
 
 export function shouldRetryOcrPageSegmentation(content: DocumentTextContent): boolean {
   const signals = calendarGridSignals(content)
-  return signals.weekdayHeaders >= 3 && signals.dayNumbers >= 4
+  const quality = assessDocumentText(content)
+  return (
+    (signals.weekdayHeaders >= 3 && signals.dayNumbers >= 4) ||
+    quality.wordCount < 6 ||
+    quality.averageConfidence < 0.7 ||
+    (quality.calendarSignalCount === 0 && quality.wordCount >= 12)
+  )
+}
+
+/** PDF dimensions are points, so rendering must also upscale to recover small print. */
+export function documentPdfRenderScale(
+  width: number,
+  height: number,
+  maximumDimension: number,
+  maximumPixels: number
+): number {
+  if (
+    ![width, height, maximumDimension, maximumPixels].every(
+      (value) => Number.isFinite(value) && value > 0
+    )
+  ) {
+    throw new Error('Invalid PDF render dimensions')
+  }
+  return Math.min(
+    maximumDimension / Math.max(width, height),
+    Math.sqrt(maximumPixels / (width * height))
+  )
 }
 
 export function isBetterCalendarGridContent(

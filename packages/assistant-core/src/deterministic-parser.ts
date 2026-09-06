@@ -126,6 +126,21 @@ const reminderPrefixPattern = new RegExp(
   'iu'
 )
 
+export function isUndatedReminderQuery(text: string): boolean {
+  return (
+    /^(?:please\s+)?(?:show|list|find|what|which|do i|are there)\b/iu.test(text) &&
+    /\breminders?\b/iu.test(text) &&
+    /\b(?:undated|unscheduled|no (?:due )?dates?|without (?:a |any )?(?:due )?dates?)\b/iu.test(
+      text
+    )
+  )
+}
+
+const undatedReminderSuffix =
+  /\s*[,;—-]?\s*(?:(?:with\s+)?no\s+(?:due\s+)?dates?|without\s+(?:(?:a|any)\s+)?(?:due\s+)?dates?|undated|someday)[.!?]*$/iu
+const unresolvedReminderTiming =
+  /\b(?:in\s+(?:\d+|an?|one|two|three|four|five|ten)\s+(?:minutes?|hours?|days?|weeks?|months?)|(?:next|this|coming)\s+(?:week|weekend|month|year)|tonight|later|soon|when\s+i|after\s+(?:work|school|lunch)|before\s+(?:work|school|bed)|every|daily|weekly|monthly|yearly|\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2})\b/iu
+
 const stopWords = new Set([
   'a',
   'an',
@@ -314,11 +329,14 @@ function parseDateMatch(text: string, localDate: string): DateMatch | null {
     const rawYear = numericMatch[3] ? Number(numericMatch[3]) : current.year
     const year = rawYear < 100 ? 2000 + rawYear : rawYear
     try {
-      let date = Temporal.PlainDate.from({
-        year,
-        month: Number(numericMatch[1]),
-        day: Number(numericMatch[2])
-      })
+      let date = Temporal.PlainDate.from(
+        {
+          year,
+          month: Number(numericMatch[1]),
+          day: Number(numericMatch[2])
+        },
+        { overflow: 'reject' }
+      )
       if (
         !numericMatch[3] &&
         !prefersPastDate(text) &&
@@ -346,11 +364,14 @@ function parseDateMatch(text: string, localDate: string): DateMatch | null {
     const month = monthNumbers[monthMatch[1].toLocaleLowerCase()]
     if (!month) return null
     try {
-      let date = Temporal.PlainDate.from({
-        year: monthMatch[3] ? Number(monthMatch[3]) : current.year,
-        month,
-        day: Number(monthMatch[2])
-      })
+      let date = Temporal.PlainDate.from(
+        {
+          year: monthMatch[3] ? Number(monthMatch[3]) : current.year,
+          month,
+          day: Number(monthMatch[2])
+        },
+        { overflow: 'reject' }
+      )
       if (
         !monthMatch[3] &&
         !prefersPastDate(text) &&
@@ -407,7 +428,7 @@ function parseEndDateMatch(
   if (!shortDay?.[1]) return null
   try {
     const start = Temporal.PlainDate.from(startDate.anchor.date)
-    const end = start.with({ day: Number(shortDay[1]) })
+    const end = start.with({ day: Number(shortDay[1]) }, { overflow: 'reject' })
     return {
       anchor: { kind: 'absolute', date: end.toString() },
       start: offset,
@@ -610,7 +631,7 @@ function queryWindow(
   })
 
   const rolling =
-    /\b(?:what(?:'s|s| is) (?:my )?next(?: (?:class|course|lecture|lab|discussion|event|meeting|appointment|plan|item|reminder))?|show (?:me )?(?:my )?next (?:class|course|lecture|lab|discussion|event|meeting|appointment|plan|item|reminder)|coming up|upcoming(?: plans?| events?)?)\b/iu.exec(
+    /\b(?:what(?:'s|s| is) (?:my )?next(?: (?:class|course|lecture|lab|discussion|event|meeting|appointment|plan|item|reminder|task|assignment|homework|quiz|project|exam|midterm|final|test|due date))?|show (?:me )?(?:my )?next (?:class|course|lecture|lab|discussion|event|meeting|appointment|plan|item|reminder|task|assignment|homework|quiz|project|exam|midterm|final|test|due date)|coming up|upcoming(?: (?:plans?|events?|reminders?|tasks?|assignments?|homework|quiz(?:zes)?|projects?|exams?|midterms?|finals?|tests?|due dates?))?)\b/iu.exec(
       text
     )
   if (rolling) return absoluteRange(rolling, current, current.add({ days: 30 }))
@@ -701,7 +722,7 @@ function queryWindow(
 
 function isOrdinalCalendarQuery(value: string): boolean {
   const hasOrdinalItem =
-    /\b(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|earliest|next|previous|last|final|latest)\s+(?:class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial|event|meeting|appointment|plan|item|reminder|thing)\b|\b(?:class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial|event|meeting|appointment|plan|item|reminder|thing)\s+(?:comes?|is)\s+(?:first|second|third|fourth|fifth|earliest|next|previous|last|final|latest)\b/iu.test(
+    /\b(?:first|1st|second|2nd|third|3rd|fourth|4th|fifth|5th|earliest|next|previous|last|final|latest)\s+(?:class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial|event|meeting|appointment|plan|item|reminder|task|assignment|homework|quiz|project|exam|midterm|test|thing)\b|\b(?:class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial|event|meeting|appointment|plan|item|reminder|task|assignment|homework|quiz|project|exam|midterm|test|thing)\s+(?:comes?|is)\s+(?:first|second|third|fourth|fifth|earliest|next|previous|last|final|latest)\b/iu.test(
       value
     )
   if (!hasOrdinalItem) return false
@@ -1329,6 +1350,12 @@ function reminderTitle(raw: string, date: DateMatch | null, time: TimeMatch | nu
 
 function shouldUsePrevious(text: string, previous: string | null): boolean {
   if (!previous) return false
+  if (
+    reminderRequestPattern.test(previous) &&
+    undatedReminderSuffix.test(text) &&
+    text.trim().split(/\s+/u).length <= 5
+  )
+    return true
   const wordCount = text.trim().split(/\s+/u).length
   return (
     wordCount <= 7 &&
@@ -1426,8 +1453,25 @@ export function parseCalendarText(
   }
   const sourceText = parseSource(context)
   const lower = sourceText.toLocaleLowerCase()
-  const date = parseDateMatch(sourceText, context.localDate)
+  let date = parseDateMatch(sourceText, context.localDate)
   const endDate = parseEndDateMatch(sourceText, context.localDate, date)
+  if (
+    date?.anchor.kind === 'absolute' &&
+    endDate?.anchor.kind === 'absolute' &&
+    !/\b\d{4}\b/u.test(date.text) &&
+    /\b\d{4}\b/u.test(endDate.text)
+  ) {
+    // A trailing explicit year applies to the whole range, including past and cross-year dates.
+    const start = Temporal.PlainDate.from(date.anchor.date)
+    const end = Temporal.PlainDate.from(endDate.anchor.date)
+    date = {
+      ...date,
+      anchor: {
+        kind: 'absolute',
+        date: start.with({ year: end.year - (start.month > end.month ? 1 : 0) }).toString()
+      }
+    }
+  }
   const time = parseTimeMatch(sourceText)
   const evidenceId = `evidence:${context.requestId.replace(/[^a-zA-Z0-9._:-]/g, '-')}`
 
@@ -1493,14 +1537,15 @@ export function parseCalendarText(
   }
 
   if (
-    (isOrdinalCalendarQuery(sourceText) ||
-      /\b(?:what(?:'s|s| is)? (?:on|in|happening|scheduled|(?:my )?next)|what(?:'s|s| is) (?:tomorrow|tmr|tmrw|tmw|today)|what (?:do|did) i have|what (?:classes?|courses?|lectures?|labs?|events?|meetings?|appointments?|reminders?) do i have|what (?:was|is) on my (?:calendar|schedule|agenda)|what does (?:my day|today|tomorrow|tmr|tmrw|tmw|(?:(?:next|this|last)\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)) look like|do i have anything|where (?:do i (?:need to )?be|am i going|was i)|show (?:me )?(?:my )?|list (?:my )?|how (?:busy|full)|summari[sz]e|walk me through|tell me (?:more )?about|give me (?:the )?details? (?:for|on)|what(?:'s|s| is) coming up|upcoming (?:plans?|events?))\b/iu.test(
+    (isUndatedReminderQuery(sourceText) ||
+      isOrdinalCalendarQuery(sourceText) ||
+      /\b(?:what(?:'s|s| is)? (?:on|in|happening|scheduled|(?:my )?next)|what(?:'s|s| is) (?:tomorrow|tmr|tmrw|tmw|today|due)|what (?:do|did) i have|what (?:classes?|courses?|lectures?|labs?|events?|meetings?|appointments?|reminders?|tasks?|assignments?|homework|quiz(?:zes)?|projects?|exams?|midterms?|finals?|tests?) do i have|what (?:assignments?|homework|quiz(?:zes)?|projects?|exams?|midterms?|finals?|tests?|due dates?|deadlines?) (?:are|is|do)\b|what (?:was|is) on my (?:calendar|schedule|agenda)|what does (?:my day|today|tomorrow|tmr|tmrw|tmw|(?:(?:next|this|last)\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)) look like|do i have (?:any|anything)|are there (?:any )?(?:upcoming )?(?:assignments?|homework|quiz(?:zes)?|projects?|exams?|midterms?|finals?|tests?|due dates?|deadlines?)|when (?:are|is) (?:my )?(?:assignments?|homework|quiz(?:zes)?|projects?|exams?|midterms?|finals?|tests?|due dates?|deadlines?)|where (?:do i (?:need to )?be|am i going|was i)|show (?:me )?(?:my )?|list (?:my )?|how (?:busy|full)|summari[sz]e|walk me through|tell me (?:more )?about|give me (?:the )?details? (?:for|on)|what(?:'s|s| is) coming up|upcoming(?: (?:plans?|events?|reminders?|tasks?|assignments?|homework|quiz(?:zes)?|projects?|exams?|midterms?|finals?|tests?|due dates?))?)\b/iu.test(
         sourceText
       ) ||
       context.semanticHint?.operation === 'calendar.list') &&
     (context.semanticHint?.operation === 'calendar.list' ||
       date !== null ||
-      /\b(?:calendar|schedule|agenda|plans?|class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial|event|meeting|appointment|reminder|today|tomorrow|tmr|tmrw|tmw|yesterday|week|month|year|first|second|third|fourth|fifth|last|next|past|previous|earlier|coming|upcoming|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/iu.test(
+      /\b(?:calendar|schedule|agenda|plans?|class|course|lecture|lab|discussion|seminar|practicum|recitation|tutorial|event|meeting|appointment|reminder|task|assignment|homework|quiz|project|exam|midterm|final|test|due|deadline|today|tomorrow|tmr|tmrw|tmw|yesterday|week|month|year|first|second|third|fourth|fifth|last|next|past|previous|earlier|coming|upcoming|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/iu.test(
         sourceText
       ))
   ) {
@@ -2046,18 +2091,24 @@ export function parseCalendarText(
   const isReminder =
     reminderRequestPattern.test(sourceText) || context.semanticHint?.operation === 'reminder.create'
   if (isReminder) {
-    if (!date) {
+    const explicitlyUndated = undatedReminderSuffix.test(sourceText)
+    if (!date || explicitlyUndated) {
       const recurrence = recurrenceFromText(sourceText, context.localDate)
-      if (!time && recurrence === null) {
+      if (
+        explicitlyUndated ||
+        (!time && recurrence === null && !unresolvedReminderTiming.test(sourceText))
+      ) {
         const hintedTitle =
-          context.semanticHint?.operation === 'reminder.create'
+          !explicitlyUndated && context.semanticHint?.operation === 'reminder.create'
             ? hintedText(sourceText, context.semanticHint.titleSpan, evidenceId)
             : null
         const hintedDescription =
           context.semanticHint?.operation === 'reminder.create'
             ? hintedText(sourceText, context.semanticHint.descriptionSpan, evidenceId)
             : null
-        const title = hintedTitle?.value ?? reminderTitle(sourceText, null, null)
+        const title =
+          hintedTitle?.value ??
+          reminderTitle(sourceText.replace(undatedReminderSuffix, ''), date, time)
         if (!title)
           return clarify(
             context,
@@ -2082,7 +2133,8 @@ export function parseCalendarText(
       }
       return clarify(context, sourceText, 'missing-date', 'What day should I remind you?', [
         'today',
-        'tomorrow'
+        'tomorrow',
+        'no due date'
       ])
     }
     if (endDate) {
@@ -2097,7 +2149,8 @@ export function parseCalendarText(
       return clarify(context, sourceText, 'missing-time', 'What time should the reminder arrive?', [
         '9:00 AM',
         '12:00 PM',
-        '6:00 PM'
+        '6:00 PM',
+        'no due date'
       ])
     }
     if (time.endTime) {

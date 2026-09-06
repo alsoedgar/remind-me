@@ -37,6 +37,7 @@ import type { ReminderNotificationScheduler } from './notification-scheduler'
 import type { OfflineVoiceRuntime } from './voice-runtime'
 import type { OptionalFlexModelRuntime } from './flex-model-runtime'
 import type { CanvasService } from './canvas-service'
+import type { OnlineAiService } from './online-ai-service'
 import { buildCanvasImportPlan } from './canvas-import'
 
 const maximumImportBytes = 25 * 1024 * 1024
@@ -72,6 +73,7 @@ interface IpcHandlerDependencies {
   voiceRuntime: OfflineVoiceRuntime
   flexModelRuntime: OptionalFlexModelRuntime
   canvasService: CanvasService
+  onlineAiService: OnlineAiService
   deleteRecoveryCopies: () => Promise<number>
   validateSender: (event: IpcMainInvokeEvent) => void
   appInfo: () => AppInfo
@@ -156,12 +158,54 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
     voiceRuntime,
     flexModelRuntime,
     canvasService,
+    onlineAiService,
     validateSender,
     appInfo,
     windowControl
   } = dependencies
   const validate = (event: IpcMainInvokeEvent): void => validateSender(event)
   const afterMutation = (): void => scheduler.reschedule()
+
+  ipcMain.handle(ipcChannels.onlineAiGetStatus, async (event, payload: unknown) => {
+    validate(event)
+    ipcContracts[ipcChannels.onlineAiGetStatus].request.parse(payload)
+    return ipcContracts[ipcChannels.onlineAiGetStatus].response.parse(
+      await onlineAiService.getStatus()
+    )
+  })
+  ipcMain.handle(ipcChannels.onlineAiConnect, async (event, payload: unknown) => {
+    validate(event)
+    const request = ipcContracts[ipcChannels.onlineAiConnect].request.parse(payload)
+    return ipcContracts[ipcChannels.onlineAiConnect].response.parse(
+      await onlineAiService.connect(request)
+    )
+  })
+  ipcMain.handle(ipcChannels.onlineAiDisconnect, async (event, payload: unknown) => {
+    validate(event)
+    ipcContracts[ipcChannels.onlineAiDisconnect].request.parse(payload)
+    return ipcContracts[ipcChannels.onlineAiDisconnect].response.parse(
+      await onlineAiService.disconnect()
+    )
+  })
+  ipcMain.handle(ipcChannels.onlineAiConfigure, async (event, payload: unknown) => {
+    validate(event)
+    const request = ipcContracts[ipcChannels.onlineAiConfigure].request.parse(payload)
+    return ipcContracts[ipcChannels.onlineAiConfigure].response.parse(
+      await onlineAiService.configure(request)
+    )
+  })
+  ipcMain.handle(ipcChannels.onlineAiDocument, async (event, payload: unknown) => {
+    validate(event)
+    const input = ipcContracts[ipcChannels.onlineAiDocument].request.parse(payload)
+    pruneDocumentSelections()
+    const pending = pendingDocumentSelections.get(input.request.selectionId)
+    if (!pending || pending.source.sha256 !== input.request.sourceSha256) {
+      throw new Error('This document review expired. Choose the file again.')
+    }
+    const response = await onlineAiService.groupDocument(input)
+    if (!pendingDocumentSelections.has(input.request.selectionId)) return null
+    return ipcContracts[ipcChannels.onlineAiDocument].response.parse(response)
+  })
 
   ipcMain.handle(ipcChannels.appGetInfo, (event, payload: unknown) => {
     validate(event)
@@ -324,8 +368,10 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
   ipcMain.handle(ipcChannels.assistantCancel, (event, payload: unknown) => {
     validate(event)
     const request = ipcContracts[ipcChannels.assistantCancel].request.parse(payload)
+    const localCancelled = flexModelRuntime.cancelInference(request.streamId)
+    const onlineCancelled = onlineAiService.cancel(request.streamId)
     return ipcContracts[ipcChannels.assistantCancel].response.parse({
-      cancelled: flexModelRuntime.cancelInference(request.streamId)
+      cancelled: localCancelled || onlineCancelled
     })
   })
 
@@ -633,6 +679,7 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
   ipcMain.handle(ipcChannels.documentDiscard, (event, payload: unknown) => {
     validate(event)
     const request = ipcContracts[ipcChannels.documentDiscard].request.parse(payload)
+    onlineAiService.cancel(`online-document:${request.selectionId}`)
     return ipcContracts[ipcChannels.documentDiscard].response.parse({
       discarded: pendingDocumentSelections.delete(request.selectionId)
     })
@@ -753,6 +800,7 @@ export function registerCalendarIpcHandlers(dependencies: IpcHandlerDependencies
     pendingDocumentSelections.clear()
     const response = service.deleteAllData(request.range)
     await canvasService.disconnect()
+    await onlineAiService.disconnect()
     const recoveryCopiesDeleted = await dependencies.deleteRecoveryCopies()
     afterMutation()
     return ipcContracts[ipcChannels.dataDeleteAll].response.parse({

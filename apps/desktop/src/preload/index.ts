@@ -11,6 +11,29 @@ import {
 } from '@remind-me/contracts'
 
 const bridge: RemindMeBridge = {
+  getOnlineAiStatus: async () => {
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.onlineAiGetStatus, {})
+    return ipcContracts[ipcChannels.onlineAiGetStatus].response.parse(response)
+  },
+  connectOnlineAi: async (input) => {
+    const request = ipcContracts[ipcChannels.onlineAiConnect].request.parse(input)
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.onlineAiConnect, request)
+    return ipcContracts[ipcChannels.onlineAiConnect].response.parse(response)
+  },
+  disconnectOnlineAi: async () => {
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.onlineAiDisconnect, {})
+    return ipcContracts[ipcChannels.onlineAiDisconnect].response.parse(response)
+  },
+  configureOnlineAi: async (input) => {
+    const request = ipcContracts[ipcChannels.onlineAiConfigure].request.parse(input)
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.onlineAiConfigure, request)
+    return ipcContracts[ipcChannels.onlineAiConfigure].response.parse(response)
+  },
+  groupDocumentWithOnlineAi: async (input) => {
+    const request = ipcContracts[ipcChannels.onlineAiDocument].request.parse(input)
+    const response: unknown = await ipcRenderer.invoke(ipcChannels.onlineAiDocument, request)
+    return ipcContracts[ipcChannels.onlineAiDocument].response.parse(response)
+  },
   getAppInfo: async () => {
     const response: unknown = await ipcRenderer.invoke(ipcChannels.appGetInfo, {})
     return appInfoResponseSchema.parse(response)

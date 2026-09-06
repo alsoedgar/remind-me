@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
   CalendarSnapshotRequest,
   EventForm,
@@ -30,7 +30,14 @@ const modelRoot = fileURLToPath(new URL('../../../models/', import.meta.url))
 
 const temporaryDirectories: string[] = []
 
+// These scenarios use September 2026 fixtures; "next" must not depend on the date tests run.
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-08-23T17:00:00.000Z'))
+})
+
 afterEach(async () => {
+  vi.useRealTimers()
   for (const directory of temporaryDirectories.splice(0)) {
     await rm(directory, { recursive: true, force: true })
   }
@@ -71,6 +78,62 @@ function conversationalPlanner(
 }
 
 describe('PersistentAssistantService', () => {
+  it('creates, confirms, lists and undoes a reminder with no due date', async () => {
+    const repository = new SqliteCalendarRepository(':memory:')
+    try {
+      const assistant = new PersistentAssistantService(repository)
+      const exchange = await assistant.send({
+        conversationId: null,
+        text: 'Remind me to buy oat milk, no due date',
+        range
+      })
+      const proposal = exchange.conversation.activeProposal
+      expect(proposal?.payload).toMatchObject({
+        kind: 'reminder-save',
+        form: { title: 'buy oat milk', dueDate: null, dueTime: null, recurrence: null }
+      })
+      expect(repository.listReminders()).toHaveLength(0)
+      const applied = assistant.confirm({ proposalId: proposal!.id, range })
+      expect(applied.snapshot.reminders[0]).toMatchObject({ title: 'buy oat milk', dueAtUtc: null })
+      expect(repository.listPendingReminderNotifications()).toHaveLength(0)
+      const listed = await assistant.send({
+        conversationId: exchange.conversation.id,
+        text: 'Show my reminders without due dates',
+        range
+      })
+      expect(listed.response.text).toContain('buy oat milk')
+      expect(listed.response.relatedReminderIds).toEqual([applied.snapshot.reminders[0]?.id])
+      new PersistentCalendarService(repository).undoLastAction(range)
+      expect(repository.listReminders()).toHaveLength(0)
+    } finally {
+      repository.close()
+    }
+  })
+
+  it('accepts no due date as the answer to a missing reminder time without asking again', async () => {
+    const repository = new SqliteCalendarRepository(':memory:')
+    try {
+      const assistant = new PersistentAssistantService(repository)
+      const first = await assistant.send({
+        conversationId: null,
+        text: 'Remind me to call Mom tomorrow',
+        range
+      })
+      expect(first.response.kind).toBe('clarification')
+      const next = await assistant.send({
+        conversationId: first.conversation.id,
+        text: 'no due date',
+        range
+      })
+      expect(next.conversation.activeProposal?.payload).toMatchObject({
+        kind: 'reminder-save',
+        form: { title: 'call Mom', dueDate: null, dueTime: null }
+      })
+      expect(repository.listReminders()).toHaveLength(0)
+    } finally {
+      repository.close()
+    }
+  })
   it('uses grounded RemindSpeak candidates without repeating an equivalent recent answer', async () => {
     const repository = new SqliteCalendarRepository(':memory:')
     try {
@@ -705,6 +768,95 @@ describe('PersistentAssistantService', () => {
       expect(exchange.response.text.match(/CS 251 lecture/gu)).toHaveLength(2)
       expect(exchange.response.text).toContain('Submit worksheet')
       expect(exchange.conversation.dialogueState.queryFrames[0]?.selectedItems).toHaveLength(3)
+    } finally {
+      repository.close()
+      vi.useRealTimers()
+    }
+  })
+
+  it('answers assignment, exam, and due-date questions from local calendar data', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-09-02T12:00:00.000Z'))
+    const repository = new SqliteCalendarRepository(':memory:')
+    try {
+      const calendar = new PersistentCalendarService(repository)
+      calendar.saveReminder(
+        {
+          id: null,
+          calendarId: null,
+          title: 'Section 13.3',
+          notes: 'Canvas assignment · Calculus III',
+          dueDate: '2026-09-03',
+          dueTime: '12:00',
+          timezone: 'America/Chicago',
+          recurrence: null
+        },
+        range
+      )
+      calendar.saveReminder(
+        {
+          id: null,
+          calendarId: null,
+          title: 'CS 251 Exam 1',
+          notes: 'Canvas assignment · Data Structures',
+          dueDate: '2026-09-07',
+          dueTime: '15:00',
+          timezone: 'America/Chicago',
+          recurrence: null
+        },
+        range
+      )
+      calendar.saveReminder(
+        {
+          id: null,
+          calendarId: null,
+          title: 'Pick up groceries',
+          notes: '',
+          dueDate: '2026-09-03',
+          dueTime: '11:00',
+          timezone: 'America/Chicago',
+          recurrence: null
+        },
+        range
+      )
+      calendar.saveEvent(
+        {
+          ...overlappingEvent('Concert review', '09:00', '10:00'),
+          description: 'Canvas assignment · MUS 114',
+          startDate: '2026-09-04',
+          endDate: '2026-09-04'
+        },
+        range
+      )
+      const assistant = new PersistentAssistantService(repository)
+
+      let exchange = await assistant.send({
+        conversationId: null,
+        text: 'What assignments are coming up?',
+        range
+      })
+      expect(exchange.response.text).toContain('Section 13.3')
+      expect(exchange.response.text).toContain('CS 251 Exam 1')
+      expect(exchange.response.text).toContain('Concert review')
+      expect(exchange.response.text).not.toContain('Pick up groceries')
+
+      exchange = await assistant.send({
+        conversationId: exchange.conversation.id,
+        text: 'What exams are coming up?',
+        range
+      })
+      expect(exchange.response.text).toContain('CS 251 Exam 1')
+      expect(exchange.response.text).not.toContain('Section 13.3')
+      expect(exchange.response.text).not.toContain('Concert review')
+
+      exchange = await assistant.send({
+        conversationId: exchange.conversation.id,
+        text: 'Do I have anything due tomorrow?',
+        range
+      })
+      expect(exchange.response.text).toContain('Section 13.3')
+      expect(exchange.response.text).toContain('Pick up groceries')
+      expect(exchange.response.text).not.toContain('CS 251 Exam 1')
     } finally {
       repository.close()
       vi.useRealTimers()
@@ -1958,6 +2110,8 @@ describe('PersistentAssistantService', () => {
   })
 
   it('keeps broad talk useful and date-scoped clearing out of global deletion', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-24T17:00:00.000Z'))
     const repository = new SqliteCalendarRepository(':memory:')
     try {
       new PersistentCalendarService(repository).saveEvent(
@@ -1998,6 +2152,7 @@ describe('PersistentAssistantService', () => {
       )
     } finally {
       repository.close()
+      vi.useRealTimers()
     }
   })
 

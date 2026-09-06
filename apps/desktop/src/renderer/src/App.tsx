@@ -7,6 +7,7 @@ import type {
   FlexModelAccelerationPreference,
   FlexModelStatus,
   FlexModelWarmthPolicy,
+  ReminderEntity,
   ResponseStyle,
   Weekday
 } from '@remind-me/contracts'
@@ -23,6 +24,7 @@ import { AssistantPanel } from './components/assistant-panel'
 import { DesktopWidget } from './components/desktop-widget'
 import { DocumentImportDialog } from './components/document-import-dialog'
 import { CanvasAssignments } from './components/canvas-assignments'
+import { OnlineAiConnection } from './components/online-ai-connection'
 import { ThemeCustomizer } from './components/theme-customizer'
 import { dayAgendaItems } from './day-agenda'
 import { appearanceFromPreferences, applyAppearanceToDocument } from './theme-runtime'
@@ -790,7 +792,52 @@ function CalendarView({
   )
 }
 
-type ReminderFilter = 'upcoming' | 'overdue' | 'completed' | 'recurring' | 'unscheduled'
+type ReminderFilter =
+  'upcoming' | 'assignments' | 'overdue' | 'completed' | 'recurring' | 'unscheduled'
+
+type ReminderSort = 'due-soonest' | 'due-latest' | 'course' | 'title'
+
+interface AcademicReminderDetails {
+  course: string | null
+  label: string | null
+  isAssignment: boolean
+}
+
+function academicReminderDetails(reminder: ReminderEntity): AcademicReminderDetails {
+  const sourceText = `${reminder.title}\n${reminder.notes}`
+  const course =
+    /^(?:canvas\s+assignment|syllabus(?:\s+assignment)?|coursework)\s*[·:]\s*([^\n]+)/imu
+      .exec(reminder.notes)?.[1]
+      ?.trim() ?? null
+  const isAssignment =
+    /\b(?:canvas\s+assignment|syllabus(?:\s+assignment)?|assignments?|homework|\bhw\b|quiz(?:zes)?|projects?|papers?|worksheets?|problem\s+sets?|exams?|midterms?|finals?(?:\s+exam)?|tests?|lab\s+reports?|readings?(?:\s+response)?|reflections?|presentations?|discussion\s+posts?|practicums?)\b/iu.test(
+      sourceText
+    )
+  const label = /\b(?:exams?|midterms?|finals?(?:\s+exam)?|tests?)\b/iu.test(sourceText)
+    ? 'Exam'
+    : /\bquiz(?:zes)?\b/iu.test(sourceText)
+      ? 'Quiz'
+      : isAssignment
+        ? 'Assignment'
+        : null
+  return { course, label, isAssignment }
+}
+
+function compareReminderText(left: string, right: string, locale: string): number {
+  return left.localeCompare(right, locale, { sensitivity: 'base', numeric: true })
+}
+
+function compareReminderDue(
+  left: ReminderEntity,
+  right: ReminderEntity,
+  direction: 'ascending' | 'descending' = 'ascending'
+): number {
+  if (left.dueAtUtc === null && right.dueAtUtc === null) return 0
+  if (left.dueAtUtc === null) return 1
+  if (right.dueAtUtc === null) return -1
+  const difference = Date.parse(left.dueAtUtc) - Date.parse(right.dueAtUtc)
+  return direction === 'ascending' ? difference : -difference
+}
 
 function RemindersView({
   snapshot,
@@ -800,33 +847,77 @@ function RemindersView({
   onOpen: (request: EditorRequest) => void
 }): ReactNode {
   const [filter, setFilter] = useState<ReminderFilter>('upcoming')
+  const [sort, setSort] = useState<ReminderSort>('due-soonest')
+  const [course, setCourse] = useState('')
   const [search, setSearch] = useState('')
   const completeReminder = useCalendarStore((state) => state.completeReminder)
   const now = Date.now()
   const query = search.trim().toLocaleLowerCase(snapshot.preferences.locale)
-  const reminders = snapshot.reminders.filter((reminder) => {
-    if (
-      query &&
-      !`${reminder.title} ${reminder.notes}`
-        .toLocaleLowerCase(snapshot.preferences.locale)
-        .includes(query)
-    )
-      return false
-    if (filter === 'completed') return reminder.status === 'completed'
-    if (filter === 'recurring') return reminder.status === 'active' && Boolean(reminder.recurrence)
-    if (filter === 'unscheduled') return reminder.status === 'active' && reminder.dueAtUtc === null
-    if (filter === 'overdue')
+  const courses = useMemo(
+    () =>
+      [...new Set(snapshot.reminders.map((reminder) => academicReminderDetails(reminder).course))]
+        .filter((value): value is string => Boolean(value))
+        .sort((left, right) => compareReminderText(left, right, snapshot.preferences.locale)),
+    [snapshot.preferences.locale, snapshot.reminders]
+  )
+  const activeCourse = courses.includes(course) ? course : ''
+  const reminders = snapshot.reminders
+    .filter((reminder) => {
+      const academic = academicReminderDetails(reminder)
+      if (
+        query &&
+        !`${reminder.title} ${reminder.notes}`
+          .toLocaleLowerCase(snapshot.preferences.locale)
+          .includes(query)
+      )
+        return false
+      if (activeCourse && academic.course !== activeCourse) return false
+      if (filter === 'assignments') return reminder.status === 'active' && academic.isAssignment
+      if (filter === 'completed') return reminder.status === 'completed'
+      if (filter === 'recurring')
+        return reminder.status === 'active' && Boolean(reminder.recurrence)
+      if (filter === 'unscheduled')
+        return reminder.status === 'active' && reminder.dueAtUtc === null
+      if (filter === 'overdue')
+        return (
+          reminder.status === 'active' &&
+          reminder.dueAtUtc !== null &&
+          Date.parse(reminder.dueAtUtc) < now
+        )
       return (
         reminder.status === 'active' &&
         reminder.dueAtUtc !== null &&
-        Date.parse(reminder.dueAtUtc) < now
+        Date.parse(reminder.dueAtUtc) >= now
       )
-    return (
-      reminder.status === 'active' &&
-      reminder.dueAtUtc !== null &&
-      Date.parse(reminder.dueAtUtc) >= now
-    )
-  })
+    })
+    .sort((left, right) => {
+      const leftAcademic = academicReminderDetails(left)
+      const rightAcademic = academicReminderDetails(right)
+      if (sort === 'due-latest') {
+        const dueDifference = compareReminderDue(left, right, 'descending')
+        if (dueDifference !== 0) return dueDifference
+      } else if (sort === 'course') {
+        const courseDifference = compareReminderText(
+          leftAcademic.course ?? 'Unsorted',
+          rightAcademic.course ?? 'Unsorted',
+          snapshot.preferences.locale
+        )
+        if (courseDifference !== 0) return courseDifference
+      } else if (sort === 'title') {
+        const titleDifference = compareReminderText(
+          left.title,
+          right.title,
+          snapshot.preferences.locale
+        )
+        if (titleDifference !== 0) return titleDifference
+      } else {
+        const dueDifference = compareReminderDue(left, right)
+        if (dueDifference !== 0) return dueDifference
+      }
+      const dueDifference = compareReminderDue(left, right)
+      if (dueDifference !== 0) return dueDifference
+      return compareReminderText(left.title, right.title, snapshot.preferences.locale)
+    })
 
   return (
     <section className="paper-card reminders-card" aria-labelledby="reminders-heading">
@@ -845,31 +936,63 @@ function RemindersView({
       </div>
       <div className="reminder-tools">
         <div className="filter-row" aria-label="Reminder filters">
-          {(['upcoming', 'overdue', 'unscheduled', 'completed', 'recurring'] as const).map(
-            (option) => (
-              <button
-                type="button"
-                data-active={filter === option}
-                key={option}
-                onClick={() => setFilter(option)}
-              >
-                {option === 'unscheduled'
-                  ? 'No date'
+          {(
+            ['upcoming', 'assignments', 'overdue', 'unscheduled', 'completed', 'recurring'] as const
+          ).map((option) => (
+            <button
+              type="button"
+              data-active={filter === option}
+              key={option}
+              onClick={() => setFilter(option)}
+            >
+              {option === 'unscheduled'
+                ? 'No date'
+                : option === 'assignments'
+                  ? 'Assignments'
                   : `${option[0]?.toUpperCase()}${option.slice(1)}`}
-              </button>
-            )
-          )}
+            </button>
+          ))}
         </div>
-        <label className="search-field">
-          <span className="visually-hidden">Search reminders</span>
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search reminders"
-          />
-        </label>
+        <div className="reminder-tools-end">
+          <label className="reminder-select">
+            <span>Sort</span>
+            <select value={sort} onChange={(event) => setSort(event.target.value as ReminderSort)}>
+              <option value="due-soonest">Due soonest</option>
+              <option value="due-latest">Due latest</option>
+              <option value="course">Course A–Z</option>
+              <option value="title">Title A–Z</option>
+            </select>
+          </label>
+          {courses.length > 0 ? (
+            <label className="reminder-select">
+              <span>Course</span>
+              <select value={activeCourse} onChange={(event) => setCourse(event.target.value)}>
+                <option value="">All courses</option>
+                {courses.map((courseName) => (
+                  <option key={courseName} value={courseName}>
+                    {courseName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <label className="search-field">
+            <span className="visually-hidden">Search reminders</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search reminders"
+            />
+          </label>
+        </div>
       </div>
+      {filter === 'assignments' ? (
+        <p className="reminder-context-note">
+          Schoolwork and due dates stay together here. Choose a course or sort by deadline to plan
+          ahead.
+        </p>
+      ) : null}
       {reminders.length === 0 ? (
         <div className="empty-list">
           <span className="check-circle" aria-hidden="true">
@@ -882,6 +1005,7 @@ function RemindersView({
         <div className="reminder-list">
           {reminders.map((reminder) => {
             const recurrence = recurrenceLabel(reminder.recurrence)
+            const academic = academicReminderDetails(reminder)
             const overdue =
               reminder.status === 'active' &&
               reminder.dueAtUtc !== null &&
@@ -902,7 +1026,10 @@ function RemindersView({
                   type="button"
                   onClick={() => onOpen({ kind: 'reminder', reminder, date: null, title: null })}
                 >
-                  <strong>{reminder.title}</strong>
+                  <span className="reminder-title-line">
+                    <strong>{reminder.title}</strong>
+                    {academic.label ? <i className="reminder-kind-chip">{academic.label}</i> : null}
+                  </span>
                   <span>
                     {formatDueDate(
                       reminder.dueAtUtc,
@@ -911,6 +1038,7 @@ function RemindersView({
                       { includeDate: true }
                     )}
                     {recurrence ? ` · ${recurrence}` : ''}
+                    {academic.course ? ` · ${academic.course}` : ''}
                   </span>
                   {reminder.notes ? <small>{reminder.notes}</small> : null}
                 </button>
@@ -1481,9 +1609,10 @@ function SettingsView({
           ) : null}
         </section>
         <CanvasAssignments snapshot={snapshot} />
+        <OnlineAiConnection />
         <section className="paper-card settings-section privacy-settings">
           <p className="eyebrow">Privacy</p>
-          <h2>Local means local</h2>
+          <h2>You choose what connects</h2>
           <ul>
             <li>
               <span>Calendar database</span>
@@ -1499,7 +1628,7 @@ function SettingsView({
             </li>
             <li>
               <span>Network dependency</span>
-              <strong>Optional installs / Canvas</strong>
+              <strong>Optional installs / Canvas / OpenAI</strong>
             </li>
             <li>
               <span>Canvas connection</span>

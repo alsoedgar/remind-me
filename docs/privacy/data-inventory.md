@@ -55,4 +55,6 @@ Installing the optional flexible pack contacts only the pinned official Hugging 
 
 ## Future optional integrations
 
+OpenAI is now an optional integration. Its OS-encrypted key is stored separately from SQLite and backups. The assistant switch authorizes sending bounded conversation/profile/calendar context for complex requests; document page images and extracted text require the separate “Send pages to OpenAI” action. Requests go only to `api.openai.com`; redirects are rejected. The app requests `store: false`, but provider processing and retention policies still apply. Disconnect/Delete all local data remove the saved key and cancel requests; they cannot retract content already sent to a provider. No telemetry is added. See [online assistance](../architecture/online-assistance.md).
+
 Calendar-provider sync, cloud backups, or larger model packs must be separate, explicit, revocable features. Enabling one must not weaken the offline core or silently change the local retention policy.
