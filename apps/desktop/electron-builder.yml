@@ -61,6 +61,7 @@ mac:
     NSMicrophoneUsageDescription: Remind Me uses the microphone only while voice input is active, and transcribes audio on this device.
 linux:
   icon: icon.png
+  executableName: remind-me
   category: Office
   target:
     - AppImage
