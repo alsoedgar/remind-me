@@ -19,7 +19,7 @@ Remind Me turns everyday requests into safe calendar changes: type “move my de
 
 ## Download
 
-**[Download Remind Me 0.1.4 for Windows x64](https://github.com/alsoedgar/remind-me/releases/latest/download/Remind-Me-Setup-0.1.4-Windows-x64.exe)**
+**[Download Remind Me 0.1.5 for Windows x64](https://github.com/alsoedgar/remind-me/releases/latest/download/Remind-Me-Setup-0.1.5-Windows-x64.exe)**
 
 The current community installer is unsigned, so Windows SmartScreen may ask for confirmation. It keeps the existing local database during upgrades and uninstall by default. macOS and Linux are supported by the application and release configuration; native signed downloads require the corresponding signing credentials.
 

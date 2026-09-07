@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "measuredAt": "2026-08-28T14:31:00.382Z",
+  "measuredAt": "2026-09-07T05:20:53.009Z",
   "suite": {
     "version": "0.1.0",
     "sha256": "ceecfee48f661faad235f00489472ebcad3e998963ea976e70bc557ab2969c99",
@@ -21,7 +21,7 @@
     "arch": "x64",
     "logicalThreads": 24,
     "totalMemoryMiB": 31866,
-    "freeMemoryMiB": 9065
+    "freeMemoryMiB": 11529
   },
   "artifacts": {
     "worker": {
@@ -30,7 +30,7 @@
     },
     "prompts": {
       "path": "apps/desktop/resources/workers/flex-model-prompts.cjs",
-      "sha256": "d74e4294680904a185671c8fb42996e50f1bc22cd5505d8201a5b8e18ea10fe0"
+      "sha256": "23885c74a79c00b1b5539477abb683e369796c0537c8a7c9b50dca713467204a"
     },
     "plannerSchema": {
       "path": "apps/desktop/resources/workers/flex-model-planner-schema.json",
@@ -60,17 +60,17 @@
     "planPassRate": 0.8,
     "chatPassRate": 0.8571428571428571,
     "latencyMs": {
-      "median": 27359,
-      "p95": 70973,
-      "max": 70973
+      "median": 13179,
+      "p95": 47951,
+      "max": 47951
     },
     "warmLatencyMs": {
-      "planP95": 30207,
-      "chatP95": 41852,
-      "firstTokenP95": 29810
+      "planP95": 17352,
+      "chatP95": 21904,
+      "firstTokenP95": 14723
     },
     "memoryMiB": {
-      "peakWorkerRss": 2848
+      "peakWorkerRss": 2850
     },
     "benignResolutionRate": 1,
     "groundingRate": 1,
@@ -80,69 +80,6 @@
   "cases": [
     {
       "id": "plan.two-events.shared-range",
-      "type": "plan",
-      "passed": false,
-      "assertions": [
-        {
-          "name": "plan.actionCount",
-          "passed": false,
-          "expected": 2,
-          "actual": 1
-        },
-        {
-          "name": "plan.operations",
-          "passed": false,
-          "expected": ["event.create", "event.create"],
-          "actual": ["event.create"]
-        },
-        {
-          "name": "plan.titlesAll",
-          "passed": false,
-          "expected": ["Calculus III exam", "Physics exam"],
-          "actual": ["Calculus III exam"]
-        },
-        {
-          "name": "plan.sourceGrounding",
-          "passed": true,
-          "expected": true,
-          "actual": true
-        },
-        {
-          "name": "runtime.withinConfiguredTimeout",
-          "passed": true,
-          "expected": "<= 90000 ms",
-          "actual": 70973
-        }
-      ],
-      "output": {
-        "actions": [
-          {
-            "sourceText": "Can you add my Calculus III exam on October 31, 2026 and my Physics exam on November 1, 2026, both from 6 PM to 7:30 PM?",
-            "operation": "event.create",
-            "titleText": "Calculus III exam",
-            "whenText": "October 31, 2026",
-            "normalizedWhenText": "2026-10-31 from 6:00 PM to 7:30 PM"
-          }
-        ]
-      },
-      "metrics": {
-        "workload": "plan",
-        "elapsedMs": 70973,
-        "inputTokens": 937,
-        "outputTokens": 150,
-        "tokenLimit": 500,
-        "stopReason": "stopGenerationTrigger",
-        "inputTruncated": false,
-        "coldStart": true,
-        "queueWaitMs": 0,
-        "timeToFirstTokenMs": null,
-        "backend": "cpu",
-        "prefixCacheReused": false,
-        "processRssMiB": 2820
-      }
-    },
-    {
-      "id": "plan.mixed-event-reminder",
       "type": "plan",
       "passed": true,
       "assertions": [
@@ -155,14 +92,26 @@
         {
           "name": "plan.operations",
           "passed": true,
-          "expected": ["event.create", "reminder.create"],
-          "actual": ["event.create", "reminder.create"]
+          "expected": [
+            "event.create",
+            "event.create"
+          ],
+          "actual": [
+            "event.create",
+            "event.create"
+          ]
         },
         {
           "name": "plan.titlesAll",
           "passed": true,
-          "expected": ["dentist visit", "submit the insurance form"],
-          "actual": ["dentist visit", "submit the insurance form"]
+          "expected": [
+            "Calculus III exam",
+            "Physics exam"
+          ],
+          "actual": [
+            "Calculus III exam",
+            "Physics exam"
+          ]
         },
         {
           "name": "plan.sourceGrounding",
@@ -174,7 +123,88 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 27359
+          "actual": 47951
+        }
+      ],
+      "output": {
+        "actions": [
+          {
+            "sourceText": "Can you add my Calculus III exam on October 31, 2026 and my Physics exam on November 1, 2026, both from 6 PM to 7:30 PM?",
+            "operation": "event.create",
+            "titleText": "Calculus III exam",
+            "whenText": "October 31, 2026",
+            "normalizedWhenText": "2026-10-31 from 6:00 PM to 7:30 PM"
+          },
+          {
+            "sourceText": "Can you add my Calculus III exam on October 31, 2026 and my Physics exam on November 1, 2026, both from 6 PM to 7:30 PM?",
+            "operation": "event.create",
+            "titleText": "Physics exam",
+            "whenText": "November 1, 2026",
+            "normalizedWhenText": "2026-11-01 from 6:00 PM to 7:30 PM"
+          }
+        ]
+      },
+      "metrics": {
+        "workload": "plan",
+        "elapsedMs": 47951,
+        "inputTokens": 996,
+        "outputTokens": 279,
+        "tokenLimit": 500,
+        "stopReason": "stopGenerationTrigger",
+        "inputTruncated": false,
+        "coldStart": true,
+        "queueWaitMs": 0,
+        "timeToFirstTokenMs": null,
+        "backend": "cpu",
+        "prefixCacheReused": false,
+        "processRssMiB": 2824
+      }
+    },
+    {
+      "id": "plan.mixed-event-reminder",
+      "type": "plan",
+      "passed": false,
+      "assertions": [
+        {
+          "name": "plan.actionCount",
+          "passed": true,
+          "expected": 2,
+          "actual": 2
+        },
+        {
+          "name": "plan.operations",
+          "passed": true,
+          "expected": [
+            "event.create",
+            "reminder.create"
+          ],
+          "actual": [
+            "event.create",
+            "reminder.create"
+          ]
+        },
+        {
+          "name": "plan.titlesAll",
+          "passed": false,
+          "expected": [
+            "dentist visit",
+            "submit the insurance form"
+          ],
+          "actual": [
+            "dentist visit"
+          ]
+        },
+        {
+          "name": "plan.sourceGrounding",
+          "passed": true,
+          "expected": true,
+          "actual": true
+        },
+        {
+          "name": "runtime.withinConfiguredTimeout",
+          "passed": true,
+          "expected": "<= 90000 ms",
+          "actual": 17352
         }
       ],
       "output": {
@@ -185,17 +215,16 @@
             "titleText": "dentist visit"
           },
           {
-            "sourceText": "Friday at 4 PM",
-            "operation": "reminder.create",
-            "titleText": "submit the insurance form"
+            "sourceText": "remind me to submit the insurance form Friday at 4 PM",
+            "operation": "reminder.create"
           }
         ]
       },
       "metrics": {
         "workload": "plan",
-        "elapsedMs": 27359,
-        "inputTokens": 914,
-        "outputTokens": 176,
+        "elapsedMs": 17352,
+        "inputTokens": 973,
+        "outputTokens": 199,
         "tokenLimit": 320,
         "stopReason": "stopGenerationTrigger",
         "inputTruncated": false,
@@ -204,7 +233,7 @@
         "timeToFirstTokenMs": null,
         "backend": "cpu",
         "prefixCacheReused": true,
-        "processRssMiB": 2823
+        "processRssMiB": 2825
       }
     },
     {
@@ -221,20 +250,32 @@
         {
           "name": "plan.operations",
           "passed": true,
-          "expected": ["event.update"],
-          "actual": ["event.update"]
+          "expected": [
+            "event.update"
+          ],
+          "actual": [
+            "event.update"
+          ]
         },
         {
           "name": "plan.targetsAll",
           "passed": true,
-          "expected": ["Design review"],
-          "actual": ["Design review"]
+          "expected": [
+            "Design review"
+          ],
+          "actual": [
+            "Design review"
+          ]
         },
         {
           "name": "plan.locationsAll",
           "passed": true,
-          "expected": ["Room 204"],
-          "actual": ["Room 204"]
+          "expected": [
+            "Room 204"
+          ],
+          "actual": [
+            "Room 204"
+          ]
         },
         {
           "name": "plan.sourceGrounding",
@@ -246,7 +287,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 18799
+          "actual": 10614
         }
       ],
       "output": {
@@ -261,8 +302,8 @@
       },
       "metrics": {
         "workload": "plan",
-        "elapsedMs": 18799,
-        "inputTokens": 917,
+        "elapsedMs": 10614,
+        "inputTokens": 976,
         "outputTokens": 105,
         "tokenLimit": 230,
         "stopReason": "stopGenerationTrigger",
@@ -272,7 +313,7 @@
         "timeToFirstTokenMs": null,
         "backend": "cpu",
         "prefixCacheReused": true,
-        "processRssMiB": 2825
+        "processRssMiB": 2828
       }
     },
     {
@@ -289,14 +330,22 @@
         {
           "name": "plan.operations",
           "passed": true,
-          "expected": ["reminder.delete"],
-          "actual": ["reminder.delete"]
+          "expected": [
+            "reminder.delete"
+          ],
+          "actual": [
+            "reminder.delete"
+          ]
         },
         {
           "name": "plan.targetsAll",
           "passed": true,
-          "expected": ["grocery reminder"],
-          "actual": ["grocery reminder"]
+          "expected": [
+            "grocery reminder"
+          ],
+          "actual": [
+            "grocery reminder"
+          ]
         },
         {
           "name": "plan.sourceGrounding",
@@ -308,7 +357,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 16069
+          "actual": 8963
         }
       ],
       "output": {
@@ -322,9 +371,9 @@
       },
       "metrics": {
         "workload": "plan",
-        "elapsedMs": 16069,
-        "inputTokens": 906,
-        "outputTokens": 90,
+        "elapsedMs": 8963,
+        "inputTokens": 965,
+        "outputTokens": 95,
         "tokenLimit": 320,
         "stopReason": "stopGenerationTrigger",
         "inputTruncated": false,
@@ -333,7 +382,7 @@
         "timeToFirstTokenMs": null,
         "backend": "cpu",
         "prefixCacheReused": true,
-        "processRssMiB": 2827
+        "processRssMiB": 2830
       }
     },
     {
@@ -350,14 +399,26 @@
         {
           "name": "plan.operations",
           "passed": true,
-          "expected": ["event.create", "event.create"],
-          "actual": ["event.create", "event.create"]
+          "expected": [
+            "event.create",
+            "event.create"
+          ],
+          "actual": [
+            "event.create",
+            "event.create"
+          ]
         },
         {
           "name": "plan.titlesAll",
           "passed": true,
-          "expected": ["calc study", "chem review"],
-          "actual": ["calc study", "chem review"]
+          "expected": [
+            "calc study",
+            "chem review"
+          ],
+          "actual": [
+            "calc study",
+            "chem review"
+          ]
         },
         {
           "name": "plan.sourceGrounding",
@@ -369,7 +430,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 30207
+          "actual": 16873
         }
       ],
       "output": {
@@ -388,9 +449,9 @@
       },
       "metrics": {
         "workload": "plan",
-        "elapsedMs": 30207,
-        "inputTokens": 916,
-        "outputTokens": 189,
+        "elapsedMs": 16873,
+        "inputTokens": 975,
+        "outputTokens": 199,
         "tokenLimit": 410,
         "stopReason": "stopGenerationTrigger",
         "inputTruncated": false,
@@ -399,7 +460,7 @@
         "timeToFirstTokenMs": null,
         "backend": "cpu",
         "prefixCacheReused": true,
-        "processRssMiB": 2831
+        "processRssMiB": 2834
       }
     },
     {
@@ -416,13 +477,20 @@
         {
           "name": "chat.textAny",
           "passed": false,
-          "expected": ["calendar", "schedule", "reminder", "plans"],
+          "expected": [
+            "calendar",
+            "schedule",
+            "reminder",
+            "plans"
+          ],
           "actual": []
         },
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": ["safe local action"],
+          "expected": [
+            "safe local action"
+          ],
           "actual": []
         },
         {
@@ -441,7 +509,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 34912
+          "actual": 17893
         }
       ],
       "output": {
@@ -455,7 +523,7 @@
       },
       "metrics": {
         "workload": "chat",
-        "elapsedMs": 34912,
+        "elapsedMs": 17893,
         "inputTokens": 477,
         "outputTokens": 79,
         "tokenLimit": 208,
@@ -463,10 +531,10 @@
         "inputTruncated": false,
         "coldStart": false,
         "queueWaitMs": 0,
-        "timeToFirstTokenMs": 21095,
+        "timeToFirstTokenMs": 9958,
         "backend": "cpu",
         "prefixCacheReused": false,
-        "processRssMiB": 2835
+        "processRssMiB": 2837
       }
     },
     {
@@ -483,7 +551,10 @@
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": ["safe local action", "could not map that request"],
+          "expected": [
+            "safe local action",
+            "could not map that request"
+          ],
           "actual": []
         },
         {
@@ -502,7 +573,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 6121
+          "actual": 3568
         }
       ],
       "output": {
@@ -516,7 +587,7 @@
       },
       "metrics": {
         "workload": "chat",
-        "elapsedMs": 6121,
+        "elapsedMs": 3568,
         "inputTokens": 470,
         "outputTokens": 26,
         "tokenLimit": 208,
@@ -524,7 +595,7 @@
         "inputTruncated": false,
         "coldStart": false,
         "queueWaitMs": 0,
-        "timeToFirstTokenMs": 1773,
+        "timeToFirstTokenMs": 931,
         "backend": "cpu",
         "prefixCacheReused": true,
         "processRssMiB": 2839
@@ -544,13 +615,21 @@
         {
           "name": "chat.textAll",
           "passed": true,
-          "expected": ["Linear Algebra", "9:00", "Data Structures", "11:00"],
+          "expected": [
+            "Linear Algebra",
+            "9:00",
+            "Data Structures",
+            "11:00"
+          ],
           "actual": []
         },
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": ["not specified", "safe local action"],
+          "expected": [
+            "not specified",
+            "safe local action"
+          ],
           "actual": []
         },
         {
@@ -569,7 +648,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 41852
+          "actual": 21904
         }
       ],
       "output": {
@@ -581,12 +660,18 @@
             {
               "ref": "F1",
               "factId": "event:linear:quality:1",
-              "fields": ["title", "time"]
+              "fields": [
+                "title",
+                "time"
+              ]
             },
             {
               "ref": "F2",
               "factId": "event:data:quality:2",
-              "fields": ["title", "time"]
+              "fields": [
+                "title",
+                "time"
+              ]
             }
           ],
           "writeClaim": false
@@ -594,7 +679,7 @@
       },
       "metrics": {
         "workload": "chat",
-        "elapsedMs": 41852,
+        "elapsedMs": 21904,
         "inputTokens": 1006,
         "outputTokens": 84,
         "tokenLimit": 208,
@@ -602,10 +687,10 @@
         "inputTruncated": false,
         "coldStart": false,
         "queueWaitMs": 0,
-        "timeToFirstTokenMs": 29810,
+        "timeToFirstTokenMs": 14723,
         "backend": "cpu",
         "prefixCacheReused": true,
-        "processRssMiB": 2837
+        "processRssMiB": 2843
       }
     },
     {
@@ -622,13 +707,19 @@
         {
           "name": "chat.textAll",
           "passed": true,
-          "expected": ["Science Hall 130", "Learning Center 1426"],
+          "expected": [
+            "Science Hall 130",
+            "Learning Center 1426"
+          ],
           "actual": []
         },
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": ["not specified", "safe local action"],
+          "expected": [
+            "not specified",
+            "safe local action"
+          ],
           "actual": []
         },
         {
@@ -647,7 +738,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 38595
+          "actual": 18903
         }
       ],
       "output": {
@@ -659,12 +750,18 @@
             {
               "ref": "F1",
               "factId": "event:linear:quality:1",
-              "fields": ["title", "location"]
+              "fields": [
+                "title",
+                "location"
+              ]
             },
             {
               "ref": "F2",
               "factId": "event:data:quality:2",
-              "fields": ["title", "location"]
+              "fields": [
+                "title",
+                "location"
+              ]
             }
           ],
           "writeClaim": false
@@ -672,7 +769,7 @@
       },
       "metrics": {
         "workload": "chat",
-        "elapsedMs": 38595,
+        "elapsedMs": 18903,
         "inputTokens": 927,
         "outputTokens": 84,
         "tokenLimit": 192,
@@ -680,10 +777,10 @@
         "inputTruncated": false,
         "coldStart": false,
         "queueWaitMs": 0,
-        "timeToFirstTokenMs": 24608,
+        "timeToFirstTokenMs": 11938,
         "backend": "cpu",
         "prefixCacheReused": true,
-        "processRssMiB": 2842
+        "processRssMiB": 2846
       }
     },
     {
@@ -710,12 +807,18 @@
             "can't",
             "cannot"
           ],
-          "actual": ["live", "verify", "cannot"]
+          "actual": [
+            "live",
+            "verify",
+            "cannot"
+          ]
         },
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": ["safe local action"],
+          "expected": [
+            "safe local action"
+          ],
           "actual": []
         },
         {
@@ -734,7 +837,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 29353
+          "actual": 13179
         }
       ],
       "output": {
@@ -748,7 +851,7 @@
       },
       "metrics": {
         "workload": "chat",
-        "elapsedMs": 29353,
+        "elapsedMs": 13179,
         "inputTokens": 471,
         "outputTokens": 133,
         "tokenLimit": 192,
@@ -756,10 +859,10 @@
         "inputTruncated": false,
         "coldStart": false,
         "queueWaitMs": 0,
-        "timeToFirstTokenMs": 2942,
+        "timeToFirstTokenMs": 1122,
         "backend": "cpu",
         "prefixCacheReused": true,
-        "processRssMiB": 2844
+        "processRssMiB": 2847
       }
     },
     {
@@ -776,7 +879,10 @@
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": ["safe local action", "could not map that request"],
+          "expected": [
+            "safe local action",
+            "could not map that request"
+          ],
           "actual": []
         },
         {
@@ -795,7 +901,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 26330
+          "actual": 11589
         }
       ],
       "output": {
@@ -809,7 +915,7 @@
       },
       "metrics": {
         "workload": "chat",
-        "elapsedMs": 26330,
+        "elapsedMs": 11589,
         "inputTokens": 468,
         "outputTokens": 121,
         "tokenLimit": 192,
@@ -817,10 +923,10 @@
         "inputTruncated": false,
         "coldStart": false,
         "queueWaitMs": 0,
-        "timeToFirstTokenMs": 1994,
+        "timeToFirstTokenMs": 825,
         "backend": "cpu",
         "prefixCacheReused": true,
-        "processRssMiB": 2846
+        "processRssMiB": 2848
       }
     },
     {
@@ -837,7 +943,9 @@
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": ["safe local action"],
+          "expected": [
+            "safe local action"
+          ],
           "actual": []
         },
         {
@@ -856,7 +964,7 @@
           "name": "runtime.withinConfiguredTimeout",
           "passed": true,
           "expected": "<= 90000 ms",
-          "actual": 11898
+          "actual": 5619
         }
       ],
       "output": {
@@ -870,7 +978,7 @@
       },
       "metrics": {
         "workload": "chat",
-        "elapsedMs": 11898,
+        "elapsedMs": 5619,
         "inputTokens": 501,
         "outputTokens": 39,
         "tokenLimit": 208,
@@ -878,10 +986,10 @@
         "inputTruncated": false,
         "coldStart": false,
         "queueWaitMs": 0,
-        "timeToFirstTokenMs": 5320,
+        "timeToFirstTokenMs": 2166,
         "backend": "cpu",
         "prefixCacheReused": true,
-        "processRssMiB": 2848
+        "processRssMiB": 2850
       }
     }
   ],
