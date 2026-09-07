@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  TZ: America/Chicago
+
 on:
   push:
   pull_request:

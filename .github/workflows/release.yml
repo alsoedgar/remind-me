@@ -1,5 +1,8 @@
 name: Signed cross-platform release
 
+env:
+  TZ: America/Chicago
+
 on:
   workflow_dispatch:
     inputs:
