@@ -7,6 +7,7 @@ allowBuilds:
   electron-winstaller: true
   esbuild: true
   node-llama-cpp: true
-
-ignoredBuiltDependencies:
-  - tesseract.js
+  # tesseract.js only runs its harmless postinstall notice in this workspace.
+  # Allow pnpm to complete fresh CI/release installs instead of failing with
+  # ERR_PNPM_IGNORED_BUILDS before any verification can run.
+  tesseract.js: true
