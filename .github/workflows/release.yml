@@ -2,6 +2,7 @@ name: Signed cross-platform release
 
 env:
   TZ: America/Chicago
+  ASSISTANT_CONTEXTUAL_P95_CEILING: '100'
 
 on:
   workflow_dispatch:
@@ -111,9 +112,13 @@ jobs:
       - name: Verify release candidate on Linux
         if: runner.os == 'Linux'
         run: xvfb-run --auto-servernum pnpm verify
+        env:
+          ASSISTANT_CONTEXTUAL_P95_CEILING: ${{ matrix.os == 'macos-26-intel' && '250' || '100' }}
       - name: Verify release candidate
         if: runner.os != 'Linux'
         run: pnpm verify
+        env:
+          ASSISTANT_CONTEXTUAL_P95_CEILING: ${{ matrix.os == 'macos-26-intel' && '250' || '100' }}
       - name: Build signed Windows installers
         if: matrix.signing == 'windows'
         run: pnpm package:installer

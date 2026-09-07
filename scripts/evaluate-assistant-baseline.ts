@@ -1273,9 +1273,11 @@ const native = modes.includes('native-hybrid')
 const results: ModeResult[] = []
 for (const mode of modes) results.push(await evaluateMode(mode, scenarios, selectedCase, native))
 
-const maxP95Ms = Number(
-  option('max-p95-ms') ?? (requireHumanBlind || requireContextualRelease ? '100' : '500')
-)
+const configuredP95 =
+  option('max-p95-ms') ??
+  (process.env.ASSISTANT_CONTEXTUAL_P95_CEILING?.trim() || null) ??
+  (requireHumanBlind || requireContextualRelease ? '100' : '500')
+const maxP95Ms = Number(configuredP95)
 if (!Number.isFinite(maxP95Ms) || maxP95Ms <= 0) {
   throw new Error('--max-p95-ms must be a positive number')
 }

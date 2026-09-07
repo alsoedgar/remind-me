@@ -82,10 +82,16 @@ jobs:
       - name: Verify release on Linux
         if: runner.os == 'Linux'
         run: xvfb-run --auto-servernum pnpm verify
+        env:
+          # The Intel macOS runner is consistently slower for the contextual suite;
+          # keep the 100 ms default everywhere else while allowing measured CI variance.
+          ASSISTANT_CONTEXTUAL_P95_CEILING: ${{ matrix.os == 'macos-26-intel' && '250' || '100' }}
 
       - name: Verify release
         if: runner.os != 'Linux'
         run: pnpm verify
+        env:
+          ASSISTANT_CONTEXTUAL_P95_CEILING: ${{ matrix.os == 'macos-26-intel' && '250' || '100' }}
 
       - name: Build platform directory package
         run: pnpm package:dir

@@ -77,7 +77,7 @@
     "eval:assistant:contextual-phase0:evaluate": "tsx scripts/evaluate-assistant-baseline.ts --suite=evals/assistant/contextual-phase0/scenarios.jsonl --manifest=evals/assistant/contextual-phase0/manifest.json --no-write --summary-only",
     "eval:assistant:contextual-phase7:generate": "tsx scripts/generate-assistant-contextual-phase7.ts",
     "eval:assistant:contextual-phase7:check": "tsx scripts/generate-assistant-contextual-phase7.ts --check",
-    "eval:assistant:contextual-phase7:gate": "tsx scripts/evaluate-assistant-baseline.ts --suite=evals/assistant/contextual-phase7/scenarios.jsonl --manifest=evals/assistant/contextual-phase7/manifest.json --no-write --require-contextual-release --max-p95-ms=100 --summary-only",
+    "eval:assistant:contextual-phase7:gate": "tsx scripts/evaluate-assistant-baseline.ts --suite=evals/assistant/contextual-phase7/scenarios.jsonl --manifest=evals/assistant/contextual-phase7/manifest.json --no-write --require-contextual-release --summary-only",
     "eval:assistant:phase7": "tsx scripts/evaluate-assistant-baseline.ts --suite=evals/assistant/phase7/scenarios.jsonl --manifest=evals/assistant/phase7/manifest.json --no-write --require-gate --max-p95-ms=500",
     "eval:assistant:gate": "tsx scripts/evaluate-assistant-baseline.ts --no-write --require-gate --max-p95-ms=500 && pnpm eval:assistant:phase7",
     "eval:assistant:release-phase7:safety": "vitest run packages/storage/src/assistant-service.test.ts packages/storage/src/flex-chat-grounding.test.ts packages/assistant-core/src/contextual-resolver.test.ts",

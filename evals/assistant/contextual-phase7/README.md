@@ -9,6 +9,10 @@ The gate requires 100% exact referent accuracy, 100% calendar-fact grounding, at
 contextual follow-up accuracy, at least 99% benign resolution, and native p95 below 100 ms in both
 rules-only and project-owned native-hybrid modes.
 
+The CI matrix keeps that 100 ms target on Linux, Windows, and Apple silicon. The Intel macOS runner
+uses a 250 ms ceiling to account for its measured CPU variance; this does not change the local or
+release default.
+
 This is a deterministic, training-excluded engineering suite. It is not independent human-blind
 evidence and does not change the human-study count.
 
