@@ -1,6 +1,6 @@
 {
   "name": "remind-me",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "A cozy, local-first calendar and reminder assistant.",
   "author": "Remind Me contributors",

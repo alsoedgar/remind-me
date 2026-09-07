@@ -16,3 +16,9 @@
 *.sqlite binary
 *.wav binary
 *.webp binary
+
+# The release manifest records exact model byte lengths and hashes. Keep the
+# tracked text artifacts in the CRLF form used when the model inventory was
+# generated so Linux/macOS CI checkouts verify the same bytes as Windows.
+models/**/*.json text eol=crlf
+models/**/*.txt text eol=crlf
