@@ -31,15 +31,43 @@ export function packagesToKeep(platform, arch, acceleration = 'portable') {
   )
 }
 
+async function resourceRootsFor(root, platform) {
+  const roots = [resolve(root, 'resources')]
+  if (platform !== 'darwin') return roots
+
+  // electron-builder's mac afterPack appOutDir is the architecture directory
+  // (for example dist/mac-arm64), while Windows/Linux use the unpacked app
+  // directory directly. Resolve the bundle resources in both forms so the
+  // native-package pruning hook works before and after asar staging.
+  if (root.toLocaleLowerCase().endsWith('.app')) {
+    roots.unshift(resolve(root, 'Contents', 'Resources'))
+  } else {
+    let entries
+    try {
+      entries = await readdir(root, { withFileTypes: true })
+    } catch (error) {
+      if (error && typeof error === 'object' && error.code === 'ENOENT') return roots
+      throw error
+    }
+    for (const entry of entries) {
+      if (entry.isDirectory() && entry.name.toLocaleLowerCase().endsWith('.app')) {
+        roots.unshift(resolve(root, entry.name, 'Contents', 'Resources'))
+      }
+    }
+  }
+  return [...new Set(roots)]
+}
+
 export default async function pruneNodeLlamaBinaries(context) {
   const root = resolve(context.appOutDir)
   // afterPack runs before electron-builder creates app.asar and app.asar.unpacked.
   // Prune the staged app tree so excluded optional packages cannot be copied into
   // app.asar.unpacked later. Keep the unpacked path as a compatibility fallback.
-  const nativeRootCandidates = [
-    resolve(root, 'resources', 'app', 'node_modules', '@node-llama-cpp'),
-    resolve(root, 'resources', 'app.asar.unpacked', 'node_modules', '@node-llama-cpp')
-  ]
+  const resourceRoots = await resourceRootsFor(root, context.electronPlatformName)
+  const nativeRootCandidates = resourceRoots.flatMap((resourceRoot) => [
+    resolve(resourceRoot, 'app', 'node_modules', '@node-llama-cpp'),
+    resolve(resourceRoot, 'app.asar.unpacked', 'node_modules', '@node-llama-cpp')
+  ])
   for (const candidate of nativeRootCandidates) {
     if (!candidate.startsWith(`${root}${sep}`)) {
       throw new Error('Refusing to prune native packages outside the packaged application')
@@ -87,7 +115,9 @@ export default async function pruneNodeLlamaBinaries(context) {
   if (requestedAcceleration === 'metal') backends.push('metal')
   if (requestedAcceleration === 'vulkan') backends.push('vulkan')
   if (requestedAcceleration === 'cuda') backends.push('cuda')
-  const resourceRoot = resolve(root, 'resources')
+  const resourceRoot =
+    resourceRoots.find((candidate) => nativeRoot?.startsWith(`${candidate}${sep}`)) ??
+    resourceRoots[0]
   if (!resourceRoot.startsWith(`${root}${sep}`)) {
     throw new Error('Refusing to write a backend manifest outside the packaged application')
   }
