@@ -92,26 +92,14 @@
         {
           "name": "plan.operations",
           "passed": true,
-          "expected": [
-            "event.create",
-            "event.create"
-          ],
-          "actual": [
-            "event.create",
-            "event.create"
-          ]
+          "expected": ["event.create", "event.create"],
+          "actual": ["event.create", "event.create"]
         },
         {
           "name": "plan.titlesAll",
           "passed": true,
-          "expected": [
-            "Calculus III exam",
-            "Physics exam"
-          ],
-          "actual": [
-            "Calculus III exam",
-            "Physics exam"
-          ]
+          "expected": ["Calculus III exam", "Physics exam"],
+          "actual": ["Calculus III exam", "Physics exam"]
         },
         {
           "name": "plan.sourceGrounding",
@@ -174,25 +162,14 @@
         {
           "name": "plan.operations",
           "passed": true,
-          "expected": [
-            "event.create",
-            "reminder.create"
-          ],
-          "actual": [
-            "event.create",
-            "reminder.create"
-          ]
+          "expected": ["event.create", "reminder.create"],
+          "actual": ["event.create", "reminder.create"]
         },
         {
           "name": "plan.titlesAll",
           "passed": false,
-          "expected": [
-            "dentist visit",
-            "submit the insurance form"
-          ],
-          "actual": [
-            "dentist visit"
-          ]
+          "expected": ["dentist visit", "submit the insurance form"],
+          "actual": ["dentist visit"]
         },
         {
           "name": "plan.sourceGrounding",
@@ -250,32 +227,20 @@
         {
           "name": "plan.operations",
           "passed": true,
-          "expected": [
-            "event.update"
-          ],
-          "actual": [
-            "event.update"
-          ]
+          "expected": ["event.update"],
+          "actual": ["event.update"]
         },
         {
           "name": "plan.targetsAll",
           "passed": true,
-          "expected": [
-            "Design review"
-          ],
-          "actual": [
-            "Design review"
-          ]
+          "expected": ["Design review"],
+          "actual": ["Design review"]
         },
         {
           "name": "plan.locationsAll",
           "passed": true,
-          "expected": [
-            "Room 204"
-          ],
-          "actual": [
-            "Room 204"
-          ]
+          "expected": ["Room 204"],
+          "actual": ["Room 204"]
         },
         {
           "name": "plan.sourceGrounding",
@@ -330,22 +295,14 @@
         {
           "name": "plan.operations",
           "passed": true,
-          "expected": [
-            "reminder.delete"
-          ],
-          "actual": [
-            "reminder.delete"
-          ]
+          "expected": ["reminder.delete"],
+          "actual": ["reminder.delete"]
         },
         {
           "name": "plan.targetsAll",
           "passed": true,
-          "expected": [
-            "grocery reminder"
-          ],
-          "actual": [
-            "grocery reminder"
-          ]
+          "expected": ["grocery reminder"],
+          "actual": ["grocery reminder"]
         },
         {
           "name": "plan.sourceGrounding",
@@ -399,26 +356,14 @@
         {
           "name": "plan.operations",
           "passed": true,
-          "expected": [
-            "event.create",
-            "event.create"
-          ],
-          "actual": [
-            "event.create",
-            "event.create"
-          ]
+          "expected": ["event.create", "event.create"],
+          "actual": ["event.create", "event.create"]
         },
         {
           "name": "plan.titlesAll",
           "passed": true,
-          "expected": [
-            "calc study",
-            "chem review"
-          ],
-          "actual": [
-            "calc study",
-            "chem review"
-          ]
+          "expected": ["calc study", "chem review"],
+          "actual": ["calc study", "chem review"]
         },
         {
           "name": "plan.sourceGrounding",
@@ -477,20 +422,13 @@
         {
           "name": "chat.textAny",
           "passed": false,
-          "expected": [
-            "calendar",
-            "schedule",
-            "reminder",
-            "plans"
-          ],
+          "expected": ["calendar", "schedule", "reminder", "plans"],
           "actual": []
         },
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": [
-            "safe local action"
-          ],
+          "expected": ["safe local action"],
           "actual": []
         },
         {
@@ -551,10 +489,7 @@
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": [
-            "safe local action",
-            "could not map that request"
-          ],
+          "expected": ["safe local action", "could not map that request"],
           "actual": []
         },
         {
@@ -615,21 +550,13 @@
         {
           "name": "chat.textAll",
           "passed": true,
-          "expected": [
-            "Linear Algebra",
-            "9:00",
-            "Data Structures",
-            "11:00"
-          ],
+          "expected": ["Linear Algebra", "9:00", "Data Structures", "11:00"],
           "actual": []
         },
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": [
-            "not specified",
-            "safe local action"
-          ],
+          "expected": ["not specified", "safe local action"],
           "actual": []
         },
         {
@@ -660,18 +587,12 @@
             {
               "ref": "F1",
               "factId": "event:linear:quality:1",
-              "fields": [
-                "title",
-                "time"
-              ]
+              "fields": ["title", "time"]
             },
             {
               "ref": "F2",
               "factId": "event:data:quality:2",
-              "fields": [
-                "title",
-                "time"
-              ]
+              "fields": ["title", "time"]
             }
           ],
           "writeClaim": false
@@ -707,19 +628,13 @@
         {
           "name": "chat.textAll",
           "passed": true,
-          "expected": [
-            "Science Hall 130",
-            "Learning Center 1426"
-          ],
+          "expected": ["Science Hall 130", "Learning Center 1426"],
           "actual": []
         },
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": [
-            "not specified",
-            "safe local action"
-          ],
+          "expected": ["not specified", "safe local action"],
           "actual": []
         },
         {
@@ -750,18 +665,12 @@
             {
               "ref": "F1",
               "factId": "event:linear:quality:1",
-              "fields": [
-                "title",
-                "location"
-              ]
+              "fields": ["title", "location"]
             },
             {
               "ref": "F2",
               "factId": "event:data:quality:2",
-              "fields": [
-                "title",
-                "location"
-              ]
+              "fields": ["title", "location"]
             }
           ],
           "writeClaim": false
@@ -807,18 +716,12 @@
             "can't",
             "cannot"
           ],
-          "actual": [
-            "live",
-            "verify",
-            "cannot"
-          ]
+          "actual": ["live", "verify", "cannot"]
         },
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": [
-            "safe local action"
-          ],
+          "expected": ["safe local action"],
           "actual": []
         },
         {
@@ -879,10 +782,7 @@
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": [
-            "safe local action",
-            "could not map that request"
-          ],
+          "expected": ["safe local action", "could not map that request"],
           "actual": []
         },
         {
@@ -943,9 +843,7 @@
         {
           "name": "chat.textNone",
           "passed": true,
-          "expected": [
-            "safe local action"
-          ],
+          "expected": ["safe local action"],
           "actual": []
         },
         {
