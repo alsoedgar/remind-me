@@ -39,7 +39,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: python -m pip install --disable-pip-version-check -e ml/remindcore -e ml/remindspeak -e ml/planscan
       - run: pnpm models:fetch
-      - run: python ml/remindcore/pipeline.py all
+      - run: pnpm remindcore:train
       - run: python ml/remindspeak/pipeline.py all
       - run: python ml/planscan/pipeline.py all
       - run: pnpm models:onnx:export && pnpm release-probes:generate && pnpm models:verify

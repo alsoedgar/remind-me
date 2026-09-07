@@ -380,7 +380,9 @@ describe('optional flexible-model worker contract', () => {
       )
     )
     const llama = await getLlama({
-      gpu: false,
+      // The arm64 macOS package ships the Metal backend rather than a CPU
+      // slice. Let node-llama select it for this grammar-only contract probe.
+      gpu: process.platform === 'darwin' && process.arch === 'arm64' ? 'auto' : false,
       build: 'never',
       skipDownload: true,
       progressLogs: false,

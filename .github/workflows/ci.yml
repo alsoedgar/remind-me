@@ -68,7 +68,7 @@ jobs:
         run: pnpm models:fetch
 
       - name: Train and export RemindCore from scratch
-        run: python ml/remindcore/pipeline.py all
+        run: pnpm remindcore:train
 
       - name: Train and export RemindSpeak from scratch
         run: python ml/remindspeak/pipeline.py all
