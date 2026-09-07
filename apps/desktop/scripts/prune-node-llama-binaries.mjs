@@ -33,15 +33,17 @@ export function packagesToKeep(platform, arch, acceleration = 'portable') {
 
 export default async function pruneNodeLlamaBinaries(context) {
   const root = resolve(context.appOutDir)
-  const nativeRoot = resolve(
-    root,
-    'resources',
-    'app.asar.unpacked',
-    'node_modules',
-    '@node-llama-cpp'
-  )
-  if (!nativeRoot.startsWith(`${root}${sep}`)) {
-    throw new Error('Refusing to prune native packages outside the packaged application')
+  // afterPack runs before electron-builder creates app.asar and app.asar.unpacked.
+  // Prune the staged app tree so excluded optional packages cannot be copied into
+  // app.asar.unpacked later. Keep the unpacked path as a compatibility fallback.
+  const nativeRootCandidates = [
+    resolve(root, 'resources', 'app', 'node_modules', '@node-llama-cpp'),
+    resolve(root, 'resources', 'app.asar.unpacked', 'node_modules', '@node-llama-cpp')
+  ]
+  for (const candidate of nativeRootCandidates) {
+    if (!candidate.startsWith(`${root}${sep}`)) {
+      throw new Error('Refusing to prune native packages outside the packaged application')
+    }
   }
 
   const arch = archNames[context.arch]
@@ -55,12 +57,20 @@ export default async function pruneNodeLlamaBinaries(context) {
   }
   const keep = packagesToKeep(context.electronPlatformName, arch, requestedAcceleration)
   const keepSet = new Set(keep)
+  let nativeRoot
   let entries
-  try {
-    entries = await readdir(nativeRoot, { withFileTypes: true })
-  } catch (error) {
-    if (error && typeof error === 'object' && error.code === 'ENOENT') return
-    throw error
+  for (const candidate of nativeRootCandidates) {
+    try {
+      entries = await readdir(candidate, { withFileTypes: true })
+      nativeRoot = candidate
+      break
+    } catch (error) {
+      if (error && typeof error === 'object' && error.code === 'ENOENT') continue
+      throw error
+    }
+  }
+  if (!nativeRoot || !entries) {
+    throw new Error('The packaged application has no @node-llama-cpp native package staging tree')
   }
 
   for (const entry of entries) {
