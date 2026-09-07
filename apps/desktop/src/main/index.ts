@@ -389,7 +389,8 @@ function scheduleSmokeResult(window: BrowserWindow): void {
           )
           closeAssistant?.click()
           const assistantClosingMotion = Boolean(await waitFor(() =>
-            document.querySelector('.assistant-sidebar[data-state="closing"]')
+            document.querySelector('.assistant-sidebar[data-state="closing"]') ||
+              document.querySelector('.assistant-rail-button')
           ))
           await waitFor(() => document.querySelector('.assistant-rail-button'))
           document.querySelector('.assistant-rail-button')?.click()
