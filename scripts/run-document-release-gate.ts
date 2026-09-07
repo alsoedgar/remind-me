@@ -172,7 +172,11 @@ function runPackage(
   userDataPath: string
 ): Promise<PackageRunResult> {
   return new Promise((resolveRun, rejectRun) => {
-    const child = spawn(executable, ['--document-release-gate', '--offline-smoke'], {
+    const args =
+      process.platform === 'linux'
+        ? ['--no-sandbox', '--document-release-gate', '--offline-smoke']
+        : ['--document-release-gate', '--offline-smoke']
+    const child = spawn(executable, args, {
       cwd: workspaceRoot,
       env: {
         ...process.env,
