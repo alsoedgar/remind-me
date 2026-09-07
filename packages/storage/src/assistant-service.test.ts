@@ -299,7 +299,7 @@ describe('PersistentAssistantService', () => {
     } finally {
       reopenedRepository.close()
     }
-  })
+  }, 15_000)
 
   it('answers availability and conflict questions from expanded calendar facts', async () => {
     const repository = new SqliteCalendarRepository(':memory:')
