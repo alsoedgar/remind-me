@@ -11,7 +11,7 @@
     "dev": "pnpm document-assets:prepare && electron-vite dev",
     "build": "pnpm document-assets:prepare && electron-vite build",
     "start": "electron-vite preview",
-    "smoke": "electron . --smoke-test --offline-smoke",
+    "smoke": "node scripts/run-smoke.mjs",
     "package:dir": "pnpm build && electron-builder --dir",
     "package:installer": "pnpm build && electron-builder --publish never"
   },

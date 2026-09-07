@@ -64,7 +64,8 @@ export default async function pruneNodeLlamaBinaries(context) {
   }
 
   for (const entry of entries) {
-    if (!entry.isDirectory() || keepSet.has(entry.name)) continue
+    if (keepSet.has(entry.name)) continue
+    if (!entry.isDirectory() && !entry.isSymbolicLink()) continue
     const target = resolve(nativeRoot, entry.name)
     if (!target.startsWith(`${nativeRoot}${sep}`)) {
       throw new Error(`Refusing to remove an unexpected native package path: ${target}`)

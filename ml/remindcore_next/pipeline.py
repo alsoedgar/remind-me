@@ -1466,36 +1466,37 @@ def write_report(report: dict[str, Any]) -> None:
     selected = report["selection"]
     challenge = report["challenge"]
     status = "promoted" if report["promoted"] else "not promoted"
-    MODEL_CARD_PATH.write_text(
-        "\n".join(
-            [
-                "# RemindCore Next model card",
-                "",
-                f"**Status:** {status}",
-                f"**Version:** {report['version']}",
-                f"**Selected capacity:** {selected['buckets']} hash buckets",
-                "",
-                "The added student heads are project-owned, zero-initialized classifiers trained from scratch. Qwen supplied only deterministically curated wording; no Qwen weights, private user data, or conversation logs were used.",
-                "",
-                "## Developer challenge",
-                "",
-                f"- Route accuracy: {challenge['routeAccuracy']:.1%}",
-                f"- First capability accuracy: {challenge['firstCapabilityAccuracy']:.1%}",
-                f"- Exact ordered sequence accuracy: {challenge['exactSequenceAccuracy']:.1%}",
-                f"- Multi-action exact accuracy: {challenge['multiActionExactAccuracy']:.1%}",
-                f"- Selective routing precision/coverage: {challenge['selectivePrecision']:.1%} / {challenge['selectiveCoverage']:.1%}",
-                f"- Dialogue relation accuracy: {challenge['dialogueRelationAccuracy']:.1%}",
-                f"- Requested attribute accuracy: {challenge['requestedAttributeAccuracy']:.1%}",
-                f"- Scope accuracy: {challenge['scopeAccuracy']:.1%}",
-                f"- Selection accuracy: {challenge['selectionAccuracy']:.1%}",
-                f"- Turn-kind accuracy: {challenge['turnKindAccuracy']:.1%}",
-                "",
-                f"The challenge was evaluated in {report['provenance']['developerChallengeEvaluationRounds']} recorded engineering rounds while the generic multi-action decoder and runtime parity were corrected. It is not untouched or independently human-blind. The honest human-blind count remains zero until Phase 8. The model is advisory only and cannot resolve, confirm, execute, or persist an action.",
-                "",
-            ]
-        ),
-        encoding="utf-8",
+    model_card = "\n".join(
+        [
+            "# RemindCore Next model card",
+            "",
+            f"**Status:** {status}",
+            f"**Version:** {report['version']}",
+            f"**Selected capacity:** {selected['buckets']} hash buckets",
+            "",
+            "The added student heads are project-owned, zero-initialized classifiers trained from scratch. Qwen supplied only deterministically curated wording; no Qwen weights, private user data, or conversation logs were used.",
+            "",
+            "## Developer challenge",
+            "",
+            f"- Route accuracy: {challenge['routeAccuracy']:.1%}",
+            f"- First capability accuracy: {challenge['firstCapabilityAccuracy']:.1%}",
+            f"- Exact ordered sequence accuracy: {challenge['exactSequenceAccuracy']:.1%}",
+            f"- Multi-action exact accuracy: {challenge['multiActionExactAccuracy']:.1%}",
+            f"- Selective routing precision/coverage: {challenge['selectivePrecision']:.1%} / {challenge['selectiveCoverage']:.1%}",
+            f"- Dialogue relation accuracy: {challenge['dialogueRelationAccuracy']:.1%}",
+            f"- Requested attribute accuracy: {challenge['requestedAttributeAccuracy']:.1%}",
+            f"- Scope accuracy: {challenge['scopeAccuracy']:.1%}",
+            f"- Selection accuracy: {challenge['selectionAccuracy']:.1%}",
+            f"- Turn-kind accuracy: {challenge['turnKindAccuracy']:.1%}",
+            "",
+            f"The challenge was evaluated in {report['provenance']['developerChallengeEvaluationRounds']} recorded engineering rounds while the generic multi-action decoder and runtime parity were corrected. It is not untouched or independently human-blind. The honest human-blind count remains zero until Phase 8. The model is advisory only and cannot resolve, confirm, execute, or persist an action.",
+            "",
+        ]
     )
+    # Keep generated markdown stable across Windows and POSIX runners so the
+    # repository-wide Prettier check sees the same line endings everywhere.
+    with MODEL_CARD_PATH.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(model_card)
 
 
 def main() -> None:
