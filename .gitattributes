@@ -18,7 +18,6 @@
 *.webp binary
 
 # The release manifest records exact model byte lengths and hashes. Keep the
-# tracked text artifacts in the CRLF form used when the model inventory was
-# generated so Linux/macOS CI checkouts verify the same bytes as Windows.
-models/**/*.json text eol=crlf
-models/**/*.txt text eol=crlf
+# tracked text artifacts in a single LF form on every checkout.
+models/**/*.json text eol=lf
+models/**/*.txt text eol=lf
